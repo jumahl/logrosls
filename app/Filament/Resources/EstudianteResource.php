@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\EstudianteResource\Pages;
-use App\Filament\Resources\EstudianteResource\RelationManagers;
 use App\Models\Estudiante;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -50,6 +49,20 @@ class EstudianteResource extends Resource
                     ->required()
                     ->searchable()
                     ->preload()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('nombre')
+                            ->required()
+                            ->maxLength(255)
+                            ->label('Nombre'),
+                        Forms\Components\Select::make('tipo')
+                            ->options([
+                                'preescolar' => 'Preescolar',
+                                'primaria' => 'Primaria',
+                                'secundaria' => 'Secundaria',
+                            ])
+                            ->required()
+                            ->label('Tipo'),
+                    ])
                     ->label('Grado'),
                 Forms\Components\DatePicker::make('fecha_nacimiento')
                     ->required()
@@ -100,10 +113,6 @@ class EstudianteResource extends Resource
                     ->boolean()
                     ->sortable()
                     ->label('Activo'),
-                Tables\Columns\TextColumn::make('logros_count')
-                    ->counts('logros')
-                    ->label('Logros')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
@@ -137,9 +146,7 @@ class EstudianteResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            RelationManagers\LogrosRelationManager::class,
-        ];
+        return [];
     }
 
     public static function getPages(): array

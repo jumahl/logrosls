@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('periodos', function (Blueprint $table) {
-            $table->id();
-            $table->string('nombre');
-            $table->date('fecha_inicio');
-            $table->date('fecha_fin');
-            $table->boolean('activo')->default(false);
-            $table->timestamps();
+        Schema::table('logros', function (Blueprint $table) {
+            $table->dropForeign(['periodo_id']);
+            $table->dropColumn('periodo_id');
         });
     }
 
@@ -26,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('periodos');
+        Schema::table('logros', function (Blueprint $table) {
+            $table->foreignId('periodo_id')->constrained();
+        });
     }
-};
+}; 

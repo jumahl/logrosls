@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\LogroResource\Pages;
-use App\Filament\Resources\LogroResource\RelationManagers;
 use App\Models\Logro;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -44,18 +43,34 @@ class LogroResource extends Resource
                     ->required()
                     ->maxLength(255)
                     ->label('Título del Logro'),
+                Forms\Components\Select::make('grado_id')
+                    ->relationship('grado', 'nombre')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->label('Grado'),
                 Forms\Components\Select::make('materia_id')
                     ->relationship('materia', 'nombre')
                     ->required()
                     ->searchable()
                     ->preload()
                     ->label('Materia'),
-                Forms\Components\Select::make('periodo_id')
-                    ->relationship('periodo', 'nombre')
+                Forms\Components\TextInput::make('competencia')
                     ->required()
-                    ->searchable()
-                    ->preload()
-                    ->label('Periodo'),
+                    ->maxLength(255)
+                    ->label('Competencia'),
+                Forms\Components\TextInput::make('tema')
+                    ->required()
+                    ->maxLength(255)
+                    ->label('Tema'),
+                Forms\Components\TextInput::make('indicador_desempeno')
+                    ->required()
+                    ->maxLength(255)
+                    ->label('Indicador de Desempeño'),
+                Forms\Components\TextInput::make('dimension')
+                    ->maxLength(255)
+                    ->nullable()
+                    ->label('Dimensión'),
                 Forms\Components\Textarea::make('descripcion')
                     ->required()
                     ->maxLength(65535)
@@ -70,6 +85,32 @@ class LogroResource extends Resource
                         'superior' => 'Superior',
                     ])
                     ->label('Nivel de Logro'),
+                Forms\Components\Select::make('nivel_dificultad')
+                    ->options([
+                        'bajo' => 'Bajo',
+                        'medio' => 'Medio',
+                        'alto' => 'Alto',
+                    ])
+                    ->default('medio')
+                    ->label('Nivel de Dificultad'),
+                Forms\Components\Select::make('tipo')
+                    ->options([
+                        'conocimiento' => 'Conocimiento',
+                        'habilidad' => 'Habilidad',
+                        'actitud' => 'Actitud',
+                    ])
+                    ->default('conocimiento')
+                    ->label('Tipo de Logro'),
+                Forms\Components\TextInput::make('orden')
+                    ->numeric()
+                    ->default(0)
+                    ->label('Orden'),
+                Forms\Components\Select::make('periodos')
+                    ->relationship('periodos', 'nombre')
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->label('Periodos'),
                 Forms\Components\Toggle::make('activo')
                     ->required()
                     ->default(true)
@@ -89,14 +130,34 @@ class LogroResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Título'),
+                Tables\Columns\TextColumn::make('grado.nombre')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Grado'),
                 Tables\Columns\TextColumn::make('materia.nombre')
                     ->searchable()
                     ->sortable()
                     ->label('Materia'),
-                Tables\Columns\TextColumn::make('periodo.nombre')
+                Tables\Columns\TextColumn::make('competencia')
                     ->searchable()
                     ->sortable()
-                    ->label('Periodo'),
+                    ->label('Competencia'),
+                Tables\Columns\TextColumn::make('tema')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Tema'),
+                Tables\Columns\TextColumn::make('indicador_desempeno')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Indicador de Desempeño'),
+                Tables\Columns\TextColumn::make('dimension')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Dimensión'),
+                Tables\Columns\TextColumn::make('descripcion')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Descripción'),
                 Tables\Columns\TextColumn::make('nivel')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -107,14 +168,26 @@ class LogroResource extends Resource
                         default => 'gray',
                     })
                     ->label('Nivel'),
+                Tables\Columns\TextColumn::make('nivel_dificultad')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Nivel de Dificultad'),
+                Tables\Columns\TextColumn::make('tipo')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Tipo de Logro'),
+                Tables\Columns\TextColumn::make('orden')
+                    ->sortable()
+                    ->label('Orden'),
+                Tables\Columns\TextColumn::make('periodos.nombre')
+                    ->listWithLineBreaks()
+                    ->searchable()
+                    ->sortable()
+                    ->label('Periodos'),
                 Tables\Columns\IconColumn::make('activo')
                     ->boolean()
                     ->sortable()
                     ->label('Activo'),
-                Tables\Columns\TextColumn::make('estudiantes_count')
-                    ->counts('estudiantes')
-                    ->label('Estudiantes')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
@@ -125,11 +198,14 @@ class LogroResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('grado_id')
+                    ->relationship('grado', 'nombre')
+                    ->label('Grado'),
                 Tables\Filters\SelectFilter::make('materia_id')
                     ->relationship('materia', 'nombre')
                     ->label('Materia'),
-                Tables\Filters\SelectFilter::make('periodo_id')
-                    ->relationship('periodo', 'nombre')
+                Tables\Filters\SelectFilter::make('periodos')
+                    ->relationship('periodos', 'nombre')
                     ->label('Periodo'),
                 Tables\Filters\SelectFilter::make('nivel')
                     ->options([
@@ -139,6 +215,20 @@ class LogroResource extends Resource
                         'superior' => 'Superior',
                     ])
                     ->label('Nivel'),
+                Tables\Filters\SelectFilter::make('nivel_dificultad')
+                    ->options([
+                        'bajo' => 'Bajo',
+                        'medio' => 'Medio',
+                        'alto' => 'Alto',
+                    ])
+                    ->label('Nivel de Dificultad'),
+                Tables\Filters\SelectFilter::make('tipo')
+                    ->options([
+                        'conocimiento' => 'Conocimiento',
+                        'habilidad' => 'Habilidad',
+                        'actitud' => 'Actitud',
+                    ])
+                    ->label('Tipo de Logro'),
                 Tables\Filters\SelectFilter::make('activo')
                     ->options([
                         '1' => 'Activo',
@@ -159,9 +249,7 @@ class LogroResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            RelationManagers\EstudiantesRelationManager::class,
-        ];
+        return [];
     }
 
     public static function getPages(): array

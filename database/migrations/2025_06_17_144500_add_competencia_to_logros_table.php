@@ -11,9 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('periodos', function (Blueprint $table) {
-            $table->boolean('activo')->default(true)->after('fecha_fin');
-        });
+        // La columna 'competencia' ya existe, no hacer nada aquí
     }
 
     /**
@@ -21,8 +19,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('periodos', function (Blueprint $table) {
-            $table->dropColumn('activo');
+        Schema::table('logros', function (Blueprint $table) {
+            $table->dropColumn('competencia');
         });
     }
 }; 

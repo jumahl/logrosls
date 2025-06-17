@@ -30,12 +30,6 @@ class LogrosRelationManager extends RelationManager
                     ->searchable()
                     ->preload()
                     ->label('Materia'),
-                Forms\Components\Select::make('periodo_id')
-                    ->relationship('periodo', 'nombre')
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->label('Periodo'),
                 Forms\Components\Textarea::make('descripcion')
                     ->required()
                     ->maxLength(65535)
@@ -54,6 +48,7 @@ class LogrosRelationManager extends RelationManager
                     ->required()
                     ->default(true)
                     ->label('Logro Activo'),
+                Forms\Components\Hidden::make('grado_id'),
             ]);
     }
 
@@ -70,10 +65,6 @@ class LogrosRelationManager extends RelationManager
                     ->searchable()
                     ->sortable()
                     ->label('Materia'),
-                Tables\Columns\TextColumn::make('periodo.nombre')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Periodo'),
                 Tables\Columns\TextColumn::make('nivel')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -97,9 +88,6 @@ class LogrosRelationManager extends RelationManager
                 Tables\Filters\SelectFilter::make('materia_id')
                     ->relationship('materia', 'nombre')
                     ->label('Materia'),
-                Tables\Filters\SelectFilter::make('periodo_id')
-                    ->relationship('periodo', 'nombre')
-                    ->label('Periodo'),
                 Tables\Filters\SelectFilter::make('nivel')
                     ->options([
                         'bajo' => 'Bajo',

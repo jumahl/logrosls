@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('periodos', function (Blueprint $table) {
-            //
+        Schema::table('materias', function (Blueprint $table) {
+            $table->foreignId('docente_id')->nullable()->change();
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('periodos', function (Blueprint $table) {
-            //
+        Schema::table('materias', function (Blueprint $table) {
+            $table->foreignId('docente_id')->nullable(false)->change();
         });
     }
-};
+}; 

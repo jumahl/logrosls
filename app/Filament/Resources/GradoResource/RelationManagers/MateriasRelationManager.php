@@ -36,6 +36,7 @@ class MateriasRelationManager extends RelationManager
                     ->required()
                     ->default(true)
                     ->label('Materia Activa'),
+                Forms\Components\Hidden::make('grado_id'),
             ]);
     }
 

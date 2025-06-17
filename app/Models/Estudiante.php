@@ -14,10 +14,19 @@ class Estudiante extends Model
 
     protected $fillable = [
         'nombre',
+        'apellido',
         'documento',
-        'genero',
         'fecha_nacimiento',
+        'direccion',
+        'telefono',
+        'email',
         'grado_id',
+        'activo'
+    ];
+
+    protected $casts = [
+        'fecha_nacimiento' => 'date',
+        'activo' => 'boolean'
     ];
 
     /**
@@ -25,7 +34,7 @@ class Estudiante extends Model
      */
     public function grado(): BelongsTo
     {
-        return $this->belongsTo(Grado::class);
+        return $this->belongsTo(Grado::class, 'grado_id');
     }
 
     /**

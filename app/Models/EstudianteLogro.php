@@ -13,12 +13,18 @@ class EstudianteLogro extends Model
     protected $fillable = [
         'estudiante_id',
         'logro_id',
-        'fecha_asignacion',
+        'periodo_id',
+        'nivel_desempeno',
         'observaciones',
+        'fecha_asignacion'
+    ];
+
+    protected $casts = [
+        'fecha_asignacion' => 'date'
     ];
 
     /**
-     * Obtener el estudiante al que se le asignó el logro.
+     * Obtener el estudiante al que pertenece este logro.
      */
     public function estudiante(): BelongsTo
     {
@@ -26,10 +32,29 @@ class EstudianteLogro extends Model
     }
 
     /**
-     * Obtener el logro asignado al estudiante.
+     * Obtener el logro asignado.
      */
     public function logro(): BelongsTo
     {
         return $this->belongsTo(Logro::class);
+    }
+
+    public function periodo(): BelongsTo
+    {
+        return $this->belongsTo(Periodo::class);
+    }
+
+    public function calcularNivelDesempeno()
+    {
+        if (!$this->nota) {
+            return null;
+        }
+
+        return match(true) {
+            $this->nota >= 4.5 => 'Superior',
+            $this->nota >= 4.0 => 'Alto',
+            $this->nota >= 3.0 => 'Básico',
+            default => 'Bajo'
+        };
     }
 }

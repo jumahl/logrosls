@@ -50,6 +50,7 @@ class EstudiantesRelationManager extends RelationManager
                     ->required()
                     ->default(true)
                     ->label('Estudiante Activo'),
+                Forms\Components\Hidden::make('grado_id'),
             ]);
     }
 

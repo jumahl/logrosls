@@ -13,8 +13,15 @@ class Materia extends Model
 
     protected $fillable = [
         'nombre',
+        'codigo',
+        'descripcion',
         'grado_id',
         'docente_id',
+        'activa'
+    ];
+
+    protected $casts = [
+        'activa' => 'boolean'
     ];
 
     /**

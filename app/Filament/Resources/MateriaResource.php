@@ -47,6 +47,12 @@ class MateriaResource extends Resource
                     ->searchable()
                     ->preload()
                     ->label('Grado'),
+                Forms\Components\Select::make('docente_id')
+                    ->relationship('docente', 'name')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->label('Docente'),
                 Forms\Components\Textarea::make('descripcion')
                     ->maxLength(65535)
                     ->columnSpanFull()
@@ -74,6 +80,10 @@ class MateriaResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Grado'),
+                Tables\Columns\TextColumn::make('docente.name')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Docente'),
                 Tables\Columns\IconColumn::make('activa')
                     ->boolean()
                     ->sortable()
@@ -95,6 +105,9 @@ class MateriaResource extends Resource
                 Tables\Filters\SelectFilter::make('grado_id')
                     ->relationship('grado', 'nombre')
                     ->label('Grado'),
+                Tables\Filters\SelectFilter::make('docente_id')
+                    ->relationship('docente', 'name')
+                    ->label('Docente'),
                 Tables\Filters\SelectFilter::make('activa')
                     ->options([
                         '1' => 'Activa',
