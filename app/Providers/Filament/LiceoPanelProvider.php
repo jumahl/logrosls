@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use Filament\Http\Middleware\Authenticate;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -37,8 +38,15 @@ class LiceoPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                \App\Filament\Widgets\StatsOverview::class,
+                \App\Filament\Widgets\CurrentPeriod::class,
+                \App\Filament\Widgets\LatestLogros::class,
+                \App\Filament\Widgets\LogrosByMateria::class,
+            ])
+            ->navigationGroups([
+                'Gestión Académica',
+                'Gestión de Estudiantes',
+                'Administración',
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -50,6 +58,9 @@ class LiceoPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->plugins([
+                FilamentShieldPlugin::make(),
             ])
             ->authMiddleware([
                 Authenticate::class,
