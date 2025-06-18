@@ -32,4 +32,17 @@ class Periodo extends Model
         return $this->belongsToMany(Logro::class)
             ->withTimestamps();
     }
+    
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::deleting(function ($periodo) {
+            // Desvincular los logros del período
+            $periodo->logros()->detach();
+        });
+    }
 }

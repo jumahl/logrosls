@@ -47,4 +47,17 @@ class Materia extends Model
     {
         return $this->hasMany(Logro::class);
     }
+    
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::deleting(function ($materia) {
+            // Eliminar en cascada los logros de la materia
+            $materia->logros()->delete();
+        });
+    }
 }

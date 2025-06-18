@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Notifications\Notification;
 
 class PeriodoResource extends Resource
 {
@@ -19,15 +20,15 @@ class PeriodoResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
     
-    protected static ?string $navigationLabel = 'Periodos';
+    protected static ?string $navigationLabel = 'Períodos';
     
-    protected static ?string $modelLabel = 'Periodo';
+    protected static ?string $modelLabel = 'Período';
     
-    protected static ?string $pluralModelLabel = 'Periodos';
+    protected static ?string $pluralModelLabel = 'Períodos';
     
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 6;
     
-    protected static ?string $navigationGroup = 'Gestión Académica';
+    protected static ?string $navigationGroup = 'Gestión de Estudiantes';
 
     public static function form(Form $form): Form
     {
@@ -36,18 +37,17 @@ class PeriodoResource extends Resource
                 Forms\Components\TextInput::make('nombre')
                     ->required()
                     ->maxLength(255)
-                    ->label('Nombre del Periodo'),
+                    ->label('Nombre'),
                 Forms\Components\DatePicker::make('fecha_inicio')
                     ->required()
                     ->label('Fecha de Inicio'),
                 Forms\Components\DatePicker::make('fecha_fin')
                     ->required()
-                    ->label('Fecha de Fin')
-                    ->after('fecha_inicio'),
+                    ->label('Fecha de Fin'),
                 Forms\Components\Toggle::make('activo')
                     ->required()
                     ->default(true)
-                    ->label('Periodo Activo'),
+                    ->label('Período Activo'),
             ]);
     }
 
@@ -58,7 +58,7 @@ class PeriodoResource extends Resource
                 Tables\Columns\TextColumn::make('nombre')
                     ->searchable()
                     ->sortable()
-                    ->label('Nombre del Periodo'),
+                    ->label('Nombre'),
                 Tables\Columns\TextColumn::make('fecha_inicio')
                     ->date('d/m/Y')
                     ->sortable()
@@ -90,11 +90,39 @@ class PeriodoResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->before(function (Periodo $record) {
+                        // Desvincular los logros del período
+                        $record->logros()->detach();
+                    })
+                    ->after(function (Periodo $record) {
+                        Notification::make()
+                            ->title('Período eliminado exitosamente')
+                            ->icon('heroicon-o-trash')
+                            ->iconColor('danger')
+                            ->body('El período ha sido eliminado del sistema.')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->before(function ($records) {
+                            foreach ($records as $record) {
+                                // Desvincular los logros de cada período
+                                $record->logros()->detach();
+                            }
+                        })
+                        ->after(function () {
+                            Notification::make()
+                                ->title('Períodos eliminados exitosamente')
+                                ->icon('heroicon-o-trash')
+                                ->iconColor('danger')
+                                ->body('Los períodos seleccionados han sido eliminados del sistema.')
+                                ->success()
+                                ->send();
+                        }),
                 ]),
             ]);
     }
@@ -102,7 +130,7 @@ class PeriodoResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\LogrosRelationManager::class,
+            // Se ha eliminado la referencia al LogrosRelationManager
         ];
     }
 

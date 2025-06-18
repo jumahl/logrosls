@@ -13,6 +13,11 @@ class Grado extends Model
     protected $fillable = [
         'nombre',
         'tipo',
+        'activo'
+    ];
+
+    protected $casts = [
+        'activo' => 'boolean'
     ];
 
     /**
@@ -37,5 +42,24 @@ class Grado extends Model
     public function logros(): HasMany
     {
         return $this->hasMany(Logro::class);
+    }
+    
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::deleting(function ($grado) {
+            // Eliminar en cascada los estudiantes del grado
+            $grado->estudiantes()->delete();
+            
+            // Eliminar en cascada las materias del grado
+            $grado->materias()->delete();
+            
+            // Eliminar en cascada los logros del grado
+            $grado->logros()->delete();
+        });
     }
 }

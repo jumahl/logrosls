@@ -120,4 +120,20 @@ class Logro extends Model
     {
         return $query->orderBy('orden');
     }
+    
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::deleting(function ($logro) {
+            // Eliminar en cascada los logros de estudiantes
+            $logro->estudianteLogros()->delete();
+            
+            // Desvincular de los períodos
+            $logro->periodos()->detach();
+        });
+    }
 }

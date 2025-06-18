@@ -11,6 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Notifications\Notification;
 
 class EstudianteResource extends Resource
 {
@@ -135,11 +136,39 @@ class EstudianteResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->before(function (Estudiante $record) {
+                        // Eliminar en cascada los logros del estudiante
+                        $record->estudianteLogros()->delete();
+                    })
+                    ->after(function (Estudiante $record) {
+                        Notification::make()
+                            ->title('Estudiante eliminado exitosamente')
+                            ->icon('heroicon-o-trash')
+                            ->iconColor('danger')
+                            ->body('El estudiante y sus datos relacionados han sido eliminados del sistema.')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->before(function ($records) {
+                            foreach ($records as $record) {
+                                // Eliminar en cascada los logros de cada estudiante
+                                $record->estudianteLogros()->delete();
+                            }
+                        })
+                        ->after(function () {
+                            Notification::make()
+                                ->title('Estudiantes eliminados exitosamente')
+                                ->icon('heroicon-o-trash')
+                                ->iconColor('danger')
+                                ->body('Los estudiantes seleccionados y sus datos relacionados han sido eliminados del sistema.')
+                                ->success()
+                                ->send();
+                        }),
                 ]),
             ]);
     }

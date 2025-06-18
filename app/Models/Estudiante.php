@@ -54,4 +54,17 @@ class Estudiante extends Model
             ->withPivot('fecha_asignacion', 'observaciones')
             ->withTimestamps();
     }
+    
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::deleting(function ($estudiante) {
+            // Eliminar en cascada los logros del estudiante
+            $estudiante->estudianteLogros()->delete();
+        });
+    }
 }

@@ -28,6 +28,7 @@ class LiceoPanelProvider extends PanelProvider
             ->id('liceo')
             ->path('liceo')
             ->login()
+            
             ->favicon(asset('liceo.png'))
             ->brandName('Liceo')
             ->brandLogo(asset('liceo.png'))

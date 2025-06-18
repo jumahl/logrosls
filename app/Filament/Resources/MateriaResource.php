@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Notifications\Notification;
 
 class MateriaResource extends Resource
 {
@@ -27,7 +28,7 @@ class MateriaResource extends Resource
     
     protected static ?int $navigationSort = 4;
     
-    protected static ?string $navigationGroup = 'Gestión Académica';
+    protected static ?string $navigationGroup = 'Gestión de Estudiantes';
 
     public static function form(Form $form): Form
     {
@@ -36,7 +37,7 @@ class MateriaResource extends Resource
                 Forms\Components\TextInput::make('nombre')
                     ->required()
                     ->maxLength(255)
-                    ->label('Nombre de la Materia'),
+                    ->label('Nombre'),
                 Forms\Components\TextInput::make('codigo')
                     ->required()
                     ->maxLength(20)
@@ -46,6 +47,20 @@ class MateriaResource extends Resource
                     ->required()
                     ->searchable()
                     ->preload()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('nombre')
+                            ->required()
+                            ->maxLength(255)
+                            ->label('Nombre'),
+                        Forms\Components\Select::make('tipo')
+                            ->options([
+                                'preescolar' => 'Preescolar',
+                                'primaria' => 'Primaria',
+                                'secundaria' => 'Secundaria',
+                            ])
+                            ->required()
+                            ->label('Tipo'),
+                    ])
                     ->label('Grado'),
                 Forms\Components\Select::make('docente_id')
                     ->relationship('docente', 'name')
@@ -71,7 +86,7 @@ class MateriaResource extends Resource
                 Tables\Columns\TextColumn::make('nombre')
                     ->searchable()
                     ->sortable()
-                    ->label('Nombre de la Materia'),
+                    ->label('Nombre'),
                 Tables\Columns\TextColumn::make('codigo')
                     ->searchable()
                     ->sortable()
@@ -88,10 +103,6 @@ class MateriaResource extends Resource
                     ->boolean()
                     ->sortable()
                     ->label('Activa'),
-                Tables\Columns\TextColumn::make('logros_count')
-                    ->counts('logros')
-                    ->label('Logros')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
@@ -117,11 +128,39 @@ class MateriaResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->before(function (Materia $record) {
+                        // Eliminar en cascada los logros de la materia
+                        $record->logros()->delete();
+                    })
+                    ->after(function (Materia $record) {
+                        Notification::make()
+                            ->title('Materia eliminada exitosamente')
+                            ->icon('heroicon-o-trash')
+                            ->iconColor('danger')
+                            ->body('La materia y sus logros relacionados han sido eliminados del sistema.')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->before(function ($records) {
+                            foreach ($records as $record) {
+                                // Eliminar en cascada los logros de cada materia
+                                $record->logros()->delete();
+                            }
+                        })
+                        ->after(function () {
+                            Notification::make()
+                                ->title('Materias eliminadas exitosamente')
+                                ->icon('heroicon-o-trash')
+                                ->iconColor('danger')
+                                ->body('Las materias seleccionadas y sus logros relacionados han sido eliminados del sistema.')
+                                ->success()
+                                ->send();
+                        }),
                 ]),
             ]);
     }
@@ -129,7 +168,7 @@ class MateriaResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\LogrosRelationManager::class,
+            // Se ha eliminado la referencia al LogrosRelationManager
         ];
     }
 
