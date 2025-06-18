@@ -19,23 +19,15 @@ class Logro extends Model
         'grado_id',
         'materia_id',
         'nivel',
-        'nivel_dificultad',
         'tipo',
         'activo',
-        'orden',
         'competencia',
-        'tema',
         'indicador_desempeno',
         'dimension'
     ];
 
     protected $casts = [
-        'activo' => 'boolean',
-        'orden' => 'integer'
-    ];
-
-    protected $attributes = [
-        'orden' => 0
+        'activo' => 'boolean'
     ];
 
     /**

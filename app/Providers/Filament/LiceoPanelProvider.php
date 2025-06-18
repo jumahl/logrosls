@@ -28,8 +28,12 @@ class LiceoPanelProvider extends PanelProvider
             ->id('liceo')
             ->path('liceo')
             ->login()
+            ->favicon(asset('liceo.png'))
+            ->brandName('Liceo')
+            ->brandLogo(asset('liceo.png'))
+            ->brandLogoHeight('65px')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -39,9 +43,6 @@ class LiceoPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 \App\Filament\Widgets\StatsOverview::class,
-                \App\Filament\Widgets\CurrentPeriod::class,
-                \App\Filament\Widgets\LatestLogros::class,
-                \App\Filament\Widgets\LogrosByMateria::class,
             ])
             ->navigationGroups([
                 'Gestión Académica',

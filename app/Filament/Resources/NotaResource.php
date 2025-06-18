@@ -14,7 +14,7 @@ class NotaResource extends Resource
 {
     protected static ?string $model = EstudianteLogro::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationIcon = 'heroicon-o-pencil-square';
     
     protected static ?string $navigationLabel = 'Notas';
     

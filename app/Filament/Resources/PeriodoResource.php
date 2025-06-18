@@ -71,10 +71,6 @@ class PeriodoResource extends Resource
                     ->boolean()
                     ->sortable()
                     ->label('Activo'),
-                Tables\Columns\TextColumn::make('logros_count')
-                    ->counts('logros')
-                    ->label('Logros')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()

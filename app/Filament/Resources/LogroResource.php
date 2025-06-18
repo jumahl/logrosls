@@ -35,10 +35,7 @@ class LogroResource extends Resource
                 Forms\Components\TextInput::make('codigo')
                     ->required()
                     ->unique(ignoreRecord: true)
-                    ->maxLength(20)
-                    ->placeholder('Ej: LOG-2024-001')
-                    ->helperText('Ingrese un código único para el logro (ej: LOG-2024-001)')
-                    ->label('Código del Logro'),
+                    ->maxLength(20)->label('Código del Logro'),
                 Forms\Components\TextInput::make('titulo')
                     ->required()
                     ->maxLength(255)
@@ -59,10 +56,6 @@ class LogroResource extends Resource
                     ->required()
                     ->maxLength(255)
                     ->label('Competencia'),
-                Forms\Components\TextInput::make('tema')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Tema'),
                 Forms\Components\TextInput::make('indicador_desempeno')
                     ->required()
                     ->maxLength(255)
@@ -85,14 +78,6 @@ class LogroResource extends Resource
                         'superior' => 'Superior',
                     ])
                     ->label('Nivel de Logro'),
-                Forms\Components\Select::make('nivel_dificultad')
-                    ->options([
-                        'bajo' => 'Bajo',
-                        'medio' => 'Medio',
-                        'alto' => 'Alto',
-                    ])
-                    ->default('medio')
-                    ->label('Nivel de Dificultad'),
                 Forms\Components\Select::make('tipo')
                     ->options([
                         'conocimiento' => 'Conocimiento',
@@ -101,10 +86,6 @@ class LogroResource extends Resource
                     ])
                     ->default('conocimiento')
                     ->label('Tipo de Logro'),
-                Forms\Components\TextInput::make('orden')
-                    ->numeric()
-                    ->default(0)
-                    ->label('Orden'),
                 Forms\Components\Select::make('periodos')
                     ->relationship('periodos', 'nombre')
                     ->multiple()
@@ -142,18 +123,10 @@ class LogroResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Competencia'),
-                Tables\Columns\TextColumn::make('tema')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Tema'),
                 Tables\Columns\TextColumn::make('indicador_desempeno')
                     ->searchable()
                     ->sortable()
                     ->label('Indicador de Desempeño'),
-                Tables\Columns\TextColumn::make('dimension')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Dimensión'),
                 Tables\Columns\TextColumn::make('descripcion')
                     ->searchable()
                     ->sortable()
@@ -168,17 +141,10 @@ class LogroResource extends Resource
                         default => 'gray',
                     })
                     ->label('Nivel'),
-                Tables\Columns\TextColumn::make('nivel_dificultad')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Nivel de Dificultad'),
                 Tables\Columns\TextColumn::make('tipo')
                     ->searchable()
                     ->sortable()
                     ->label('Tipo de Logro'),
-                Tables\Columns\TextColumn::make('orden')
-                    ->sortable()
-                    ->label('Orden'),
                 Tables\Columns\TextColumn::make('periodos.nombre')
                     ->listWithLineBreaks()
                     ->searchable()
@@ -215,13 +181,6 @@ class LogroResource extends Resource
                         'superior' => 'Superior',
                     ])
                     ->label('Nivel'),
-                Tables\Filters\SelectFilter::make('nivel_dificultad')
-                    ->options([
-                        'bajo' => 'Bajo',
-                        'medio' => 'Medio',
-                        'alto' => 'Alto',
-                    ])
-                    ->label('Nivel de Dificultad'),
                 Tables\Filters\SelectFilter::make('tipo')
                     ->options([
                         'conocimiento' => 'Conocimiento',

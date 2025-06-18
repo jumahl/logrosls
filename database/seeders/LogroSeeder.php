@@ -18,9 +18,7 @@ class LogroSeeder extends Seeder
                 'grado_id' => 1, // Transición
                 'codigo' => 'MAT001',
                 'nivel' => 'Básico',
-                'orden' => 1,
                 'titulo' => 'Conteo de números',
-                'tema' => 'Números y conteo',
                 'indicador_desempeno' => 'Cuenta objetos del 1 al 10 en situaciones cotidianas',
             ],
             [
@@ -30,9 +28,7 @@ class LogroSeeder extends Seeder
                 'grado_id' => 1,
                 'codigo' => 'MAT002',
                 'nivel' => 'Alto',
-                'orden' => 2,
                 'titulo' => 'Formas geométricas',
-                'tema' => 'Geometría básica',
                 'indicador_desempeno' => 'Reconoce círculos, cuadrados y triángulos en su entorno',
             ],
             [
@@ -42,9 +38,7 @@ class LogroSeeder extends Seeder
                 'grado_id' => 1,
                 'codigo' => 'MAT003',
                 'nivel' => 'Superior',
-                'orden' => 3,
                 'titulo' => 'Suma y resta',
-                'tema' => 'Operaciones básicas',
                 'indicador_desempeno' => 'Resuelve problemas de suma y resta con números del 1 al 10',
             ],
 
@@ -56,9 +50,7 @@ class LogroSeeder extends Seeder
                 'grado_id' => 1,
                 'codigo' => 'LEN001',
                 'nivel' => 'Básico',
-                'orden' => 1,
                 'titulo' => 'Reconocimiento de letras',
-                'tema' => 'Alfabeto',
                 'indicador_desempeno' => 'Identifica y nombra las vocales y algunas consonantes',
             ],
             [
@@ -68,9 +60,7 @@ class LogroSeeder extends Seeder
                 'grado_id' => 1,
                 'codigo' => 'LEN002',
                 'nivel' => 'Alto',
-                'orden' => 2,
                 'titulo' => 'Escritura de palabras',
-                'tema' => 'Escritura',
                 'indicador_desempeno' => 'Escribe su nombre y palabras cortas con ayuda',
             ],
             [
@@ -80,9 +70,7 @@ class LogroSeeder extends Seeder
                 'grado_id' => 1,
                 'codigo' => 'LEN003',
                 'nivel' => 'Superior',
-                'orden' => 3,
                 'titulo' => 'Comprensión lectora',
-                'tema' => 'Comprensión',
                 'indicador_desempeno' => 'Responde preguntas sobre un texto leído',
             ],
 
@@ -94,9 +82,7 @@ class LogroSeeder extends Seeder
                 'grado_id' => 1,
                 'codigo' => 'CN001',
                 'nivel' => 'Básico',
-                'orden' => 1,
                 'titulo' => 'Partes del cuerpo',
-                'tema' => 'Cuerpo humano',
                 'indicador_desempeno' => 'Nombra y señala las partes principales del cuerpo',
             ],
             [
@@ -106,9 +92,7 @@ class LogroSeeder extends Seeder
                 'grado_id' => 1,
                 'codigo' => 'CN002',
                 'nivel' => 'Alto',
-                'orden' => 2,
                 'titulo' => 'Los sentidos',
-                'tema' => 'Sistema sensorial',
                 'indicador_desempeno' => 'Identifica y describe la función de cada sentido',
             ],
             [
@@ -118,9 +102,7 @@ class LogroSeeder extends Seeder
                 'grado_id' => 1,
                 'codigo' => 'CN003',
                 'nivel' => 'Superior',
-                'orden' => 3,
                 'titulo' => 'Seres vivos',
-                'tema' => 'Ecosistemas',
                 'indicador_desempeno' => 'Clasifica objetos y seres en vivos y no vivos',
             ],
         ];
