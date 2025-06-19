@@ -25,9 +25,9 @@ class BoletinResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Boletines';
     
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 1;
     
-    protected static ?string $navigationGroup = 'Gestión de Estudiantes';
+    protected static ?string $navigationGroup = 'Reportes';
 
     public static function form(Form $form): Form
     {

@@ -22,6 +22,7 @@ class Logro extends Model
         'tipo',
         'activo',
         'competencia',
+        'tema',
         'indicador_desempeno',
         'dimension'
     ];

@@ -26,9 +26,9 @@ class MateriaResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Materias';
     
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
     
-    protected static ?string $navigationGroup = 'Gestión de Estudiantes';
+    protected static ?string $navigationGroup = 'Gestión Académica';
 
     public static function form(Form $form): Form
     {

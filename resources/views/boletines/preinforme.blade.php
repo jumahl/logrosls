@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <meta charset="utf-8">
-    <title>Boletín Académico</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preinforme Académico</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,9 +21,9 @@
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
             border-bottom: 3px solid #2c3e50;
             padding-bottom: 20px;
+            margin-bottom: 30px;
         }
         .header h1 {
             color: #2c3e50;
@@ -62,64 +63,35 @@
         .info-value {
             color: #2c3e50;
         }
-        .materia-section {
+        .subject-section {
             margin-bottom: 30px;
             border: 1px solid #bdc3c7;
             border-radius: 8px;
             overflow: hidden;
-            page-break-inside: avoid;
         }
-        .materia-header {
+        .subject-header {
             background-color: #3498db;
             color: white;
             padding: 15px;
             font-weight: bold;
             font-size: 16px;
         }
-        .materia-summary {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .summary-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            text-align: center;
-        }
-        .summary-item {
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .summary-label {
-            font-size: 12px;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-        .summary-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .promedio-final {
-            background-color: #28a745;
-            color: white;
-        }
-        table {
+        .achievements-table {
             width: 100%;
             border-collapse: collapse;
         }
-        th, td {
-            border: 1px solid #dee2e6;
+        .achievements-table th,
+        .achievements-table td {
             padding: 12px;
             text-align: left;
+            border-bottom: 1px solid #ecf0f1;
         }
-        th {
+        .achievements-table th {
             background-color: #f8f9fa;
             font-weight: bold;
             color: #2c3e50;
         }
-        .nivel-desempeno {
+        .performance-level {
             padding: 4px 8px;
             border-radius: 4px;
             font-weight: bold;
@@ -130,11 +102,6 @@
         .alto { background-color: #d1ecf1; color: #0c5460; }
         .basico { background-color: #fff3cd; color: #856404; }
         .bajo { background-color: #f8d7da; color: #721c24; }
-        .corte-indicator {
-            font-size: 12px;
-            color: #6c757d;
-            font-style: italic;
-        }
         .footer {
             margin-top: 40px;
             text-align: center;
@@ -143,13 +110,25 @@
             border-top: 1px solid #ecf0f1;
             padding-top: 20px;
         }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>BOLETÍN ACADÉMICO</h1>
+            <h1>PREINFORME ACADÉMICO</h1>
             <h2>{{ $periodo->nombre }} - {{ $periodo->corte }} {{ $periodo->año_escolar }}</h2>
+        </div>
+
+        <div class="warning">
+            <strong>IMPORTANTE:</strong> Este es un preinforme del primer corte. Los logros mostrados corresponden únicamente a la primera mitad del período académico.
         </div>
 
         <div class="student-info">
@@ -174,33 +153,15 @@
             </div>
         </div>
 
-        @foreach($logrosPorMateria as $materia => $logros)
-        <div class="materia-section">
-            <div class="materia-header">
+        @foreach($logros as $materia => $logrosMateria)
+        <div class="subject-section">
+            <div class="subject-header">
                 {{ $materia }}
-                @if($logros->first()->logro->materia->docente)
-                <span style="font-size: 14px; font-weight: normal;"> - Docente: {{ $logros->first()->logro->materia->docente->name }}</span>
+                @if($logrosMateria->first()->logro->materia->docente)
+                <span style="font-size: 14px; font-weight: normal;"> - Docente: {{ $logrosMateria->first()->logro->materia->docente->name }}</span>
                 @endif
             </div>
-            
-            <div class="materia-summary">
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <div class="summary-label">Logros Primer Corte</div>
-                        <div class="summary-value">{{ $logros->where('periodo_id', $periodoAnterior->id ?? 0)->count() }}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Logros Segundo Corte</div>
-                        <div class="summary-value">{{ $logros->where('periodo_id', $periodo->id)->count() }}</div>
-                    </div>
-                    <div class="summary-item promedio-final">
-                        <div class="summary-label">Promedio Final</div>
-                        <div class="summary-value">{{ number_format($promediosPorMateria[$materia], 1) }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <table>
+            <table class="achievements-table">
                 <thead>
                     <tr>
                         <th>Título del Logro</th>
@@ -208,29 +169,23 @@
                         <th>Tema</th>
                         <th>Indicador de Desempeño</th>
                         <th>Nivel de Desempeño</th>
-                        <th>Corte</th>
                         <th>Observaciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($logros as $logro)
-                        <tr>
-                            <td><strong>{{ $logro->logro->titulo }}</strong></td>
-                            <td>{{ $logro->logro->competencia }}</td>
-                            <td>{{ $logro->logro->tema ?: 'No especificado' }}</td>
-                            <td>{{ $logro->logro->indicador_desempeno }}</td>
-                            <td>
-                                <span class="nivel-desempeno {{ strtolower($logro->nivel_desempeno) }}">
-                                    {{ $logro->nivel_desempeno }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="corte-indicator">
-                                    {{ $logro->periodo->corte }}
-                                </span>
-                            </td>
-                            <td>{{ $logro->observaciones ?: 'Sin observaciones' }}</td>
-                        </tr>
+                    @foreach($logrosMateria as $logro)
+                    <tr>
+                        <td><strong>{{ $logro->logro->titulo }}</strong></td>
+                        <td>{{ $logro->logro->competencia }}</td>
+                        <td>{{ $logro->logro->tema ?: 'No especificado' }}</td>
+                        <td>{{ $logro->logro->indicador_desempeno }}</td>
+                        <td>
+                            <span class="performance-level {{ strtolower($logro->nivel_desempeno) }}">
+                                {{ $logro->nivel_desempeno }}
+                            </span>
+                        </td>
+                        <td>{{ $logro->observaciones ?: 'Sin observaciones' }}</td>
+                    </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -238,8 +193,8 @@
         @endforeach
 
         <div class="footer">
-            <p><strong>Nota:</strong> Este boletín incluye todos los logros del período completo, 
-            combinando los resultados del primer y segundo corte.</p>
+            <p><strong>Nota:</strong> Este preinforme muestra el progreso del estudiante hasta la mitad del período. 
+            El boletín final incluirá todos los logros del período completo.</p>
             <p>Generado el {{ now()->format('d/m/Y H:i:s') }}</p>
         </div>
     </div>

@@ -13,6 +13,9 @@ class Periodo extends Model
 
     protected $fillable = [
         'nombre',
+        'corte',
+        'año_escolar',
+        'numero_periodo',
         'fecha_inicio',
         'fecha_fin',
         'activo'
@@ -21,7 +24,9 @@ class Periodo extends Model
     protected $casts = [
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
-        'activo' => 'boolean'
+        'activo' => 'boolean',
+        'año_escolar' => 'integer',
+        'numero_periodo' => 'integer'
     ];
 
     /**
@@ -31,6 +36,76 @@ class Periodo extends Model
     {
         return $this->belongsToMany(Logro::class)
             ->withTimestamps();
+    }
+
+    /**
+     * Obtener los logros de estudiantes de este período.
+     */
+    public function estudianteLogros(): HasMany
+    {
+        return $this->hasMany(EstudianteLogro::class);
+    }
+
+    /**
+     * Scope para filtrar períodos activos.
+     */
+    public function scopeActivos($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    /**
+     * Scope para filtrar por año escolar.
+     */
+    public function scopePorAñoEscolar($query, $año)
+    {
+        return $query->where('año_escolar', $año);
+    }
+
+    /**
+     * Scope para filtrar por número de período.
+     */
+    public function scopePorNumeroPeriodo($query, $numero)
+    {
+        return $query->where('numero_periodo', $numero);
+    }
+
+    /**
+     * Scope para filtrar por corte.
+     */
+    public function scopePorCorte($query, $corte)
+    {
+        return $query->where('corte', $corte);
+    }
+
+    /**
+     * Obtener el período completo (nombre + corte + año).
+     */
+    public function getPeriodoCompletoAttribute()
+    {
+        return "{$this->nombre} - {$this->corte} {$this->año_escolar}";
+    }
+
+    /**
+     * Obtener el período anterior del mismo año escolar.
+     */
+    public function getPeriodoAnteriorAttribute()
+    {
+        if ($this->corte === 'Segundo Corte' && $this->numero_periodo === 1) {
+            // Retornar el primer corte del primer período
+            return static::where('año_escolar', $this->año_escolar)
+                ->where('numero_periodo', 1)
+                ->where('corte', 'Primer Corte')
+                ->first();
+        } elseif ($this->corte === 'Primer Corte' && $this->numero_periodo === 2) {
+            // Retornar el segundo corte del primer período
+            return static::where('año_escolar', $this->año_escolar)
+                ->where('numero_periodo', 1)
+                ->where('corte', 'Segundo Corte')
+                ->first();
+        }
+        
+        return null;
     }
     
     /**

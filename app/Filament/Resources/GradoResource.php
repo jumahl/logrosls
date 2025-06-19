@@ -26,9 +26,9 @@ class GradoResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Grados';
     
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
     
-    protected static ?string $navigationGroup = 'Gestión de Estudiantes';
+    protected static ?string $navigationGroup = 'Configuración Académica';
 
     public static function form(Form $form): Form
     {
