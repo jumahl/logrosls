@@ -12,7 +12,6 @@ class Periodo extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nombre',
         'corte',
         'año_escolar',
         'numero_periodo',
@@ -28,6 +27,14 @@ class Periodo extends Model
         'año_escolar' => 'integer',
         'numero_periodo' => 'integer'
     ];
+
+    /**
+     * Obtener el nombre del período generado dinámicamente.
+     */
+    public function getNombreAttribute()
+    {
+        return "Período {$this->numero_periodo}";
+    }
 
     /**
      * Obtener los logros de este periodo.
@@ -107,13 +114,21 @@ class Periodo extends Model
         
         return null;
     }
-    
+
     /**
-     * Boot the model.
+     * Validar que las fechas sean coherentes.
      */
-    protected static function boot()
+    public static function boot()
     {
         parent::boot();
+        
+        static::saving(function ($periodo) {
+            if ($periodo->fecha_inicio && $periodo->fecha_fin) {
+                if ($periodo->fecha_inicio >= $periodo->fecha_fin) {
+                    throw new \Exception('La fecha de fin debe ser posterior a la fecha de inicio.');
+                }
+            }
+        });
         
         static::deleting(function ($periodo) {
             // Desvincular los logros del período

@@ -47,34 +47,36 @@ class NotaResource extends Resource
                         // Limpiar el logro seleccionado cuando cambie la materia
                         $set('logro_id', null);
                     }),
-                Forms\Components\Select::make('logro_id')
-                    ->relationship('logro', 'titulo', function ($query, $get) {
+                Forms\Components\Select::make(request()->routeIs('filament.resources.nota-resource.create') ? 'logros' : 'logro_id')
+                    ->options(function ($get) {
                         $materiaId = $get('materia_id');
                         if ($materiaId) {
-                            return $query->where('materia_id', $materiaId)
+                            return \App\Models\Logro::where('materia_id', $materiaId)
                                        ->where('activo', true)
-                                       ->orderBy('titulo');
+                                       ->orderBy('titulo')
+                                       ->pluck('titulo', 'id')
+                                       ->map(function ($titulo, $id) {
+                                           $logro = \App\Models\Logro::find($id);
+                                           return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
+                                       });
                         }
-                        return $query->where('id', 0); // No mostrar nada si no hay materia seleccionada
+                        return [];
+                    })
+                    ->when(request()->routeIs('filament.resources.nota-resource.create'), fn ($field) => $field->multiple())
+                    ->required()
+                    ->searchable()
+                    ->label('Logros')
+                    ->helperText('Seleccione los logros que desea asignar al estudiante. Puede seleccionar múltiples logros de la materia seleccionada.')
+                    ->disabled(fn ($get) => !$get('materia_id')),
+                Forms\Components\Select::make('periodo_id')
+                    ->relationship('periodo', 'corte')
+                    ->getOptionLabelFromRecordUsing(function ($record) {
+                        return $record->periodo_completo;
                     })
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->label('Logro')
-                    ->helperText('Seleccione primero una materia para ver los logros disponibles')
-                    ->disabled(fn ($get) => !$get('materia_id'))
-                    ->getOptionLabelFromRecordUsing(function ($record) {
-                        return $record->titulo . ' - ' . substr($record->competencia, 0, 50) . '...';
-                    }),
-                Forms\Components\Select::make('periodo_id')
-                    ->relationship('periodo', 'nombre')
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->label('Período')
-                    ->getOptionLabelFromRecordUsing(function ($record) {
-                        return $record->nombre . ' - ' . $record->corte . ' ' . $record->año_escolar;
-                    }),
+                    ->label('Período'),
                 Forms\Components\Select::make('nivel_desempeno')
                     ->options([
                         'Superior' => 'Superior',
@@ -128,10 +130,7 @@ class NotaResource extends Resource
                     ->sortable()
                     ->label('Tema')
                     ->limit(40),
-                Tables\Columns\TextColumn::make('periodo.nombre')
-                    ->formatStateUsing(function ($record) {
-                        return $record->periodo->nombre . ' - ' . $record->periodo->corte . ' ' . $record->periodo->año_escolar;
-                    })
+                Tables\Columns\TextColumn::make('periodo.periodo_completo')
                     ->searchable()
                     ->sortable()
                     ->label('Período'),
@@ -152,10 +151,10 @@ class NotaResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('periodo_id')
-                    ->relationship('periodo', 'nombre')
+                    ->relationship('periodo', 'corte')
                     ->label('Período')
                     ->getOptionLabelFromRecordUsing(function ($record) {
-                        return $record->nombre . ' - ' . $record->corte . ' ' . $record->año_escolar;
+                        return $record->periodo_completo;
                     }),
                 Tables\Filters\SelectFilter::make('materia_id')
                     ->relationship('logro.materia', 'nombre')

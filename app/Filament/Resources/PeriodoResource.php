@@ -34,11 +34,6 @@ class PeriodoResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('nombre')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Nombre del Período')
-                    ->helperText('Ej: Primer Período, Segundo Período'),
                 Forms\Components\Select::make('numero_periodo')
                     ->options([
                         1 => 'Primer Período',
@@ -82,9 +77,8 @@ class PeriodoResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Nombre'),
+                    ->label('Nombre')
+                    ->formatStateUsing(fn (Periodo $record): string => $record->nombre),
                 Tables\Columns\TextColumn::make('numero_periodo')
                     ->formatStateUsing(fn (int $state): string => $state === 1 ? 'Primer Período' : 'Segundo Período')
                     ->sortable()

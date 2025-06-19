@@ -16,7 +16,6 @@ class Logro extends Model
         'codigo',
         'titulo',
         'descripcion',
-        'grado_id',
         'materia_id',
         'nivel',
         'tipo',
@@ -30,14 +29,6 @@ class Logro extends Model
     protected $casts = [
         'activo' => 'boolean'
     ];
-
-    /**
-     * Obtener el grado al que pertenece el logro.
-     */
-    public function grado(): BelongsTo
-    {
-        return $this->belongsTo(Grado::class);
-    }
 
     /**
      * Obtener la materia a la que pertenece el logro.
@@ -87,7 +78,9 @@ class Logro extends Model
      */
     public function scopePorGrado($query, $gradoId)
     {
-        return $query->where('grado_id', $gradoId);
+        return $query->whereHas('materia.grado', function ($q) use ($gradoId) {
+            $q->where('grados.id', $gradoId);
+        });
     }
 
     /**

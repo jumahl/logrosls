@@ -103,7 +103,7 @@ class GenerarBoletines extends Command
         });
 
         if ($logrosPorMateria->isEmpty()) {
-            $this->warn("El estudiante {$estudiante->nombre} no tiene logros en el período {$periodo->nombre} - {$periodo->corte} {$periodo->año_escolar}.");
+            $this->warn("El estudiante {$estudiante->nombre} no tiene logros en el período {$periodo->periodo_completo}.");
             return;
         }
 

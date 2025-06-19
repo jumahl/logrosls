@@ -124,7 +124,7 @@
     <div class="container">
         <div class="header">
             <h1>PREINFORME ACADÉMICO</h1>
-            <h2>{{ $periodo->nombre }} - {{ $periodo->corte }} {{ $periodo->año_escolar }}</h2>
+            <h2>{{ $periodo->periodo_completo }}</h2>
         </div>
 
         <div class="warning">

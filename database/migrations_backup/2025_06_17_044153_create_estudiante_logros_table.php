@@ -16,17 +16,13 @@ return new class extends Migration
             $table->foreignId('estudiante_id')->constrained('estudiantes');
             $table->foreignId('logro_id')->constrained('logros');
             $table->foreignId('periodo_id')->constrained('periodos');
-            $table->enum('nivel_desempeno', ['Superior', 'Alto', 'Básico', 'Bajo']);
+            $table->enum('nivel_desempeno', ['Superior', 'Alto', 'Básico', 'Bajo'])->nullable();
             $table->text('observaciones')->nullable();
             $table->date('fecha_asignacion');
             $table->timestamps();
 
             // Asegurar que un estudiante no tenga el mismo logro en el mismo periodo
             $table->unique(['estudiante_id', 'logro_id', 'periodo_id']);
-            
-            // Índices para mejorar rendimiento
-            $table->index(['estudiante_id', 'periodo_id']);
-            $table->index(['logro_id', 'periodo_id']);
         });
     }
 
@@ -37,4 +33,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('estudiante_logros');
     }
-}; 
+};

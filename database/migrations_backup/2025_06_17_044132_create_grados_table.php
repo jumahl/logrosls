@@ -14,9 +14,7 @@ return new class extends Migration
         Schema::create('grados', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->enum('tipo', ['preescolar', 'primaria', 'secundaria', 'media_academica']);
-            $table->boolean('activo')->default(true);
-            $table->decimal('media_academica', 3, 2)->nullable();
+            $table->enum('tipo', ['preescolar', 'primaria', 'secundaria']);
             $table->timestamps();
         });
     }
@@ -28,4 +26,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('grados');
     }
-}; 
+};

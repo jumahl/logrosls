@@ -29,6 +29,13 @@ class Estudiante extends Model
         'activo' => 'boolean'
     ];
 
+    protected $appends = ['nombre_completo'];
+
+    public function getNombreCompletoAttribute()
+    {
+        return "{$this->nombre} {$this->apellido} - {$this->documento}";
+    }
+
     /**
      * Obtener el grado al que pertenece el estudiante.
      */

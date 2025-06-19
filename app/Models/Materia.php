@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Materia extends Model
@@ -15,7 +16,6 @@ class Materia extends Model
         'nombre',
         'codigo',
         'descripcion',
-        'grado_id',
         'docente_id',
         'activa'
     ];
@@ -25,11 +25,11 @@ class Materia extends Model
     ];
 
     /**
-     * Obtener el grado al que pertenece la materia.
+     * Obtener los grados a los que pertenece la materia (relación muchos a muchos).
      */
-    public function grado(): BelongsTo
+    public function grados(): BelongsToMany
     {
-        return $this->belongsTo(Grado::class);
+        return $this->belongsToMany(Grado::class, 'grado_materia');
     }
 
     /**

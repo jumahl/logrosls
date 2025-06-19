@@ -149,7 +149,7 @@
     <div class="container">
         <div class="header">
             <h1>BOLETÍN ACADÉMICO</h1>
-            <h2>{{ $periodo->nombre }} - {{ $periodo->corte }} {{ $periodo->año_escolar }}</h2>
+            <h2>{{ $periodo->periodo_completo }}</h2>
         </div>
 
         <div class="student-info">
@@ -178,7 +178,7 @@
         <div class="materia-section">
             <div class="materia-header">
                 {{ $materia }}
-                @if($logros->first()->logro->materia->docente)
+                @if($logros->isNotEmpty() && $logros->first()->logro->materia->docente)
                 <span style="font-size: 14px; font-weight: normal;"> - Docente: {{ $logros->first()->logro->materia->docente->name }}</span>
                 @endif
             </div>
@@ -200,6 +200,7 @@
                 </div>
             </div>
 
+            @if($logros->isNotEmpty())
             <table>
                 <thead>
                     <tr>
@@ -234,6 +235,11 @@
                     @endforeach
                 </tbody>
             </table>
+            @else
+            <div style="padding: 20px; text-align: center; color: #6c757d; font-style: italic;">
+                <p>No hay logros registrados para esta materia en el período seleccionado.</p>
+            </div>
+            @endif
         </div>
         @endforeach
 
