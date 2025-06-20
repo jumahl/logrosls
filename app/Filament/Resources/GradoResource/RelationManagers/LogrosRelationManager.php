@@ -9,6 +9,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Models\Logro;
 
 class LogrosRelationManager extends RelationManager
 {
@@ -16,22 +17,41 @@ class LogrosRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'titulo';
 
+    /**
+     * SOBRESCRITURA IMPORTANTE:
+     * La relación 'logros' en el modelo Grado es incorrecta para nuestra BD,
+     * pero necesaria para que Filament se inicie. Aquí la reemplazamos
+     * por la consulta correcta que usa la tabla pivote 'grado_materia'.
+     * Esto corrige tanto la tabla como el conteo de la pestaña.
+     */
+    protected function getTableQuery(): Builder
+    {
+        $grado = $this->getOwnerRecord();
+        $materiaIds = $grado->materias()->pluck('materias.id');
+
+        return Logro::query()->whereIn('materia_id', $materiaIds);
+    }
+
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('titulo')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Título del Logro'),
                 Forms\Components\Select::make('materia_id')
                     ->relationship('materia', 'nombre', function (Builder $query) {
-                        return $query->where('grado_id', $this->getOwnerRecord()->id);
+                        // Filtra las materias para mostrar solo las que pertenecen a este grado
+                        $gradoId = $this->getOwnerRecord()->id;
+                        return $query->whereHas('grados', function ($q) use ($gradoId) {
+                            $q->where('grados.id', $gradoId);
+                        });
                     })
                     ->required()
                     ->searchable()
                     ->preload()
                     ->label('Materia'),
+                Forms\Components\TextInput::make('titulo')
+                    ->required()
+                    ->maxLength(255)
+                    ->label('Título del Logro'),
                 Forms\Components\TextInput::make('competencia')
                     ->required()
                     ->maxLength(255)

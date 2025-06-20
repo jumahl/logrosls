@@ -40,8 +40,12 @@ class Grado extends Model
 
     /**
      * Obtener los logros de este grado a través de las materias.
+     * Esta relación usa hasManyThrough, que genera una consulta SQL incorrecta
+     * para nuestra estructura de base de datos (muchos a muchos).
+     * Sin embargo, es necesaria para que Filament reconozca la relación.
+     * La lógica de consulta real se sobreescribe completamente en el RelationManager.
      */
-    public function logros()
+    public function logros(): HasManyThrough
     {
         return $this->hasManyThrough(Logro::class, Materia::class);
     }
