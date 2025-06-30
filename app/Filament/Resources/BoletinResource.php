@@ -134,14 +134,14 @@ class BoletinResource extends Resource
                     ->form([
                         Forms\Components\Select::make('periodo_id')
                             ->options(function () {
-                                return Periodo::all()->mapWithKeys(function ($periodo) {
+                                return Periodo::where('corte', 'Segundo Corte')->get()->mapWithKeys(function ($periodo) {
                                     return [$periodo->id => $periodo->periodo_completo];
                                 });
                             })
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->label('Periodo'),
+                            ->label('Periodo (Solo Segundo Corte)'),
                     ])
                     ->action(function (Estudiante $record, array $data) {
                         $periodo = Periodo::find($data['periodo_id']);
