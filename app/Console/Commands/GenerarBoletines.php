@@ -84,14 +84,14 @@ class GenerarBoletines extends Command
         if ($periodoAnterior) {
             $logrosPrimerCorte = $estudiante->estudianteLogros()
                 ->where('periodo_id', $periodoAnterior->id)
-                ->with(['logro.materia.docente', 'logro.grado'])
+                ->with(['logro.materia.docente', 'logro.materia.grados'])
                 ->get();
         }
 
         // Obtener logros del segundo corte
         $logrosSegundoCorte = $estudiante->estudianteLogros()
             ->where('periodo_id', $periodo->id)
-            ->with(['logro.materia.docente', 'logro.grado'])
+            ->with(['logro.materia.docente', 'logro.materia.grados'])
             ->get();
 
         // Combinar logros de ambos cortes

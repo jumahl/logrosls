@@ -100,10 +100,10 @@ class CreateNota extends CreateRecord
                     ->disabled(fn ($get) => !$get('materia_id')),
                 Forms\Components\Select::make('nivel_desempeno')
                     ->options([
-                        'Superior' => 'Superior',
-                        'Alto' => 'Alto',
-                        'Básico' => 'Básico',
-                        'Bajo' => 'Bajo',
+                        'E' => 'E - Excelente',
+                        'S' => 'S - Sobresaliente',
+                        'A' => 'A - Aceptable',
+                        'I' => 'I - Insuficiente',
                     ])
                     ->required()
                     ->label('Nivel de Desempeño')

@@ -93,7 +93,7 @@ class GenerarPreinforme extends Command
         // Obtener logros del estudiante en el período
         $logros = $estudiante->estudianteLogros()
             ->where('periodo_id', $periodo->id)
-            ->with(['logro.materia.docente', 'logro.grado'])
+            ->with(['logro.materia.docente', 'logro.materia.grados'])
             ->get()
             ->groupBy(function ($logro) {
                 return $logro->logro->materia->nombre;

@@ -79,10 +79,10 @@ class NotaResource extends Resource
                     ->label('Período'),
                 Forms\Components\Select::make('nivel_desempeno')
                     ->options([
-                        'Superior' => 'Superior',
-                        'Alto' => 'Alto',
-                        'Básico' => 'Básico',
-                        'Bajo' => 'Bajo',
+                        'E' => 'E - Excelente',
+                        'S' => 'S - Sobresaliente',
+                        'A' => 'A - Aceptable',
+                        'I' => 'I - Insuficiente',
                     ])
                     ->required()
                     ->label('Nivel de Desempeño')
@@ -120,30 +120,29 @@ class NotaResource extends Resource
                     ->sortable()
                     ->label('Título del Logro')
                     ->limit(40),
-                Tables\Columns\TextColumn::make('logro.competencia')
+                Tables\Columns\BadgeColumn::make('nivel_desempeno')
+                    ->colors([
+                        'success' => 'E',
+                        'info' => 'S',
+                        'warning' => 'A',
+                        'danger' => 'I',
+                    ])
                     ->searchable()
                     ->sortable()
-                    ->label('Competencia')
-                    ->limit(50),
-                Tables\Columns\TextColumn::make('logro.tema')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Tema')
-                    ->limit(40),
+                    ->label('Nivel de Desempeño')
+                    ->formatStateUsing(function ($state) {
+                        return match($state) {
+                            'E' => 'E - Excelente',
+                            'S' => 'S - Sobresaliente',
+                            'A' => 'A - Aceptable',
+                            'I' => 'I - Insuficiente',
+                            default => $state
+                        };
+                    }),
                 Tables\Columns\TextColumn::make('periodo.periodo_completo')
                     ->searchable()
                     ->sortable()
                     ->label('Período'),
-                Tables\Columns\BadgeColumn::make('nivel_desempeno')
-                    ->colors([
-                        'success' => 'Superior',
-                        'info' => 'Alto',
-                        'warning' => 'Básico',
-                        'danger' => 'Bajo',
-                    ])
-                    ->searchable()
-                    ->sortable()
-                    ->label('Nivel de Desempeño'),
                 Tables\Columns\TextColumn::make('fecha_asignacion')
                     ->date()
                     ->sortable()
@@ -161,10 +160,10 @@ class NotaResource extends Resource
                     ->label('Materia'),
                 Tables\Filters\SelectFilter::make('nivel_desempeno')
                     ->options([
-                        'Superior' => 'Superior',
-                        'Alto' => 'Alto',
-                        'Básico' => 'Básico',
-                        'Bajo' => 'Bajo',
+                        'E' => 'E - Excelente',
+                        'S' => 'S - Sobresaliente',
+                        'A' => 'A - Aceptable',
+                        'I' => 'I - Insuficiente',
                     ])
                     ->label('Nivel de Desempeño'),
                 Tables\Filters\SelectFilter::make('estudiante_id')

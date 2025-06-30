@@ -9,7 +9,7 @@ class EstudianteLogroSeeder extends Seeder
 {
     public function run(): void
     {
-        $niveles = ['Superior', 'Alto', 'Básico', 'Bajo'];
+        $niveles = ['E', 'S', 'A', 'I']; // Nuevos valores: E=Excelente, S=Sobresaliente, A=Aceptable, I=Insuficiente
         $estudiantes = [1, 2, 3]; // IDs de los estudiantes
         $logros = [1, 2, 3, 4, 5, 6, 7, 8, 9]; // IDs de los logros
         $periodo_id = 1; // Primer período

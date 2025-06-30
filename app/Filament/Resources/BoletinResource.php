@@ -75,6 +75,59 @@ class BoletinResource extends Resource
                     ->label('Grado'),
             ])
             ->actions([
+                Tables\Actions\Action::make('descargarPreinforme')
+                    ->label('Descargar Preinforme')
+                    ->icon('heroicon-o-document-text')
+                    ->form([
+                        Forms\Components\Select::make('periodo_id')
+                            ->options(function () {
+                                return Periodo::where('corte', 'Primer Corte')
+                                    ->get()
+                                    ->mapWithKeys(function ($periodo) {
+                                        return [$periodo->id => $periodo->periodo_completo];
+                                    });
+                            })
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->label('Período (Primer Corte)')
+                            ->helperText('Solo se muestran períodos del primer corte'),
+                    ])
+                    ->action(function (Estudiante $record, array $data) {
+                        $periodo = Periodo::find($data['periodo_id']);
+                        
+                        if ($periodo->corte !== 'Primer Corte') {
+                            throw new \Exception('Solo se pueden generar preinformes para períodos del primer corte.');
+                        }
+
+                        // Obtener logros del estudiante en el período (primer corte)
+                        $logrosPorMateria = $record->estudianteLogros()
+                            ->where('periodo_id', $periodo->id)
+                            ->with(['logro.materia.docente', 'logro.materia'])
+                            ->get()
+                            ->groupBy(function ($logro) {
+                                return $logro->logro->materia->nombre;
+                            });
+
+                        if ($logrosPorMateria->isEmpty()) {
+                            throw new \Exception("El estudiante {$record->nombre} no tiene logros en el período {$periodo->periodo_completo}.");
+                        }
+
+                        // Generar PDF
+                        $pdf = Pdf::loadView('boletines.preinforme', [
+                            'estudiante' => $record,
+                            'periodo' => $periodo,
+                            'logrosPorMateria' => $logrosPorMateria,
+                        ]);
+
+                        // Generar un nombre para el archivo
+                        $filename = "preinforme_{$record->nombre}_{$record->apellido}_{$periodo->periodo_completo}.pdf";
+
+                        // Descargar el PDF directamente
+                        return response()->streamDownload(function () use ($pdf) {
+                            echo $pdf->output();
+                        }, $filename);
+                    }),
                 Tables\Actions\Action::make('descargarBoletin')
                     ->label('Descargar Boletín')
                     ->icon('heroicon-o-document-arrow-down')
@@ -161,6 +214,74 @@ class BoletinResource extends Resource
                     }),
             ])
             ->headerActions([
+                Tables\Actions\Action::make('descargarPreinformesGrado')
+                    ->label('Descargar Preinformes por Grado')
+                    ->icon('heroicon-o-document-text')
+                    ->form([
+                        Forms\Components\Select::make('grado_id')
+                            ->relationship('grado', 'nombre')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->label('Grado'),
+                        Forms\Components\Select::make('periodo_id')
+                            ->options(function () {
+                                return Periodo::where('corte', 'Primer Corte')
+                                    ->get()
+                                    ->mapWithKeys(function ($periodo) {
+                                        return [$periodo->id => $periodo->periodo_completo];
+                                    });
+                            })
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->label('Período (Primer Corte)')
+                            ->helperText('Solo se muestran períodos del primer corte'),
+                    ])
+                    ->action(function (array $data) {
+                        $grado = Grado::find($data['grado_id']);
+                        $periodo = Periodo::find($data['periodo_id']);
+                        
+                        if ($periodo->corte !== 'Primer Corte') {
+                            throw new \Exception('Solo se pueden generar preinformes para períodos del primer corte.');
+                        }
+                        
+                        $estudiantes = Estudiante::where('grado_id', $grado->id)->get();
+
+                        // Crear un archivo ZIP en memoria
+                        $zip = new \ZipArchive();
+                        $zipName = "preinformes_grado_{$grado->nombre}_periodo_{$periodo->periodo_completo}.zip";
+                        $zipPath = tempnam(sys_get_temp_dir(), 'zip');
+                        
+                        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                            foreach ($estudiantes as $estudiante) {
+                                // Obtener logros del estudiante en el período
+                                $logros = $estudiante->estudianteLogros()
+                                    ->where('periodo_id', $periodo->id)
+                                    ->with(['logro.materia.docente', 'logro.materia.grados'])
+                                    ->get()
+                                    ->groupBy(function ($logro) {
+                                        return $logro->logro->materia->nombre;
+                                    });
+
+                                if (!$logros->isEmpty()) {
+                                    $pdf = Pdf::loadView('boletines.preinforme', [
+                                        'estudiante' => $estudiante,
+                                        'periodo' => $periodo,
+                                        'logros' => $logros,
+                                    ]);
+
+                                    $filename = "preinforme_{$estudiante->nombre}_{$estudiante->apellido}.pdf";
+                                    $zip->addFromString($filename, $pdf->output());
+                                }
+                            }
+                            $zip->close();
+
+                            return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
+                        }
+
+                        return null;
+                    }),
                 Tables\Actions\Action::make('descargarBoletinesGrado')
                     ->label('Descargar Boletines por Grado')
                     ->icon('heroicon-o-document-arrow-down')

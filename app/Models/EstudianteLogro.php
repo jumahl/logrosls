@@ -50,10 +50,10 @@ class EstudianteLogro extends Model
     public function getValorNumericoAttribute()
     {
         return match($this->nivel_desempeno) {
-            'Superior' => 5.0,
-            'Alto' => 4.0,
-            'Básico' => 3.0,
-            'Bajo' => 2.0,
+            'E' => 5.0, // Excelente
+            'S' => 4.0, // Sobresaliente
+            'A' => 3.0, // Aceptable
+            'I' => 2.0, // Insuficiente
             default => 0.0
         };
     }
@@ -64,11 +64,25 @@ class EstudianteLogro extends Model
     public function getColorNivelAttribute()
     {
         return match($this->nivel_desempeno) {
-            'Superior' => 'success',
-            'Alto' => 'info',
-            'Básico' => 'warning',
-            'Bajo' => 'danger',
+            'E' => 'success', // Excelente - verde
+            'S' => 'info',    // Sobresaliente - azul
+            'A' => 'warning', // Aceptable - amarillo
+            'I' => 'danger',  // Insuficiente - rojo
             default => 'gray'
+        };
+    }
+
+    /**
+     * Obtener el nombre completo del nivel de desempeño.
+     */
+    public function getNivelDesempenoCompletoAttribute()
+    {
+        return match($this->nivel_desempeno) {
+            'E' => 'Excelente',
+            'S' => 'Sobresaliente',
+            'A' => 'Aceptable',
+            'I' => 'Insuficiente',
+            default => 'No definido'
         };
     }
 }

@@ -126,10 +126,10 @@
             text-align: center;
             min-width: 80px;
         }
-        .superior { background-color: #d4edda; color: #155724; }
-        .alto { background-color: #d1ecf1; color: #0c5460; }
-        .basico { background-color: #fff3cd; color: #856404; }
-        .bajo { background-color: #f8d7da; color: #721c24; }
+        .e { background-color: #d4edda; color: #155724; } /* Excelente */
+        .s { background-color: #d1ecf1; color: #0c5460; } /* Sobresaliente */
+        .a { background-color: #fff3cd; color: #856404; } /* Aceptable */
+        .i { background-color: #f8d7da; color: #721c24; } /* Insuficiente */
         .corte-indicator {
             font-size: 12px;
             color: #6c757d;
@@ -222,7 +222,7 @@
                             <td>{{ $logro->logro->indicador_desempeno }}</td>
                             <td>
                                 <span class="nivel-desempeno {{ strtolower($logro->nivel_desempeno) }}">
-                                    {{ $logro->nivel_desempeno }}
+                                    {{ $logro->nivel_desempeno_completo }}
                                 </span>
                             </td>
                             <td>
