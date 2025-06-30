@@ -26,9 +26,9 @@ class MateriaResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Materias';
     
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
     
-    protected static ?string $navigationGroup = 'Gestión de Estudiantes';
+    protected static ?string $navigationGroup = 'Gestión Académica';
 
     public static function form(Form $form): Form
     {
@@ -42,8 +42,9 @@ class MateriaResource extends Resource
                     ->required()
                     ->maxLength(20)
                     ->label('Código'),
-                Forms\Components\Select::make('grado_id')
-                    ->relationship('grado', 'nombre')
+                Forms\Components\Select::make('grados')
+                    ->relationship('grados', 'nombre')
+                    ->multiple()
                     ->required()
                     ->searchable()
                     ->preload()
@@ -57,11 +58,12 @@ class MateriaResource extends Resource
                                 'preescolar' => 'Preescolar',
                                 'primaria' => 'Primaria',
                                 'secundaria' => 'Secundaria',
+                                'media_academica' => 'Media Académica',
                             ])
                             ->required()
                             ->label('Tipo'),
                     ])
-                    ->label('Grado'),
+                    ->label('Grados'),
                 Forms\Components\Select::make('docente_id')
                     ->relationship('docente', 'name')
                     ->required()
@@ -91,10 +93,12 @@ class MateriaResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Código'),
-                Tables\Columns\TextColumn::make('grado.nombre')
+                Tables\Columns\TextColumn::make('grados.nombre')
+                    ->badge()
+                    ->separator(',')
                     ->searchable()
                     ->sortable()
-                    ->label('Grado'),
+                    ->label('Grados'),
                 Tables\Columns\TextColumn::make('docente.name')
                     ->searchable()
                     ->sortable()
@@ -113,9 +117,10 @@ class MateriaResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('grado_id')
-                    ->relationship('grado', 'nombre')
-                    ->label('Grado'),
+                Tables\Filters\SelectFilter::make('grados')
+                    ->relationship('grados', 'nombre')
+                    ->multiple()
+                    ->label('Grados'),
                 Tables\Filters\SelectFilter::make('docente_id')
                     ->relationship('docente', 'name')
                     ->label('Docente'),

@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Grado extends Model
 {
@@ -29,19 +31,23 @@ class Grado extends Model
     }
 
     /**
-     * Obtener las materias de este grado.
+     * Obtener las materias de este grado (relación muchos a muchos).
      */
-    public function materias(): HasMany
+    public function materias(): BelongsToMany
     {
-        return $this->hasMany(Materia::class);
+        return $this->belongsToMany(Materia::class, 'grado_materia');
     }
 
     /**
-     * Obtener los logros de este grado.
+     * Obtener los logros de este grado a través de las materias.
+     * Esta relación usa hasManyThrough, que genera una consulta SQL incorrecta
+     * para nuestra estructura de base de datos (muchos a muchos).
+     * Sin embargo, es necesaria para que Filament reconozca la relación.
+     * La lógica de consulta real se sobreescribe completamente en el RelationManager.
      */
-    public function logros(): HasMany
+    public function logros(): HasManyThrough
     {
-        return $this->hasMany(Logro::class);
+        return $this->hasManyThrough(Logro::class, Materia::class);
     }
     
     /**
@@ -54,12 +60,6 @@ class Grado extends Model
         static::deleting(function ($grado) {
             // Eliminar en cascada los estudiantes del grado
             $grado->estudiantes()->delete();
-            
-            // Eliminar en cascada las materias del grado
-            $grado->materias()->delete();
-            
-            // Eliminar en cascada los logros del grado
-            $grado->logros()->delete();
         });
     }
 }

@@ -14,14 +14,10 @@ return new class extends Migration
         Schema::create('estudiantes', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->string('apellido');
             $table->string('documento')->unique();
+            $table->enum('genero', ['masculino', 'femenino', 'otro']);
             $table->date('fecha_nacimiento');
-            $table->string('direccion')->nullable();
-            $table->string('telefono')->nullable();
-            $table->string('email')->nullable();
             $table->foreignId('grado_id')->constrained('grados');
-            $table->boolean('activo')->default(true);
             $table->timestamps();
         });
     }
@@ -33,4 +29,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('estudiantes');
     }
-}; 
+};

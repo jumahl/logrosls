@@ -48,6 +48,8 @@ class LiceoPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Gestión Académica',
                 'Gestión de Estudiantes',
+                'Configuración Académica',
+                'Reportes',
                 'Administración',
             ])
             ->middleware([

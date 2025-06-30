@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('materias', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
+            $table->string('codigo')->unique();
             $table->foreignId('grado_id')->constrained('grados');
-            $table->foreignId('docente_id')->constrained('users');
+            $table->foreignId('docente_id')->nullable()->constrained('users');
+            $table->boolean('activa')->default(true);
+            $table->text('descripcion')->nullable();
             $table->timestamps();
         });
     }
@@ -27,4 +30,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('materias');
     }
-};
+}; 

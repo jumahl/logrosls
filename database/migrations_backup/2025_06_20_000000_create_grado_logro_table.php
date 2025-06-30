@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('grados', function (Blueprint $table) {
+        Schema::create('grado_logro', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre');
-            $table->enum('tipo', ['preescolar', 'primaria', 'secundaria', 'media_academica']);
-            $table->boolean('activo')->default(true);
-            $table->decimal('media_academica', 3, 2)->nullable();
+            $table->foreignId('grado_id')->constrained('grados')->onDelete('cascade');
+            $table->foreignId('logro_id')->constrained('logros')->onDelete('cascade');
             $table->timestamps();
+            $table->unique(['grado_id', 'logro_id']);
         });
     }
 
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('grados');
+        Schema::dropIfExists('grado_logro');
     }
 }; 

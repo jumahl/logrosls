@@ -44,17 +44,31 @@ class EstudianteLogro extends Model
         return $this->belongsTo(Periodo::class);
     }
 
-    public function calcularNivelDesempeno()
+    /**
+     * Obtener el valor numérico del nivel de desempeño para cálculos.
+     */
+    public function getValorNumericoAttribute()
     {
-        if (!$this->nota) {
-            return null;
-        }
+        return match($this->nivel_desempeno) {
+            'Superior' => 5.0,
+            'Alto' => 4.0,
+            'Básico' => 3.0,
+            'Bajo' => 2.0,
+            default => 0.0
+        };
+    }
 
-        return match(true) {
-            $this->nota >= 4.5 => 'Superior',
-            $this->nota >= 4.0 => 'Alto',
-            $this->nota >= 3.0 => 'Básico',
-            default => 'Bajo'
+    /**
+     * Obtener el color del nivel de desempeño para la interfaz.
+     */
+    public function getColorNivelAttribute()
+    {
+        return match($this->nivel_desempeno) {
+            'Superior' => 'success',
+            'Alto' => 'info',
+            'Básico' => 'warning',
+            'Bajo' => 'danger',
+            default => 'gray'
         };
     }
 }
