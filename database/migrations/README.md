@@ -94,7 +94,7 @@ Este directorio contiene las migraciones consolidadas del sistema de gestión de
 -   `estudiante_id` - Referencia al estudiante
 -   `logro_id` - Referencia al logro
 -   `periodo_id` - Referencia al período
--   `nivel_desempeno` - Nivel de desempeño (Superior, Alto, Básico, Bajo)
+-   `nivel_desempeno` - Nivel de desempeño (E=Excelente, S=Sobresaliente, A=Aceptable, I=Insuficiente)
 -   `observaciones` - Observaciones adicionales
 -   `fecha_asignacion` - Fecha de asignación
 -   `timestamps` - Fechas de creación y actualización

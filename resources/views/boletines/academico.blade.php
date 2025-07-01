@@ -1,253 +1,251 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="utf-8">
     <title>Boletín Académico</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #2c3e50;
-            padding-bottom: 20px;
-        }
-        .header h1 {
-            color: #2c3e50;
-            margin: 0;
-            font-size: 24px;
-        }
-        .header h2 {
-            color: #7f8c8d;
-            margin: 10px 0 0 0;
-            font-size: 18px;
-        }
-        .student-info {
-            background-color: #ecf0f1;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-        .student-info h3 {
-            color: #2c3e50;
-            margin: 0 0 15px 0;
-            font-size: 18px;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        .info-item {
-            display: flex;
-            align-items: center;
-        }
-        .info-label {
-            font-weight: bold;
-            color: #34495e;
-            min-width: 120px;
-        }
-        .info-value {
-            color: #2c3e50;
-        }
-        .materia-section {
-            margin-bottom: 30px;
-            border: 1px solid #bdc3c7;
-            border-radius: 8px;
-            overflow: hidden;
-            page-break-inside: avoid;
-        }
-        .materia-header {
-            background-color: #3498db;
-            color: white;
-            padding: 15px;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .materia-summary {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .summary-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            text-align: center;
-        }
-        .summary-item {
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .summary-label {
-            font-size: 12px;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-        .summary-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .promedio-final {
-            background-color: #28a745;
-            color: white;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #dee2e6;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .nivel-desempeno {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            text-align: center;
-            min-width: 80px;
-        }
-        .superior { background-color: #d4edda; color: #155724; }
-        .alto { background-color: #d1ecf1; color: #0c5460; }
-        .basico { background-color: #fff3cd; color: #856404; }
-        .bajo { background-color: #f8d7da; color: #721c24; }
-        .corte-indicator {
-            font-size: 12px;
-            color: #6c757d;
-            font-style: italic;
-        }
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            color: #7f8c8d;
-            font-size: 14px;
-            border-top: 1px solid #ecf0f1;
-            padding-top: 20px;
-        }
+        body { font-family: Arial, sans-serif; color: #000; margin: 20px; }
+        .header-table, .student-table, .area-table, .sign-table { width: 100%; border-collapse: collapse; }
+        .header-table td { font-size: 12px; }
+        .logo { width: 90px; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .student-table td, .student-table th { border: 1px solid #333; font-size: 12px; padding: 3px 6px; }
+        .student-table th { background: #e0e0e0; }
+        .area-table th, .area-table td { border: 1px solid #333; font-size: 12px; padding: 3px 6px; }
+        .area-table th { background: #f5f5f5; }
+        .asignatura-row { background: #f9f9f9; font-weight: bold; }
+        .logros-list { margin: 0 0 8px 0; padding-left: 18px; font-size: 12px; }
+        .logros-list li { margin-bottom: 2px; }
+        .section-title { text-align: center; font-weight: bold; font-size: 15px; margin: 10px 0 4px 0; }
+        .subtitle { text-align: center; font-size: 13px; margin-bottom: 8px; }
+        .observaciones { margin-top: 18px; font-size: 12px; }
+        .sign-table td { padding: 30px 10px 0 10px; text-align: center; font-size: 12px; }
+        .firma-line { border-top: 1px solid #333; width: 80%; margin: 0 auto 2px auto; }
+        .foto { width: 90px; height: 110px; object-fit: cover; border: 1px solid #aaa; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>BOLETÍN ACADÉMICO</h1>
-            <h2>{{ $periodo->periodo_completo }}</h2>
-        </div>
 
-        <div class="student-info">
-            <h3>Información del Estudiante</h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Nombre:</span>
-                    <span class="info-value">{{ $estudiante->nombre }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Documento:</span>
-                    <span class="info-value">{{ $estudiante->documento }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Grado:</span>
-                    <span class="info-value">{{ $estudiante->grado->nombre ?? 'No asignado' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Fecha:</span>
-                    <span class="info-value">{{ now()->format('d/m/Y') }}</span>
-                </div>
-            </div>
-        </div>
-
-        @foreach($logrosPorMateria as $materia => $logros)
-        <div class="materia-section">
-            <div class="materia-header">
-                {{ $materia }}
-                @if($logros->isNotEmpty() && $logros->first()->logro->materia->docente)
-                <span style="font-size: 14px; font-weight: normal;"> - Docente: {{ $logros->first()->logro->materia->docente->name }}</span>
-                @endif
-            </div>
-            
-            <div class="materia-summary">
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <div class="summary-label">Logros Primer Corte</div>
-                        <div class="summary-value">{{ $logros->where('periodo_id', $periodoAnterior->id ?? 0)->count() }}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Logros Segundo Corte</div>
-                        <div class="summary-value">{{ $logros->where('periodo_id', $periodo->id)->count() }}</div>
-                    </div>
-                    <div class="summary-item promedio-final">
-                        <div class="summary-label">Promedio Final</div>
-                        <div class="summary-value">{{ number_format($promediosPorMateria[$materia], 1) }}</div>
-                    </div>
-                </div>
-            </div>
-
-            @if($logros->isNotEmpty())
-            <table>
-                <thead>
-                    <tr>
-                        <th>Título del Logro</th>
-                        <th>Competencia</th>
-                        <th>Tema</th>
-                        <th>Indicador de Desempeño</th>
-                        <th>Nivel de Desempeño</th>
-                        <th>Corte</th>
-                        <th>Observaciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($logros as $logro)
-                        <tr>
-                            <td><strong>{{ $logro->logro->titulo }}</strong></td>
-                            <td>{{ $logro->logro->competencia }}</td>
-                            <td>{{ $logro->logro->tema ?: 'No especificado' }}</td>
-                            <td>{{ $logro->logro->indicador_desempeno }}</td>
-                            <td>
-                                <span class="nivel-desempeno {{ strtolower($logro->nivel_desempeno) }}">
-                                    {{ $logro->nivel_desempeno }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="corte-indicator">
-                                    {{ $logro->periodo->corte }}
-                                </span>
-                            </td>
-                            <td>{{ $logro->observaciones ?: 'Sin observaciones' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+<!-- Encabezado institucional -->
+<table class="header-table">
+    <tr>
+        <td rowspan="4" class="center"><img src="{{ public_path('liceo.png') }}" class="logo"></td>
+        <td class="center bold" colspan="2" style="font-size:16px;">INSTITUCION EDUCATIVA "LICEO DEL SABER"</td>
+        <td rowspan="4" class="center">
+            @if(isset($estudiante->foto))
+                <img src="{{ public_path('fotos/'.$estudiante->foto) }}" class="foto">
             @else
-            <div style="padding: 20px; text-align: center; color: #6c757d; font-style: italic;">
-                <p>No hay logros registrados para esta materia en el período seleccionado.</p>
-            </div>
+                <img src="{{ public_path('fotos/default.png') }}" class="foto">
             @endif
-        </div>
-        @endforeach
+        </td>
+    </tr>
+    <tr>
+        <td class="center" colspan="2" style="font-size:12px;">
+            Aprobado según resolución No. 01199 del 03 de Abril de 2018<br>
+            Preescolar, Básica Primaria, Secundaria y Media Académica
+        </td>
+    </tr>
+    <tr>
+        <td class="center" colspan="2" style="font-size:11px;">
+            Transversal 6 diagonal 3 esquina No. 7 - 05 B/ Los Lagos III etapa Zarzal - Valle del Cauca<br>
+            Tel. 6022208019 – 3168207306 – E-mail: ieliceodelsaber@hotmail.com
+        </td>
+    </tr>
+</table>
 
-        <div class="footer">
-            <p><strong>Nota:</strong> Este boletín incluye todos los logros del período completo, 
-            combinando los resultados del primer y segundo corte.</p>
-            <p>Generado el {{ now()->format('d/m/Y H:i:s') }}</p>
-        </div>
+<!-- Datos del estudiante -->
+<table class="student-table" style="margin-top:10px;">
+    <tr>
+        <th>APELLIDOS Y NOMBRES DEL ESTUDIANTE</th>
+        <th>NIVEL</th>
+        <th>GRADO</th>
+        <th>PERIODO</th>
+        <th>AÑO</th>
+    </tr>
+    <tr>
+        <td class="bold">{{ strtoupper(($estudiante->apellido ?? '') . ' ' . ($estudiante->nombre ?? '')) }}</td>
+        <td>{{ strtoupper($estudiante->grado->tipo ?? '') }}</td>
+        <td>{{ $estudiante->grado->nombre ?? '' }}</td>
+        <td>{{ $periodo->numero_periodo ?? '' }}</td>
+        <td>{{ $periodo->año_escolar ?? now()->year }}</td>
+    </tr>
+    <tr>
+        <th>DIRECTORA DE GRUPO</th>
+        <th colspan="2">INASISTENCIA</th>
+        <th colspan="2"></th>
+    </tr>
+    <tr>
+        <td>{{ $estudiante->directora ?? '  ' }}</td>
+        <td colspan="2">{{ $estudiante->inasistencias ?? '  ' }}</td>
+        <td colspan="2"></td>
+    </tr>
+</table>
+
+<!-- Título del preinforme -->
+<div class="section-title">BOLETÍN ACADÉMICO Y DISCIPLINARIO</div>
+<div class="subtitle">DEL PRIMER CORTE DEL PERÍODO No. {{ $periodo->numero_periodo ?? '' }}</div>
+<div class="subtitle">Comprendido entre: el {{ $periodo->fecha_inicio->format('d/m/Y') }} y el {{ $periodo->fecha_fin->format('d/m/Y') }}</div>
+
+<!-- Materias y logros del segundo corte -->
+<table class="area-table" style="margin-top:10px;">
+    <tr>
+        <th>ASIGNATURA</th>
+        <th>Escala Valoración</th>
+        <th>Nivel de Desempeño</th>
+        <th>Docente</th>
+    </tr>
+    @foreach($logrosPorMateria as $materia => $logros)
+        @php
+            $logrosSegundoCorte = $logros->filter(function($logro) use ($periodo) {
+                return $logro->periodo->corte === 'Segundo Corte' && $logro->periodo->año_escolar == $periodo->año_escolar && $logro->periodo->numero_periodo == $periodo->numero_periodo;
+            });
+        @endphp
+        @if($logrosSegundoCorte->isNotEmpty())
+        <tr class="asignatura-row">
+            <td>{{ $materia }}</td>
+            <td class="center">{{ $logrosSegundoCorte->first()->nivel_desempeno ?? '' }}</td>
+            <td class="center">{{ $logrosSegundoCorte->first()->nivel_desempeno_completo ?? '' }}</td>
+            <td>{{ $logrosSegundoCorte->first()->logro->materia->docente->name ?? '' }}</td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <ul class="logros-list">
+                    @foreach($logrosSegundoCorte as $logro)
+                        <li>
+                            <b>{{ $logro->logro->titulo }}</b>
+                            @if($logro->logro->competencia)
+                                - {{ $logro->logro->competencia }}
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            </td>
+        </tr>
+        @endif
+    @endforeach
+</table>
+
+<!-- Título del boletín -->
+<div class="section-title">CONSOLIDADO DE VALORACIONES DEL PROCESO FORMATIVO INTEGRAL</div>
+<div class="subtitle">Que corresponde a la evaluación por procesos y no por promedios</div>
+<div class="subtitle">ESCALA CONCEPTUAL: <b>E: Excelente (Desempeño Superior) = 5</b> &nbsp;&nbsp; <b>S: Sobresaliente (Desempeño Alto) = 4</b> &nbsp;&nbsp; <b>A: Aceptable (Desempeño Básico) = 3</b> &nbsp;&nbsp; <b>I: Insuficiente (Desempeño Bajo) = 2 - 1</b></div>
+
+<!-- Tabla consolidado de valores -->
+<table class="area-table" style="margin-top:20px; font-size:13px;">
+    <tr>
+        <th rowspan="2" style="text-align:center; vertical-align:middle;">AREA</th>
+        <th rowspan="2" style="text-align:center; vertical-align:middle;">Asignatura</th>
+        <th rowspan="2" style="text-align:center; vertical-align:middle;">IH</th>
+        <th colspan="2" style="text-align:center;">1 Periodo</th>
+        <th colspan="2" style="text-align:center;">2 Periodo</th>
+    </tr>
+    <tr>
+        <th style="text-align:center;">1er Corte</th>
+        <th style="text-align:center;">2do Corte</th>
+        <th style="text-align:center;">1er Corte</th>
+        <th style="text-align:center;">2do Corte</th>
+    </tr>
+    @foreach($logrosPorMateria as $materia => $logros)
+        @if($logros->isNotEmpty())
+        <tr>
+            <td style="text-align:center;">{{ $logros->first()->logro->materia->area ?? '' }}</td>
+            <td style="text-align:center;">{{ $materia }}</td>
+            <td style="text-align:center;"></td>
+            @php
+                $desempenos = [
+                    '1_Primer Corte' => '',
+                    '1_Segundo Corte' => '',
+                    '2_Primer Corte' => '',
+                    '2_Segundo Corte' => ''
+                ];
+                foreach($logros as $logro) {
+                    $anio = $logro->periodo->año_escolar ?? null;
+                    $periodoN = $logro->periodo->numero_periodo ?? null;
+                    $corte = $logro->periodo->corte ?? null;
+                    if($anio == ($periodo->año_escolar ?? null)) {
+                        if($periodoN == 1 && $corte == 'Primer Corte') $desempenos['1_Primer Corte'] = $logro->nivel_desempeno;
+                        if($periodoN == 1 && $corte == 'Segundo Corte') $desempenos['1_Segundo Corte'] = $logro->nivel_desempeno;
+                        if($periodoN == 2 && $corte == 'Primer Corte') $desempenos['2_Primer Corte'] = $logro->nivel_desempeno;
+                        if($periodoN == 2 && $corte == 'Segundo Corte') $desempenos['2_Segundo Corte'] = $logro->nivel_desempeno;
+                    }
+                }
+            @endphp
+            <td style="text-align:center;">{{ $desempenos['1_Primer Corte'] }}</td>
+            <td style="text-align:center;">{{ $desempenos['1_Segundo Corte'] }}</td>
+            <td style="text-align:center;">{{ $desempenos['2_Primer Corte'] }}</td>
+            <td style="text-align:center;">{{ $desempenos['2_Segundo Corte'] }}</td>
+        </tr>
+        @endif
+    @endforeach
+</table>
+
+<!-- Tabla cuadro de valores -->
+<table class="area-table" style="margin-top:20px;">
+    <tr>
+        <th colspan="3">CUADRO DE VALORES</th>
+        <th colspan="3"></th>
+    </tr>
+    <tr>
+        <td><b>RESPETO:</b> Escucha con atención a otros y respeta sus opiniones</td>
+        <td></td>
+        <td><b>RESOLUCIONES DE CONFLICTOS:</b> Buscas soluciones ante situaciones difíciles que se le presentan</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><b>AMOR:</b> Demuestra afecto hacia las personas de su entorno</td>
+        <td></td>
+        <td><b>CUMPLIMIENTO DE LA NORMA:</b> Acata las normas y acepta los llamados de atención</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><b>TOLERANCIA:</b> Acepta a los demás tal y como son</td>
+        <td></td>
+        <td><b>CAPACIDAD DE DIALOGO:</b> Manifiesta sus emociones y sentimientos a través del diálogo</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><b>HONESTIDAD:</b> Actúa y habla siempre con la verdad</td>
+        <td></td>
+        <td><b>GRATITUD:</b> Usa palabras de cortesía y valora lo que otros hacen por su bien</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><b>AUTOESTIMA:</b> Se acepta y valora tal como es</td>
+        <td></td>
+        <td><b>RESPONSABILIDAD:</b> Es puntual y cumple oportunamente con sus compromisos</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><b>SOLIDARIDAD:</b> Es sensible y compasivo a las necesidades de los demás</td>
+        <td></td>
+        <td><b>PERSEVERANCIA:</b> Es constante en todo lo que realiza a pesar de los errores</td>
+        <td></td>
+    </tr>
+</table>
+
+<!-- Observaciones disciplina -->
+@if(isset($estudiante->observaciones_disciplina))
+    <div class="area-title">ÁREA: DISCIPLINA Y CONVIVENCIA ESCOLAR</div>
+    <div class="observaciones">
+        <b>Observaciones y/o Recomendaciones:</b><br>
+        {{ $estudiante->observaciones_disciplina }}
     </div>
+@endif
+
+<!-- Firmas -->
+<table class="sign-table" style="margin-top:30px;">
+    <tr>
+        <td>
+            <div class="firma-line"></div>
+            DIRECTORA DE GRUPO
+        </td>
+        <td>
+            <div class="firma-line"></div>
+            RECTORA
+        </td>
+    </tr>
+</table>
+
 </body>
 </html> 
