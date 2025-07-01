@@ -59,4 +59,12 @@ class User extends Authenticatable
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
+
+    /**
+     * Obtener las materias donde el usuario es docente.
+     */
+    public function materias()
+    {
+        return $this->hasMany(Materia::class, 'docente_id');
+    }
 }

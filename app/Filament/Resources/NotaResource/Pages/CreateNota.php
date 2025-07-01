@@ -25,10 +25,18 @@ class CreateNota extends CreateRecord
 
     public function form(Form $form): Form
     {
+        $user = auth()->user();
         return $form
             ->schema([
                 Forms\Components\Select::make('grado_id')
-                    ->options(fn () => \App\Models\Grado::where('activo', true)->pluck('nombre', 'id'))
+                    ->options(function () use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            // Solo mostrar grados donde el profesor tiene materias asignadas
+                            $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+                            return \App\Models\Grado::where('activo', true)->whereIn('id', $gradoIds)->pluck('nombre', 'id');
+                        }
+                        return \App\Models\Grado::where('activo', true)->pluck('nombre', 'id');
+                    })
                     ->required()
                     ->searchable()
                     ->preload()
@@ -40,15 +48,22 @@ class CreateNota extends CreateRecord
                         $set('estudiante_id', null);
                     }),
                 Forms\Components\Select::make('estudiante_id')
-                    ->options(function ($get) {
+                    ->options(function ($get) use ($user) {
                         $gradoId = $get('grado_id');
                         if ($gradoId) {
-                            return Estudiante::where('grado_id', $gradoId)
-                                          ->where('activo', true)
-                                          ->get()
-                                          ->mapWithKeys(function ($estudiante) {
-                                              return [$estudiante->id => $estudiante->nombre_completo];
-                                          });
+                            $query = Estudiante::where('grado_id', $gradoId)->where('activo', true);
+                            
+                            if ($user && $user->hasRole('profesor')) {
+                                // Solo mostrar estudiantes de grados donde el profesor tiene materias asignadas
+                                $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+                                if (!$gradoIds->contains($gradoId)) {
+                                    return [];
+                                }
+                            }
+                            
+                            return $query->get()->mapWithKeys(function ($estudiante) {
+                                return [$estudiante->id => $estudiante->nombre_completo];
+                            });
                         }
                         return [];
                     })
@@ -58,7 +73,12 @@ class CreateNota extends CreateRecord
                     ->label('Estudiante')
                     ->disabled(fn ($get) => !$get('grado_id')),
                 Forms\Components\Select::make('materia_id')
-                    ->options(Materia::where('activa', true)->pluck('nombre', 'id'))
+                    ->options(function () use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            return $user->materias()->where('activa', true)->pluck('nombre', 'id');
+                        }
+                        return Materia::where('activa', true)->pluck('nombre', 'id');
+                    })
                     ->required()
                     ->searchable()
                     ->preload()
@@ -78,17 +98,23 @@ class CreateNota extends CreateRecord
                     ->preload()
                     ->label('Período'),
                 Forms\Components\Select::make('logros')
-                    ->options(function ($get) {
+                    ->options(function ($get) use ($user) {
                         $materiaId = $get('materia_id');
                         if ($materiaId) {
-                            return Logro::where('materia_id', $materiaId)
-                                       ->where('activo', true)
-                                       ->orderBy('titulo')
-                                       ->pluck('titulo', 'id')
-                                       ->map(function ($titulo, $id) {
-                                           $logro = Logro::find($id);
-                                           return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
-                                       });
+                            $query = Logro::where('materia_id', $materiaId)->where('activo', true);
+                            
+                            if ($user && $user->hasRole('profesor')) {
+                                // Solo mostrar logros de materias del profesor
+                                $materiaIds = $user->materias()->pluck('id');
+                                if (!$materiaIds->contains($materiaId)) {
+                                    return [];
+                                }
+                            }
+                            
+                            return $query->orderBy('titulo')->pluck('titulo', 'id')->map(function ($titulo, $id) {
+                                $logro = Logro::find($id);
+                                return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
+                            });
                         }
                         return [];
                     })

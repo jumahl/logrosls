@@ -88,6 +88,7 @@ class EstudianteResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $user = auth()->user();
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
@@ -135,40 +136,15 @@ class EstudianteResource extends Resource
                     ->label('Estado'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
                 Tables\Actions\DeleteAction::make()
-                    ->before(function (Estudiante $record) {
-                        // Eliminar en cascada los logros del estudiante
-                        $record->estudianteLogros()->delete();
-                    })
-                    ->after(function (Estudiante $record) {
-                        Notification::make()
-                            ->title('Estudiante eliminado exitosamente')
-                            ->icon('heroicon-o-trash')
-                            ->iconColor('danger')
-                            ->body('El estudiante y sus datos relacionados han sido eliminados del sistema.')
-                            ->success()
-                            ->send();
-                    }),
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->before(function ($records) {
-                            foreach ($records as $record) {
-                                // Eliminar en cascada los logros de cada estudiante
-                                $record->estudianteLogros()->delete();
-                            }
-                        })
-                        ->after(function () {
-                            Notification::make()
-                                ->title('Estudiantes eliminados exitosamente')
-                                ->icon('heroicon-o-trash')
-                                ->iconColor('danger')
-                                ->body('Los estudiantes seleccionados y sus datos relacionados han sido eliminados del sistema.')
-                                ->success()
-                                ->send();
-                        }),
+                        ->visible(fn() => auth()->user()?->hasRole('admin')),
                 ]),
             ]);
     }
@@ -185,5 +161,17 @@ class EstudianteResource extends Resource
             'create' => Pages\CreateEstudiante::route('/create'),
             'edit' => Pages\EditEstudiante::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $query = parent::getEloquentQuery();
+        if ($user && $user->hasRole('profesor')) {
+            // Obtener los grados donde el profesor tiene materias asignadas
+            $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+            $query->whereIn('grado_id', $gradoIds);
+        }
+        return $query;
     }
 }

@@ -56,6 +56,7 @@ class GradoResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $user = auth()->user();
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
@@ -104,44 +105,15 @@ class GradoResource extends Resource
                     ->label('Estado'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
                 Tables\Actions\DeleteAction::make()
-                    ->before(function (Grado $record) {
-                        // Eliminar en cascada los estudiantes, materias y logros del grado
-                        $record->estudiantes()->delete();
-                        $record->materias()->delete();
-                        $record->logros()->delete();
-                    })
-                    ->after(function (Grado $record) {
-                        Notification::make()
-                            ->title('Grado eliminado exitosamente')
-                            ->icon('heroicon-o-trash')
-                            ->iconColor('danger')
-                            ->body('El grado y todos sus datos relacionados han sido eliminados del sistema.')
-                            ->success()
-                            ->send();
-                    }),
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->before(function ($records) {
-                            foreach ($records as $record) {
-                                // Eliminar en cascada los estudiantes, materias y logros de cada grado
-                                $record->estudiantes()->delete();
-                                $record->materias()->delete();
-                                $record->logros()->delete();
-                            }
-                        })
-                        ->after(function () {
-                            Notification::make()
-                                ->title('Grados eliminados exitosamente')
-                                ->icon('heroicon-o-trash')
-                                ->iconColor('danger')
-                                ->body('Los grados seleccionados y todos sus datos relacionados han sido eliminados del sistema.')
-                                ->success()
-                                ->send();
-                        }),
+                        ->visible(fn() => auth()->user()?->hasRole('admin')),
                 ]),
             ]);
     }
@@ -161,6 +133,19 @@ class GradoResource extends Resource
             'index' => Pages\ListGrados::route('/'),
             'create' => Pages\CreateGrado::route('/create'),
             'edit' => Pages\EditGrado::route('/{record}/edit'),
+            'view' => Pages\ShowGrado::route('/{record}'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $query = parent::getEloquentQuery();
+        if ($user && $user->hasRole('profesor')) {
+            // Solo mostrar los grados donde el profesor tiene materias asignadas
+            $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+            $query->whereIn('id', $gradoIds);
+        }
+        return $query;
     }
 }
