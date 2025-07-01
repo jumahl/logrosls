@@ -23,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'director_grado_id',
     ];
 
     /**
@@ -66,5 +67,32 @@ class User extends Authenticatable
     public function materias()
     {
         return $this->hasMany(Materia::class, 'docente_id');
+    }
+
+    /**
+     * Obtener el grado donde el usuario es director de grupo.
+     */
+    public function directorGrado()
+    {
+        return $this->belongsTo(Grado::class, 'director_grado_id');
+    }
+
+    /**
+     * Verificar si el usuario es director de grupo.
+     */
+    public function isDirectorGrupo(): bool
+    {
+        return !is_null($this->director_grado_id);
+    }
+
+    /**
+     * Obtener los estudiantes del grupo donde el usuario es director.
+     */
+    public function estudiantesGrupo()
+    {
+        if (!$this->isDirectorGrupo()) {
+            return collect();
+        }
+        return $this->directorGrado->estudiantes;
     }
 }

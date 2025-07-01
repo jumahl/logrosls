@@ -16,6 +16,7 @@ use App\Policies\MateriaPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\LogroPolicy;
 use App\Policies\EstudianteLogroPolicy;
+use App\Policies\BoletinPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -31,6 +32,7 @@ class AuthServiceProvider extends ServiceProvider
         User::class => UserPolicy::class,
         Logro::class => LogroPolicy::class,
         EstudianteLogro::class => EstudianteLogroPolicy::class,
+        Estudiante::class => BoletinPolicy::class,
     ];
 
     /**

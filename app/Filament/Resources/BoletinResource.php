@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 
 class BoletinResource extends Resource
 {
@@ -31,14 +32,31 @@ class BoletinResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $user = auth()->user();
+        
         return $form
             ->schema([
                 Forms\Components\Select::make('grado_id')
-                    ->relationship('grado', 'nombre')
+                    ->options(function () use ($user) {
+                        $query = Grado::where('activo', true);
+                        
+                        // Si el usuario es profesor y es director de grupo, solo mostrar su grado
+                        if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                            $query->where('id', $user->director_grado_id);
+                        }
+                        // Si es profesor pero no es director de grupo, mostrar grados donde tiene materias
+                        elseif ($user && $user->hasRole('profesor')) {
+                            $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+                            $query->whereIn('id', $gradoIds);
+                        }
+                        
+                        return $query->pluck('nombre', 'id');
+                    })
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->label('Grado'),
+                    ->label('Grado')
+                    ->disabled(fn() => auth()->user()?->hasRole('profesor') && auth()->user()?->isDirectorGrupo()),
                 Forms\Components\Select::make('periodo_id')
                     ->options(function () {
                         return Periodo::all()->mapWithKeys(function ($periodo) {
@@ -219,11 +237,34 @@ class BoletinResource extends Resource
                     ->icon('heroicon-o-document-text')
                     ->form([
                         Forms\Components\Select::make('grado_id')
-                            ->relationship('grado', 'nombre')
+                            ->options(function () {
+                                $user = auth()->user();
+                                $query = Grado::where('activo', true);
+                                
+                                // Si el usuario es profesor y es director de grupo, solo mostrar su grado
+                                if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                                    $query->where('id', $user->director_grado_id);
+                                }
+                                // Si es profesor pero no es director de grupo, mostrar grados donde tiene materias
+                                elseif ($user && $user->hasRole('profesor')) {
+                                    $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+                                    $query->whereIn('id', $gradoIds);
+                                }
+                                
+                                return $query->pluck('nombre', 'id');
+                            })
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->label('Grado'),
+                            ->label('Grado')
+                            ->default(function () {
+                                $user = auth()->user();
+                                if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                                    return $user->director_grado_id;
+                                }
+                                return null;
+                            })
+                            ->disabled(fn() => auth()->user()?->hasRole('profesor') && auth()->user()?->isDirectorGrupo()),
                         Forms\Components\Select::make('periodo_id')
                             ->options(function () {
                                 return Periodo::where('corte', 'Primer Corte')
@@ -287,11 +328,34 @@ class BoletinResource extends Resource
                     ->icon('heroicon-o-document-arrow-down')
                     ->form([
                         Forms\Components\Select::make('grado_id')
-                            ->relationship('grado', 'nombre')
+                            ->options(function () {
+                                $user = auth()->user();
+                                $query = Grado::where('activo', true);
+                                
+                                // Si el usuario es profesor y es director de grupo, solo mostrar su grado
+                                if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                                    $query->where('id', $user->director_grado_id);
+                                }
+                                // Si es profesor pero no es director de grupo, mostrar grados donde tiene materias
+                                elseif ($user && $user->hasRole('profesor')) {
+                                    $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+                                    $query->whereIn('id', $gradoIds);
+                                }
+                                
+                                return $query->pluck('nombre', 'id');
+                            })
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->label('Grado'),
+                            ->label('Grado')
+                            ->default(function () {
+                                $user = auth()->user();
+                                if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                                    return $user->director_grado_id;
+                                }
+                                return null;
+                            })
+                            ->disabled(fn() => auth()->user()?->hasRole('profesor') && auth()->user()?->isDirectorGrupo()),
                         Forms\Components\Select::make('periodo_id')
                             ->options(function () {
                                 return Periodo::all()->mapWithKeys(function ($periodo) {
@@ -395,5 +459,53 @@ class BoletinResource extends Resource
         return [
             'index' => Pages\ListBoletines::route('/'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $query = parent::getEloquentQuery();
+        
+        if ($user && $user->hasRole('profesor')) {
+            // Si el profesor es director de grupo, solo mostrar estudiantes de su grupo
+            if ($user->isDirectorGrupo()) {
+                $query->where('grado_id', $user->director_grado_id);
+            } else {
+                // Si no es director de grupo, mostrar estudiantes de grados donde tiene materias
+                $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+                $query->whereIn('grado_id', $gradoIds);
+            }
+        }
+        
+        return $query;
+    }
+
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+        
+        // Solo admin y profesores que son directores de grupo pueden ver boletines
+        return $user && ($user->hasRole('admin') || ($user->hasRole('profesor') && $user->isDirectorGrupo()));
+    }
+
+    public static function canView($record): bool
+    {
+        $user = auth()->user();
+        
+        if (!$user) {
+            return false;
+        }
+        
+        // Admin puede ver todos los boletines
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+        
+        // Profesor director de grupo solo puede ver boletines de su grupo
+        if ($user->hasRole('profesor') && $user->isDirectorGrupo()) {
+            return $record->grado_id === $user->director_grado_id;
+        }
+        
+        return false;
     }
 } 

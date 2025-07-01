@@ -34,23 +34,34 @@ class GradoResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('nombre')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Nombre'),
-                Forms\Components\Select::make('tipo')
-                    ->options([
-                        'preescolar' => 'Preescolar',
-                        'primaria' => 'Primaria',
-                        'secundaria' => 'Secundaria',
-                        'media_academica' => 'Media Academica',
+                Forms\Components\Section::make('Información del Grado')
+                    ->schema([
+                        Forms\Components\TextInput::make('nombre')
+                            ->required()
+                            ->maxLength(255)
+                            ->label('Nombre del Grado'),
+                        Forms\Components\TextInput::make('tipo')
+                            ->required()
+                            ->maxLength(255)
+                            ->label('Tipo de Grado'),
+                        Forms\Components\Toggle::make('activo')
+                            ->label('Grado Activo')
+                            ->default(true),
+                    ])->columns(2),
+                
+                Forms\Components\Section::make('Director de Grupo')
+                    ->schema([
+                        Forms\Components\Placeholder::make('director_info')
+                            ->label('Director Asignado')
+                            ->content(function ($record) {
+                                if ($record && $record->directorGrupo) {
+                                    return $record->directorGrupo->name . ' (' . $record->directorGrupo->email . ')';
+                                }
+                                return 'No hay director asignado';
+                            }),
                     ])
-                    ->required()
-                    ->label('Tipo'),
-                Forms\Components\Toggle::make('activo')
-                    ->required()
-                    ->default(true)
-                    ->label('Grado Activo'),
+                    ->collapsible()
+                    ->collapsed(),
             ]);
     }
 
@@ -79,6 +90,11 @@ class GradoResource extends Resource
                     ->boolean()
                     ->sortable()
                     ->label('Activo'),
+                Tables\Columns\TextColumn::make('directorGrupo.name')
+                    ->label('Director de Grupo')
+                    ->placeholder('Sin asignar')
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()

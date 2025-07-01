@@ -111,10 +111,29 @@ class EstudianteResource extends Resource
                     ->date('d/m/Y')
                     ->sortable()
                     ->label('Fecha de Nacimiento'),
-                Tables\Columns\IconColumn::make('activo')
-                    ->boolean()
-                    ->sortable()
-                    ->label('Activo'),
+                Tables\Columns\TextColumn::make('activo')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        '1' => 'success',
+                        '0' => 'danger',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        '1' => 'Activo',
+                        '0' => 'Inactivo',
+                    })
+                    ->label('Estado'),
+                Tables\Columns\TextColumn::make('es_mi_grupo')
+                    ->label('Mi Grupo')
+                    ->getStateUsing(function ($record) {
+                        $user = auth()->user();
+                        if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                            return $record->grado_id === $user->director_grado_id ? 'Sí' : 'No';
+                        }
+                        return null;
+                    })
+                    ->badge()
+                    ->color('success')
+                    ->visible(fn() => auth()->user()?->hasRole('profesor') && auth()->user()?->isDirectorGrupo()),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
@@ -134,6 +153,16 @@ class EstudianteResource extends Resource
                         '0' => 'Inactivo',
                     ])
                     ->label('Estado'),
+                Tables\Filters\Filter::make('mi_grupo')
+                    ->label('Solo mi grupo')
+                    ->query(function ($query) {
+                        $user = auth()->user();
+                        if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                            return $query->where('grado_id', $user->director_grado_id);
+                        }
+                        return $query;
+                    })
+                    ->visible(fn() => auth()->user()?->hasRole('profesor') && auth()->user()?->isDirectorGrupo()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
