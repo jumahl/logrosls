@@ -34,28 +34,40 @@ class GradoResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('nombre')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Nombre'),
-                Forms\Components\Select::make('tipo')
-                    ->options([
-                        'preescolar' => 'Preescolar',
-                        'primaria' => 'Primaria',
-                        'secundaria' => 'Secundaria',
-                        'media_academica' => 'Media Academica',
+                Forms\Components\Section::make('Información del Grado')
+                    ->schema([
+                        Forms\Components\TextInput::make('nombre')
+                            ->required()
+                            ->maxLength(255)
+                            ->label('Nombre del Grado'),
+                        Forms\Components\TextInput::make('tipo')
+                            ->required()
+                            ->maxLength(255)
+                            ->label('Tipo de Grado'),
+                        Forms\Components\Toggle::make('activo')
+                            ->label('Grado Activo')
+                            ->default(true),
+                    ])->columns(2),
+                
+                Forms\Components\Section::make('Director de Grupo')
+                    ->schema([
+                        Forms\Components\Placeholder::make('director_info')
+                            ->label('Director Asignado')
+                            ->content(function ($record) {
+                                if ($record && $record->directorGrupo) {
+                                    return $record->directorGrupo->name . ' (' . $record->directorGrupo->email . ')';
+                                }
+                                return 'No hay director asignado';
+                            }),
                     ])
-                    ->required()
-                    ->label('Tipo'),
-                Forms\Components\Toggle::make('activo')
-                    ->required()
-                    ->default(true)
-                    ->label('Grado Activo'),
+                    ->collapsible()
+                    ->collapsed(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
+        $user = auth()->user();
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
@@ -78,6 +90,11 @@ class GradoResource extends Resource
                     ->boolean()
                     ->sortable()
                     ->label('Activo'),
+                Tables\Columns\TextColumn::make('directorGrupo.name')
+                    ->label('Director de Grupo')
+                    ->placeholder('Sin asignar')
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
@@ -104,44 +121,15 @@ class GradoResource extends Resource
                     ->label('Estado'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
                 Tables\Actions\DeleteAction::make()
-                    ->before(function (Grado $record) {
-                        // Eliminar en cascada los estudiantes, materias y logros del grado
-                        $record->estudiantes()->delete();
-                        $record->materias()->delete();
-                        $record->logros()->delete();
-                    })
-                    ->after(function (Grado $record) {
-                        Notification::make()
-                            ->title('Grado eliminado exitosamente')
-                            ->icon('heroicon-o-trash')
-                            ->iconColor('danger')
-                            ->body('El grado y todos sus datos relacionados han sido eliminados del sistema.')
-                            ->success()
-                            ->send();
-                    }),
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->before(function ($records) {
-                            foreach ($records as $record) {
-                                // Eliminar en cascada los estudiantes, materias y logros de cada grado
-                                $record->estudiantes()->delete();
-                                $record->materias()->delete();
-                                $record->logros()->delete();
-                            }
-                        })
-                        ->after(function () {
-                            Notification::make()
-                                ->title('Grados eliminados exitosamente')
-                                ->icon('heroicon-o-trash')
-                                ->iconColor('danger')
-                                ->body('Los grados seleccionados y todos sus datos relacionados han sido eliminados del sistema.')
-                                ->success()
-                                ->send();
-                        }),
+                        ->visible(fn() => auth()->user()?->hasRole('admin')),
                 ]),
             ]);
     }
@@ -161,6 +149,19 @@ class GradoResource extends Resource
             'index' => Pages\ListGrados::route('/'),
             'create' => Pages\CreateGrado::route('/create'),
             'edit' => Pages\EditGrado::route('/{record}/edit'),
+            'view' => Pages\ShowGrado::route('/{record}'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $query = parent::getEloquentQuery();
+        if ($user && $user->hasRole('profesor')) {
+            // Solo mostrar los grados donde el profesor tiene materias asignadas
+            $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+            $query->whereIn('id', $gradoIds);
+        }
+        return $query;
     }
 }

@@ -88,6 +88,7 @@ class EstudianteResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $user = auth()->user();
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
@@ -110,10 +111,29 @@ class EstudianteResource extends Resource
                     ->date('d/m/Y')
                     ->sortable()
                     ->label('Fecha de Nacimiento'),
-                Tables\Columns\IconColumn::make('activo')
-                    ->boolean()
-                    ->sortable()
-                    ->label('Activo'),
+                Tables\Columns\TextColumn::make('activo')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        '1' => 'success',
+                        '0' => 'danger',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        '1' => 'Activo',
+                        '0' => 'Inactivo',
+                    })
+                    ->label('Estado'),
+                Tables\Columns\TextColumn::make('es_mi_grupo')
+                    ->label('Mi Grupo')
+                    ->getStateUsing(function ($record) {
+                        $user = auth()->user();
+                        if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                            return $record->grado_id === $user->director_grado_id ? 'Sí' : 'No';
+                        }
+                        return null;
+                    })
+                    ->badge()
+                    ->color('success')
+                    ->visible(fn() => auth()->user()?->hasRole('profesor') && auth()->user()?->isDirectorGrupo()),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
@@ -133,42 +153,27 @@ class EstudianteResource extends Resource
                         '0' => 'Inactivo',
                     ])
                     ->label('Estado'),
+                Tables\Filters\Filter::make('mi_grupo')
+                    ->label('Solo mi grupo')
+                    ->query(function ($query) {
+                        $user = auth()->user();
+                        if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                            return $query->where('grado_id', $user->director_grado_id);
+                        }
+                        return $query;
+                    })
+                    ->visible(fn() => auth()->user()?->hasRole('profesor') && auth()->user()?->isDirectorGrupo()),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
                 Tables\Actions\DeleteAction::make()
-                    ->before(function (Estudiante $record) {
-                        // Eliminar en cascada los logros del estudiante
-                        $record->estudianteLogros()->delete();
-                    })
-                    ->after(function (Estudiante $record) {
-                        Notification::make()
-                            ->title('Estudiante eliminado exitosamente')
-                            ->icon('heroicon-o-trash')
-                            ->iconColor('danger')
-                            ->body('El estudiante y sus datos relacionados han sido eliminados del sistema.')
-                            ->success()
-                            ->send();
-                    }),
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->before(function ($records) {
-                            foreach ($records as $record) {
-                                // Eliminar en cascada los logros de cada estudiante
-                                $record->estudianteLogros()->delete();
-                            }
-                        })
-                        ->after(function () {
-                            Notification::make()
-                                ->title('Estudiantes eliminados exitosamente')
-                                ->icon('heroicon-o-trash')
-                                ->iconColor('danger')
-                                ->body('Los estudiantes seleccionados y sus datos relacionados han sido eliminados del sistema.')
-                                ->success()
-                                ->send();
-                        }),
+                        ->visible(fn() => auth()->user()?->hasRole('admin')),
                 ]),
             ]);
     }
@@ -185,5 +190,17 @@ class EstudianteResource extends Resource
             'create' => Pages\CreateEstudiante::route('/create'),
             'edit' => Pages\EditEstudiante::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $query = parent::getEloquentQuery();
+        if ($user && $user->hasRole('profesor')) {
+            // Obtener los grados donde el profesor tiene materias asignadas
+            $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+            $query->whereIn('grado_id', $gradoIds);
+        }
+        return $query;
     }
 }

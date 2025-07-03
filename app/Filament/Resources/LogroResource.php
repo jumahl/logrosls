@@ -31,6 +31,7 @@ class LogroResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $user = auth()->user();
         return $form
             ->schema([
                 Forms\Components\TextInput::make('codigo')
@@ -49,6 +50,12 @@ class LogroResource extends Resource
                     ->required()
                     ->searchable()
                     ->preload()
+                    ->options(function () use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            return $user->materias()->pluck('nombre', 'id');
+                        }
+                        return \App\Models\Materia::pluck('nombre', 'id');
+                    })
                     ->createOptionForm([
                         Forms\Components\TextInput::make('nombre')
                             ->required()
@@ -155,6 +162,7 @@ class LogroResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $user = auth()->user();
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('codigo')
@@ -238,40 +246,15 @@ class LogroResource extends Resource
                     ->label('Estado'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('profesor')),
                 Tables\Actions\DeleteAction::make()
-                    ->before(function (Logro $record) {
-                        // Eliminar en cascada los logros de estudiantes
-                        $record->estudianteLogros()->delete();
-                    })
-                    ->after(function (Logro $record) {
-                        Notification::make()
-                            ->title('Logro eliminado exitosamente')
-                            ->icon('heroicon-o-trash')
-                            ->iconColor('danger')
-                            ->body('El logro y sus registros relacionados han sido eliminados del sistema.')
-                            ->success()
-                            ->send();
-                    }),
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->before(function ($records) {
-                            foreach ($records as $record) {
-                                // Eliminar en cascada los logros de estudiantes
-                                $record->estudianteLogros()->delete();
-                            }
-                        })
-                        ->after(function () {
-                            Notification::make()
-                                ->title('Logros eliminados exitosamente')
-                                ->icon('heroicon-o-trash')
-                                ->iconColor('danger')
-                                ->body('Los logros seleccionados y sus registros relacionados han sido eliminados del sistema.')
-                                ->success()
-                                ->send();
-                        }),
+                        ->visible(fn() => auth()->user()?->hasRole('admin')),
                 ]),
             ]);
     }
@@ -288,5 +271,17 @@ class LogroResource extends Resource
             'create' => Pages\CreateLogro::route('/create'),
             'edit' => Pages\EditLogro::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $query = parent::getEloquentQuery();
+        if ($user && $user->hasRole('profesor')) {
+            // Solo mostrar logros de las materias del profesor
+            $materiaIds = $user->materias()->pluck('id');
+            $query->whereIn('materia_id', $materiaIds);
+        }
+        return $query;
     }
 }

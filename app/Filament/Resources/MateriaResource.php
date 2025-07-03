@@ -83,6 +83,7 @@ class MateriaResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $user = auth()->user();
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
@@ -132,40 +133,15 @@ class MateriaResource extends Resource
                     ->label('Estado'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
                 Tables\Actions\DeleteAction::make()
-                    ->before(function (Materia $record) {
-                        // Eliminar en cascada los logros de la materia
-                        $record->logros()->delete();
-                    })
-                    ->after(function (Materia $record) {
-                        Notification::make()
-                            ->title('Materia eliminada exitosamente')
-                            ->icon('heroicon-o-trash')
-                            ->iconColor('danger')
-                            ->body('La materia y sus logros relacionados han sido eliminados del sistema.')
-                            ->success()
-                            ->send();
-                    }),
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->before(function ($records) {
-                            foreach ($records as $record) {
-                                // Eliminar en cascada los logros de cada materia
-                                $record->logros()->delete();
-                            }
-                        })
-                        ->after(function () {
-                            Notification::make()
-                                ->title('Materias eliminadas exitosamente')
-                                ->icon('heroicon-o-trash')
-                                ->iconColor('danger')
-                                ->body('Las materias seleccionadas y sus logros relacionados han sido eliminados del sistema.')
-                                ->success()
-                                ->send();
-                        }),
+                        ->visible(fn() => auth()->user()?->hasRole('admin')),
                 ]),
             ]);
     }
@@ -183,6 +159,17 @@ class MateriaResource extends Resource
             'index' => Pages\ListMaterias::route('/'),
             'create' => Pages\CreateMateria::route('/create'),
             'edit' => Pages\EditMateria::route('/{record}/edit'),
+            'view' => Pages\ShowMateria::route('/{record}'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $query = parent::getEloquentQuery();
+        if ($user && $user->hasRole('profesor')) {
+            $query->where('docente_id', $user->id);
+        }
+        return $query;
     }
 }

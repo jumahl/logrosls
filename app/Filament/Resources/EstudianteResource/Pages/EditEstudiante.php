@@ -12,8 +12,11 @@ class EditEstudiante extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\DeleteAction::make(),
-        ];
+        $user = auth()->user();
+        $actions = [];
+        if ($user && $user->hasRole('admin')) {
+            $actions[] = Actions\DeleteAction::make();
+        }
+        return $actions;
     }
 }

@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class NotaResource extends Resource
 {
@@ -28,6 +29,7 @@ class NotaResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $user = auth()->user();
         return $form
             ->schema([
                 Forms\Components\Select::make('estudiante_id')
@@ -42,23 +44,32 @@ class NotaResource extends Resource
                     ->searchable()
                     ->preload()
                     ->label('Materia')
+                    ->options(function () use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            return $user->materias()->pluck('nombre', 'id');
+                        }
+                        return \App\Models\Materia::pluck('nombre', 'id');
+                    })
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                         // Limpiar el logro seleccionado cuando cambie la materia
                         $set('logro_id', null);
                     }),
                 Forms\Components\Select::make(request()->routeIs('filament.resources.nota-resource.create') ? 'logros' : 'logro_id')
-                    ->options(function ($get) {
+                    ->options(function ($get) use ($user) {
                         $materiaId = $get('materia_id');
                         if ($materiaId) {
-                            return \App\Models\Logro::where('materia_id', $materiaId)
-                                       ->where('activo', true)
-                                       ->orderBy('titulo')
-                                       ->pluck('titulo', 'id')
-                                       ->map(function ($titulo, $id) {
-                                           $logro = \App\Models\Logro::find($id);
-                                           return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
-                                       });
+                            $query = \App\Models\Logro::where('materia_id', $materiaId)->where('activo', true);
+                            if ($user && $user->hasRole('profesor')) {
+                                $materiaIds = $user->materias()->pluck('id');
+                                if (!$materiaIds->contains($materiaId)) {
+                                    return [];
+                                }
+                            }
+                            return $query->orderBy('titulo')->pluck('titulo', 'id')->map(function ($titulo, $id) {
+                                $logro = \App\Models\Logro::find($id);
+                                return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
+                            });
                         }
                         return [];
                     })
@@ -101,6 +112,7 @@ class NotaResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $user = auth()->user();
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('estudiante.nombre')
@@ -171,12 +183,15 @@ class NotaResource extends Resource
                     ->label('Estudiante'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('profesor')),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn() => auth()->user()?->hasRole('admin')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => auth()->user()?->hasRole('admin')),
                 ]),
             ]);
     }
@@ -195,5 +210,19 @@ class NotaResource extends Resource
             'create' => Pages\CreateNota::route('/create'),
             'edit' => Pages\EditNota::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $query = parent::getEloquentQuery();
+        if ($user && $user->hasRole('profesor')) {
+            // Solo mostrar notas de logros de las materias del profesor
+            $materiaIds = $user->materias()->pluck('id');
+            $query->whereHas('logro', function ($q) use ($materiaIds) {
+                $q->whereIn('materia_id', $materiaIds);
+            });
+        }
+        return $query;
     }
 } 

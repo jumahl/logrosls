@@ -13,6 +13,10 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Hash;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use App\Models\Grado;
 
 class UserResource extends Resource
 {
@@ -36,11 +40,11 @@ class UserResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Información Personal')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255)
                             ->label('Nombre'),
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->email()
                             ->required()
                             ->maxLength(255)
@@ -50,18 +54,15 @@ class UserResource extends Resource
 
                 Forms\Components\Section::make('Seguridad')
                     ->schema([
-                        Forms\Components\TextInput::make('password')
+                        TextInput::make('password')
                             ->password()
-                            ->required(fn (string $operation): bool => $operation === 'create')
-                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                             ->dehydrated(fn ($state) => filled($state))
-                            ->maxLength(255)
+                            ->required(fn (string $context): bool => $context === 'create')
                             ->label('Contraseña'),
-                        Forms\Components\TextInput::make('password_confirmation')
+                        TextInput::make('password_confirmation')
                             ->password()
-                            ->required(fn (string $operation): bool => $operation === 'create')
+                            ->required(fn (string $context): bool => $context === 'create')
                             ->same('password')
-                            ->maxLength(255)
                             ->label('Confirmar Contraseña'),
                     ])->columns(2),
 
@@ -73,6 +74,20 @@ class UserResource extends Resource
                             ->preload()
                             ->label('Roles'),
                     ]),
+
+                Forms\Components\Section::make('Director de Grupo')
+                    ->schema([
+                        Select::make('director_grado_id')
+                            ->label('Director de Grupo')
+                            ->options(Grado::where('activo', true)->pluck('nombre', 'id'))
+                            ->placeholder('Seleccionar grado (opcional)')
+                            ->helperText('Asignar como director de grupo de un grado específico. Solo un profesor puede ser director de un grado.')
+                            ->searchable()
+                            ->nullable()
+                            ->unique(table: 'users', column: 'director_grado_id', ignoreRecord: true),
+                    ])
+                    ->collapsible()
+                    ->collapsed(),
             ]);
     }
 
@@ -88,6 +103,11 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Correo Electrónico'),
+                Tables\Columns\TextColumn::make('directorGrado.nombre')
+                    ->label('Director de Grupo')
+                    ->placeholder('No es director')
+                    ->badge()
+                    ->color('success'),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->badge()
                     ->searchable()
