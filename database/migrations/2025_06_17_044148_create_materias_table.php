@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');
             $table->string('codigo')->unique();
-            $table->foreignId('grado_id')->constrained('grados');
             $table->foreignId('docente_id')->nullable()->constrained('users');
             $table->boolean('activa')->default(true);
             $table->text('descripcion')->nullable();

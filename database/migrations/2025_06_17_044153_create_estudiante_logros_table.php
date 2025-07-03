@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('estudiante_id')->constrained('estudiantes');
             $table->foreignId('logro_id')->constrained('logros');
             $table->foreignId('periodo_id')->constrained('periodos');
-            $table->enum('nivel_desempeno', ['Superior', 'Alto', 'Básico', 'Bajo']);
+            $table->enum('nivel_desempeno', ['E', 'S', 'A', 'I']);
             $table->text('observaciones')->nullable();
             $table->date('fecha_asignacion');
             $table->timestamps();
