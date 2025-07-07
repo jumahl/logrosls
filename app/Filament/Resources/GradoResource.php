@@ -40,9 +40,14 @@ class GradoResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->label('Nombre del Grado'),
-                        Forms\Components\TextInput::make('tipo')
+                        Forms\Components\Select::make('tipo')
                             ->required()
-                            ->maxLength(255)
+                            ->options([
+                                'preescolar' => 'Preescolar',
+                                'primaria' => 'Primaria',
+                                'secundaria' => 'Secundaria',
+                                'media_academica' => 'Media Académica',
+                            ])
                             ->label('Tipo de Grado'),
                         Forms\Components\Toggle::make('activo')
                             ->label('Grado Activo')

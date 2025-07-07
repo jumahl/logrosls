@@ -37,39 +37,69 @@ class NotaResource extends Resource
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->label('Estudiante'),
+                    ->label('Estudiante')
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        // Limpiar materia y logro cuando cambie el estudiante
+                        $set('materia_id', null);
+                        $set('logro_id', null);
+                    }),
                 Forms\Components\Select::make('materia_id')
-                    ->relationship('logro.materia', 'nombre')
+                    ->options(function ($get) use ($user) {
+                        $estudianteId = $get('estudiante_id');
+                        if ($estudianteId) {
+                            $estudiante = \App\Models\Estudiante::find($estudianteId);
+                            if ($estudiante && $estudiante->grado) {
+                                // Obtener materias del grado del estudiante
+                                $materias = $estudiante->grado->materias()->where('activa', true);
+                                
+                                // Si es profesor, filtrar solo sus materias
+                                if ($user && $user->hasRole('profesor')) {
+                                    $materias = $materias->whereIn('id', $user->materias()->pluck('id'));
+                                }
+                                
+                                return $materias->pluck('nombre', 'id');
+                            }
+                        }
+                        return [];
+                    })
                     ->required()
                     ->searchable()
-                    ->preload()
                     ->label('Materia')
-                    ->options(function () use ($user) {
-                        if ($user && $user->hasRole('profesor')) {
-                            return $user->materias()->pluck('nombre', 'id');
-                        }
-                        return \App\Models\Materia::pluck('nombre', 'id');
-                    })
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                         // Limpiar el logro seleccionado cuando cambie la materia
                         $set('logro_id', null);
-                    }),
+                    })
+                    ->disabled(fn ($get) => !$get('estudiante_id')),
                 Forms\Components\Select::make(request()->routeIs('filament.resources.nota-resource.create') ? 'logros' : 'logro_id')
                     ->options(function ($get) use ($user) {
                         $materiaId = $get('materia_id');
-                        if ($materiaId) {
-                            $query = \App\Models\Logro::where('materia_id', $materiaId)->where('activo', true);
-                            if ($user && $user->hasRole('profesor')) {
-                                $materiaIds = $user->materias()->pluck('id');
-                                if (!$materiaIds->contains($materiaId)) {
-                                    return [];
+                        $estudianteId = $get('estudiante_id');
+                        
+                        if ($materiaId && $estudianteId) {
+                            $estudiante = \App\Models\Estudiante::find($estudianteId);
+                            if ($estudiante && $estudiante->grado) {
+                                // Obtener logros de la materia que pertenecen al grado del estudiante
+                                $query = \App\Models\Logro::where('materia_id', $materiaId)
+                                    ->where('activo', true)
+                                    ->whereHas('materia.grados', function ($q) use ($estudiante) {
+                                        $q->where('grado_id', $estudiante->grado_id);
+                                    });
+                                
+                                // Si es profesor, verificar que la materia le pertenezca
+                                if ($user && $user->hasRole('profesor')) {
+                                    $materiaIds = $user->materias()->pluck('id');
+                                    if (!$materiaIds->contains($materiaId)) {
+                                        return [];
+                                    }
                                 }
+                                
+                                return $query->orderBy('titulo')->pluck('titulo', 'id')->map(function ($titulo, $id) {
+                                    $logro = \App\Models\Logro::find($id);
+                                    return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
+                                });
                             }
-                            return $query->orderBy('titulo')->pluck('titulo', 'id')->map(function ($titulo, $id) {
-                                $logro = \App\Models\Logro::find($id);
-                                return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
-                            });
                         }
                         return [];
                     })
@@ -78,7 +108,7 @@ class NotaResource extends Resource
                     ->searchable()
                     ->label('Logros')
                     ->helperText('Seleccione los logros que desea asignar al estudiante. Puede seleccionar múltiples logros de la materia seleccionada.')
-                    ->disabled(fn ($get) => !$get('materia_id')),
+                    ->disabled(fn ($get) => !$get('materia_id') || !$get('estudiante_id')),
                 Forms\Components\Select::make('periodo_id')
                     ->relationship('periodo', 'corte')
                     ->getOptionLabelFromRecordUsing(function ($record) {
