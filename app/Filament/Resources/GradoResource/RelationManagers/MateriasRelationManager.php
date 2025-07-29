@@ -23,11 +23,39 @@ class MateriasRelationManager extends RelationManager
                 Forms\Components\TextInput::make('nombre')
                     ->required()
                     ->maxLength(255)
-                    ->label('Nombre de la Materia'),
+                    ->label('Nombre'),
                 Forms\Components\TextInput::make('codigo')
                     ->required()
                     ->maxLength(20)
                     ->label('Código'),
+                Forms\Components\Select::make('grados')
+                    ->relationship('grados', 'nombre')
+                    ->multiple()
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('nombre')
+                            ->required()
+                            ->maxLength(255)
+                            ->label('Nombre'),
+                        Forms\Components\Select::make('tipo')
+                            ->options([
+                                'preescolar' => 'Preescolar',
+                                'primaria' => 'Primaria',
+                                'secundaria' => 'Secundaria',
+                                'media_academica' => 'Media Académica',
+                            ])
+                            ->required()
+                            ->label('Tipo'),
+                    ])
+                    ->label('Grados'),
+                Forms\Components\Select::make('docente_id')
+                    ->relationship('docente', 'name')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->label('Docente'),
                 Forms\Components\Textarea::make('descripcion')
                     ->maxLength(65535)
                     ->columnSpanFull()
@@ -36,7 +64,6 @@ class MateriasRelationManager extends RelationManager
                     ->required()
                     ->default(true)
                     ->label('Materia Activa'),
-                Forms\Components\Hidden::make('grado_id'),
             ]);
     }
 
@@ -48,11 +75,21 @@ class MateriasRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('nombre')
                     ->searchable()
                     ->sortable()
-                    ->label('Nombre de la Materia'),
+                    ->label('Nombre'),
                 Tables\Columns\TextColumn::make('codigo')
                     ->searchable()
                     ->sortable()
                     ->label('Código'),
+                Tables\Columns\TextColumn::make('grados.nombre')
+                    ->badge()
+                    ->separator(',')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Grados'),
+                Tables\Columns\TextColumn::make('docente.name')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Docente'),
                 Tables\Columns\IconColumn::make('activa')
                     ->boolean()
                     ->sortable()
@@ -63,6 +100,13 @@ class MateriasRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('grados')
+                    ->relationship('grados', 'nombre')
+                    ->multiple()
+                    ->label('Grados'),
+                Tables\Filters\SelectFilter::make('docente_id')
+                    ->relationship('docente', 'name')
+                    ->label('Docente'),
                 Tables\Filters\SelectFilter::make('activa')
                     ->options([
                         '1' => 'Activa',
@@ -83,4 +127,4 @@ class MateriasRelationManager extends RelationManager
                 ]),
             ]);
     }
-} 
+}

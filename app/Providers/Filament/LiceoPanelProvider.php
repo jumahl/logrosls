@@ -46,9 +46,9 @@ class LiceoPanelProvider extends PanelProvider
                 \App\Filament\Widgets\StatsOverview::class,
             ])
             ->navigationGroups([
+                'Configuración Académica',
                 'Gestión Académica',
                 'Gestión de Estudiantes',
-                'Configuración Académica',
                 'Reportes',
                 'Administración',
             ])

@@ -17,13 +17,6 @@ class LogrosRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'titulo';
 
-    /**
-     * SOBRESCRITURA IMPORTANTE:
-     * La relación 'logros' en el modelo Grado es incorrecta para nuestra BD,
-     * pero necesaria para que Filament se inicie. Aquí la reemplazamos
-     * por la consulta correcta que usa la tabla pivote 'grado_materia'.
-     * Esto corrige tanto la tabla como el conteo de la pestaña.
-     */
     protected function getTableQuery(): Builder
     {
         $grado = $this->getOwnerRecord();
@@ -34,11 +27,22 @@ class LogrosRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
+        $user = auth()->user();
         return $form
             ->schema([
+                Forms\Components\TextInput::make('codigo')
+                    ->required()
+                    ->maxLength(20)
+                    ->unique(ignoreRecord: true)
+                    ->label('Código')
+                    ->helperText('Código único del logro'),
+                Forms\Components\TextInput::make('titulo')
+                    ->required()
+                    ->maxLength(255)
+                    ->label('Título del Logro')
+                    ->helperText('Título descriptivo del logro'),
                 Forms\Components\Select::make('materia_id')
                     ->relationship('materia', 'nombre', function (Builder $query) {
-                        // Filtra las materias para mostrar solo las que pertenecen a este grado
                         $gradoId = $this->getOwnerRecord()->id;
                         return $query->whereHas('grados', function ($q) use ($gradoId) {
                             $q->where('grados.id', $gradoId);
@@ -47,39 +51,107 @@ class LogrosRelationManager extends RelationManager
                     ->required()
                     ->searchable()
                     ->preload()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('nombre')
+                            ->required()
+                            ->maxLength(255)
+                            ->label('Nombre'),
+                        Forms\Components\TextInput::make('codigo')
+                            ->required()
+                            ->maxLength(20)
+                            ->label('Código'),
+                        Forms\Components\Select::make('grados')
+                            ->relationship('grados', 'nombre')
+                            ->multiple()
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->label('Grados'),
+                    ])
                     ->label('Materia'),
-                Forms\Components\TextInput::make('titulo')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Título del Logro'),
                 Forms\Components\TextInput::make('competencia')
                     ->required()
                     ->maxLength(255)
-                    ->label('Competencia'),
+                    ->label('Competencia')
+                    ->helperText('Competencia que evalúa este logro'),
                 Forms\Components\TextInput::make('tema')
                     ->required()
                     ->maxLength(255)
-                    ->label('Tema'),
+                    ->label('Tema')
+                    ->helperText('Tema específico del logro'),
                 Forms\Components\TextInput::make('indicador_desempeno')
                     ->required()
                     ->maxLength(255)
-                    ->label('Indicador de Desempeño'),
-                Forms\Components\Textarea::make('descripcion')
-                    ->maxLength(65535)
-                    ->columnSpanFull()
-                    ->label('Descripción'),
+                    ->label('Indicador de Desempeño')
+                    ->helperText('Indicador específico que se evalúa'),
+                Forms\Components\TextInput::make('dimension')
+                    ->maxLength(255)
+                    ->label('Dimensión')
+                    ->helperText('Dimensión del aprendizaje (opcional)'),
                 Forms\Components\Select::make('nivel_dificultad')
-                    ->required()
                     ->options([
                         'bajo' => 'Bajo',
                         'medio' => 'Medio',
                         'alto' => 'Alto',
                     ])
-                    ->label('Nivel de Dificultad'),
+                    ->required()
+                    ->default('medio')
+                    ->label('Nivel de Dificultad')
+                    ->helperText('Nivel de complejidad del logro'),
+                Forms\Components\Select::make('tipo')
+                    ->options([
+                        'conocimiento' => 'Conocimiento',
+                        'habilidad' => 'Habilidad',
+                        'actitud' => 'Actitud',
+                        'valor' => 'Valor',
+                    ])
+                    ->required()
+                    ->default('conocimiento')
+                    ->label('Tipo de Logro')
+                    ->helperText('Tipo de aprendizaje que evalúa'),
+                Forms\Components\Select::make('periodos')
+                    ->relationship('periodos', 'corte')
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->createOptionForm([
+                        Forms\Components\Select::make('numero_periodo')
+                            ->options([
+                                1 => 'Primer Período',
+                                2 => 'Segundo Período',
+                            ])
+                            ->required()
+                            ->label('Número de Período'),
+                        Forms\Components\Select::make('corte')
+                            ->options([
+                                'Primer Corte' => 'Primer Corte',
+                                'Segundo Corte' => 'Segundo Corte',
+                            ])
+                            ->required()
+                            ->label('Corte'),
+                        Forms\Components\TextInput::make('año_escolar')
+                            ->required()
+                            ->numeric()
+                            ->default(date('Y'))
+                            ->label('Año Escolar'),
+                        Forms\Components\DatePicker::make('fecha_inicio')
+                            ->required()
+                            ->label('Fecha de Inicio'),
+                        Forms\Components\DatePicker::make('fecha_fin')
+                            ->required()
+                            ->label('Fecha de Fin'),
+                    ])
+                    ->label('Períodos'),
+                Forms\Components\Textarea::make('descripcion')
+                    ->maxLength(65535)
+                    ->columnSpanFull()
+                    ->label('Descripción General')
+                    ->helperText('Descripción adicional del logro'),
                 Forms\Components\Toggle::make('activo')
                     ->required()
                     ->default(true)
-                    ->label('Logro Activo'),
+                    ->label('Logro Activo')
+                    ->helperText('Indica si el logro está disponible para asignar'),
             ]);
     }
 
@@ -87,6 +159,10 @@ class LogrosRelationManager extends RelationManager
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('codigo')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Código'),
                 Tables\Columns\TextColumn::make('titulo')
                     ->searchable()
                     ->sortable()
@@ -100,6 +176,11 @@ class LogrosRelationManager extends RelationManager
                     ->sortable()
                     ->limit(50)
                     ->label('Competencia'),
+                Tables\Columns\TextColumn::make('tema')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(30)
+                    ->label('Tema'),
                 Tables\Columns\TextColumn::make('nivel_dificultad')
                     ->searchable()
                     ->sortable()
@@ -110,6 +191,17 @@ class LogrosRelationManager extends RelationManager
                         'alto' => 'danger',
                     })
                     ->label('Nivel'),
+                Tables\Columns\TextColumn::make('tipo')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'conocimiento' => 'info',
+                        'habilidad' => 'success',
+                        'actitud' => 'warning',
+                        'valor' => 'danger',
+                    })
+                    ->label('Tipo'),
                 Tables\Columns\IconColumn::make('activo')
                     ->boolean()
                     ->sortable()
@@ -121,6 +213,21 @@ class LogrosRelationManager extends RelationManager
                     ->searchable()
                     ->preload()
                     ->label('Materia'),
+                Tables\Filters\SelectFilter::make('nivel_dificultad')
+                    ->options([
+                        'bajo' => 'Bajo',
+                        'medio' => 'Medio',
+                        'alto' => 'Alto',
+                    ])
+                    ->label('Nivel de Dificultad'),
+                Tables\Filters\SelectFilter::make('tipo')
+                    ->options([
+                        'conocimiento' => 'Conocimiento',
+                        'habilidad' => 'Habilidad',
+                        'actitud' => 'Actitud',
+                        'valor' => 'Valor',
+                    ])
+                    ->label('Tipo de Logro'),
                 Tables\Filters\TernaryFilter::make('activo')
                     ->label('Estado'),
             ])
@@ -142,4 +249,4 @@ class LogrosRelationManager extends RelationManager
                 ]),
             ]);
     }
-} 
+}
