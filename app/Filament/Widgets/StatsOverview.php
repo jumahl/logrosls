@@ -61,11 +61,12 @@ class StatsOverview extends BaseWidget
                 ];
             } else {
                 // Profesor normal (no director de grupo)
-                $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
+                $materias = $user->materias()->with('grados')->get();
+                $gradoIds = $materias->pluck('grados')->flatten()->pluck('id')->unique();
                 $estudiantesMaterias = Estudiante::whereIn('grado_id', $gradoIds)->where('activo', true)->count();
                 
                 $stats = [
-                    Stat::make('Mis Materias', $user->materias()->where('activa', true)->count())
+                    Stat::make('Mis Materias', $materias->where('activa', true)->count())
                         ->description('Materias que imparto')
                         ->descriptionIcon('heroicon-m-book-open')
                         ->color('success'),
