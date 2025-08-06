@@ -13,6 +13,7 @@ use App\Models\Periodo;
 use App\Models\Logro;
 use App\Models\Materia;
 use App\Models\Grado;
+use Filament\Notifications\Notification;
 
 class CreateNota extends CreateRecord
 {
@@ -21,6 +22,13 @@ class CreateNota extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+    protected function getCreatedNotification(): ?Notification
+    {
+        return Notification::make()
+            ->success()
+            ->title('Nota creada')
+            ->body('La nota ha sido creada exitosamente.');
     }
 
     public function form(Form $form): Form

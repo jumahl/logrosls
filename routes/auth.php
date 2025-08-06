@@ -4,19 +4,38 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
+// Rutas de autenticación deshabilitadas - usando Filament
+// Route::middleware('guest')->group(function () {
+//     Volt::route('login', 'auth.login')
+//         ->name('login');
+
+//     Volt::route('register', 'auth.register')
+//         ->name('register');
+
+//     Volt::route('forgot-password', 'auth.forgot-password')
+//         ->name('password.request');
+
+//     Volt::route('reset-password/{token}', 'auth.reset-password')
+//         ->name('password.reset');
+// });
+
+// Redireccionar rutas nombradas a Filament
 Route::middleware('guest')->group(function () {
-    Volt::route('login', 'auth.login')
-        ->name('login');
+    Route::get('login', function () {
+        return redirect('/liceo/login');
+    })->name('login');
 
-    Volt::route('register', 'auth.register')
-        ->name('register');
+    Route::get('register', function () {
+        return redirect('/liceo/login');
+    })->name('register');
 
-    Volt::route('forgot-password', 'auth.forgot-password')
-        ->name('password.request');
+    Route::get('forgot-password', function () {
+        return redirect('/liceo/login');
+    })->name('password.request');
 
-    Volt::route('reset-password/{token}', 'auth.reset-password')
-        ->name('password.reset');
-
+    Route::get('reset-password/{token}', function () {
+        return redirect('/liceo/login');
+    })->name('password.reset');
 });
 
 Route::middleware('auth')->group(function () {

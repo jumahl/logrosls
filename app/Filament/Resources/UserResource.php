@@ -79,9 +79,23 @@ class UserResource extends Resource
                     ->schema([
                         Select::make('director_grado_id')
                             ->label('Director de Grupo')
-                            ->options(Grado::where('activo', true)->pluck('nombre', 'id'))
+                            ->options(function ($record) {
+                                $query = Grado::where('activo', true);
+                                $gradosConDirector = User::whereNotNull('director_grado_id')
+                                    ->pluck('director_grado_id')
+                                    ->toArray();
+                                
+                                if ($record && $record->director_grado_id) {
+
+                                    $gradosConDirector = array_diff($gradosConDirector, [$record->director_grado_id]);
+                                }
+                        
+                                $query->whereNotIn('id', $gradosConDirector);
+                                
+                                return $query->pluck('nombre', 'id');
+                            })
                             ->placeholder('Seleccionar grado (opcional)')
-                            ->helperText('Asignar como director de grupo de un grado específico. Solo un profesor puede ser director de un grado.')
+                            ->helperText('Asignar como director de grupo de un grado específico.')
                             ->searchable()
                             ->nullable()
                             ->unique(table: 'users', column: 'director_grado_id', ignoreRecord: true),

@@ -28,7 +28,7 @@ class LiceoPanelProvider extends PanelProvider
             ->id('liceo')
             ->path('liceo')
             ->login()
-            
+            ->passwordReset()
             ->favicon(asset('liceo.png'))
             ->brandName('Liceo')
             ->brandLogo(asset('liceo.png'))
@@ -46,9 +46,9 @@ class LiceoPanelProvider extends PanelProvider
                 \App\Filament\Widgets\StatsOverview::class,
             ])
             ->navigationGroups([
+                'Configuración Académica',
                 'Gestión Académica',
                 'Gestión de Estudiantes',
-                'Configuración Académica',
                 'Reportes',
                 'Administración',
             ])

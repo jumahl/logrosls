@@ -145,15 +145,7 @@ class PeriodoResource extends Resource
                         // Desvincular los logros del período
                         $record->logros()->detach();
                     })
-                    ->after(function (Periodo $record) {
-                        Notification::make()
-                            ->title('Período eliminado exitosamente')
-                            ->icon('heroicon-o-trash')
-                            ->iconColor('danger')
-                            ->body('El período ha sido eliminado del sistema.')
-                            ->success()
-                            ->send();
-                    }),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -164,15 +156,7 @@ class PeriodoResource extends Resource
                                 $record->logros()->detach();
                             }
                         })
-                        ->after(function () {
-                            Notification::make()
-                                ->title('Períodos eliminados exitosamente')
-                                ->icon('heroicon-o-trash')
-                                ->iconColor('danger')
-                                ->body('Los períodos seleccionados han sido eliminados del sistema.')
-                                ->success()
-                                ->send();
-                        }),
+
                 ]),
             ]);
     }
