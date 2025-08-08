@@ -195,9 +195,9 @@ class EstudianteResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with(['grado']); 
+        
         if ($user && $user->hasRole('profesor')) {
-            // Obtener los grados donde el profesor tiene materias asignadas
             $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
             $query->whereIn('grado_id', $gradoIds);
         }

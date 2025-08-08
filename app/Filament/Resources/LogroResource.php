@@ -276,9 +276,9 @@ class LogroResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with(['materia']);
+        
         if ($user && $user->hasRole('profesor')) {
-            // Solo mostrar logros de las materias del profesor
             $materiaIds = $user->materias()->pluck('id');
             $query->whereIn('materia_id', $materiaIds);
         }

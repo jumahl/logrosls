@@ -245,9 +245,13 @@ class NotaResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with([
+            'estudiante.grado',
+            'logro.materia.docente',
+            'periodo'
+        ]);
+        
         if ($user && $user->hasRole('profesor')) {
-            // Solo mostrar notas de logros de las materias del profesor
             $materiaIds = $user->materias()->pluck('id');
             $query->whereHas('logro', function ($q) use ($materiaIds) {
                 $q->whereIn('materia_id', $materiaIds);
