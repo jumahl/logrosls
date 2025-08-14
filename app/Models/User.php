@@ -8,8 +8,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
@@ -94,5 +96,14 @@ class User extends Authenticatable
             return collect();
         }
         return $this->directorGrado->estudiantes;
+    }
+
+    /**
+     * Determinar si el usuario puede acceder al panel de Filament.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // Permitir acceso si el usuario tiene algún rol válido
+        return $this->hasAnyRole(['admin', 'profesor']);
     }
 }

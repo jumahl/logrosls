@@ -58,6 +58,14 @@ class Grado extends Model
     {
         return $this->hasOne(User::class, 'director_grado_id');
     }
+
+    /**
+     * Scope para filtrar grados activos.
+     */
+    public function scopeActivos($query)
+    {
+        return $query->where('activo', true);
+    }
     
     /**
      * Boot the model.

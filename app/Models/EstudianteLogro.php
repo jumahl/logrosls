@@ -45,6 +45,62 @@ class EstudianteLogro extends Model
     }
 
     /**
+     * Scope para filtrar por estudiante
+     */
+    public function scopePorEstudiante($query, $estudianteId)
+    {
+        return $query->where('estudiante_id', $estudianteId);
+    }
+
+    /**
+     * Scope para filtrar por logro
+     */
+    public function scopePorLogro($query, $logroId)
+    {
+        return $query->where('logro_id', $logroId);
+    }
+
+    /**
+     * Scope para filtrar por periodo
+     */
+    public function scopePorPeriodo($query, $periodoId)
+    {
+        return $query->where('periodo_id', $periodoId);
+    }
+
+    /**
+     * Scope para filtrar por nivel de desempeño
+     */
+    public function scopePorNivelDesempeno($query, $nivel)
+    {
+        return $query->where('nivel_desempeno', $nivel);
+    }
+
+    /**
+     * Scope para obtener evaluaciones que tienen observaciones (simulando "evaluados")
+     */
+    public function scopeEvaluados($query)
+    {
+        return $query->whereNotNull('observaciones');
+    }
+
+    /**
+     * Scope para obtener evaluaciones pendientes (sin observaciones)
+     */
+    public function scopePendientes($query)
+    {
+        return $query->whereNull('observaciones');
+    }
+
+    /**
+     * Accessor para determinar si la evaluación está completada
+     */
+    public function getEvaluadoAttribute()
+    {
+        return !is_null($this->observaciones);
+    }
+
+    /**
      * Obtener el valor numérico del nivel de desempeño para cálculos.
      */
     public function getValorNumericoAttribute()

@@ -17,13 +17,14 @@ class Logro extends Model
         'titulo',
         'descripcion',
         'materia_id',
-        'nivel',
+        'nivel_dificultad',
         'tipo',
         'activo',
         'competencia',
         'tema',
         'indicador_desempeno',
-        'dimension'
+        'dimension',
+        'orden'
     ];
 
     protected $casts = [
@@ -78,7 +79,7 @@ class Logro extends Model
      */
     public function scopePorGrado($query, $gradoId)
     {
-        return $query->whereHas('materia.grado', function ($q) use ($gradoId) {
+        return $query->whereHas('materia.grados', function ($q) use ($gradoId) {
             $q->where('grados.id', $gradoId);
         });
     }
@@ -105,14 +106,6 @@ class Logro extends Model
     public function scopePorTipo($query, $tipo)
     {
         return $query->where('tipo', $tipo);
-    }
-
-    /**
-     * Scope para ordenar por orden de presentación.
-     */
-    public function scopeOrdenados($query)
-    {
-        return $query->orderBy('orden');
     }
     
     /**
