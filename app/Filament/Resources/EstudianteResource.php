@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Notifications\Notification;
+use App\Rules\FechaNoPosterior;
 
 class EstudianteResource extends Resource
 {
@@ -44,7 +45,10 @@ class EstudianteResource extends Resource
                 Forms\Components\TextInput::make('documento')
                     ->required()
                     ->maxLength(20)
-                    ->label('Documento de Identidad'),
+                    ->unique(ignoreRecord: true)
+                    ->regex('/^[0-9]+$/')
+                    ->label('Documento de Identidad')
+                    ->helperText('Solo números, sin puntos ni espacios'),
                 Forms\Components\Select::make('grado_id')
                     ->relationship('grado', 'nombre')
                     ->required()
@@ -67,18 +71,26 @@ class EstudianteResource extends Resource
                     ->label('Grado'),
                 Forms\Components\DatePicker::make('fecha_nacimiento')
                     ->required()
-                    ->label('Fecha de Nacimiento'),
+                    ->label('Fecha de Nacimiento')
+                    ->rules([new FechaNoPosterior()])
+                    ->before(now()->subYears(3))
+                    ->after(now()->subYears(25))
+                    ->helperText('Debe tener entre 3 y 25 años'),
                 Forms\Components\TextInput::make('direccion')
                     ->maxLength(255)
                     ->label('Dirección'),
                 Forms\Components\TextInput::make('telefono')
                     ->tel()
                     ->maxLength(20)
-                    ->label('Teléfono'),
+                    ->regex('/^[\d\s\+\-\(\)]+$/')
+                    ->label('Teléfono')
+                    ->helperText('Formato: +57 300 123 4567 o 300 123 4567'),
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->maxLength(255)
-                    ->label('Correo Electrónico'),
+                    ->unique(ignoreRecord: true)
+                    ->label('Correo Electrónico')
+                    ->helperText('Opcional - Si se proporciona debe ser único'),
                 Forms\Components\Toggle::make('activo')
                     ->required()
                     ->default(true)

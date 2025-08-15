@@ -10,6 +10,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Rules\FechaNoPosterior;
+use App\Rules\EstudianteLogroUnico;
 
 class NotaResource extends Resource
 {
@@ -136,7 +138,9 @@ class NotaResource extends Resource
                 Forms\Components\DatePicker::make('fecha_asignacion')
                     ->required()
                     ->label('Fecha de Asignación')
-                    ->default(now()),
+                    ->default(now())
+                    ->rules([new FechaNoPosterior()])
+                    ->helperText('No puede ser una fecha futura'),
             ]);
     }
 

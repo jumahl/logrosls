@@ -41,7 +41,10 @@ class MateriaResource extends Resource
                 Forms\Components\TextInput::make('codigo')
                     ->required()
                     ->maxLength(20)
-                    ->label('Código'),
+                    ->unique(ignoreRecord: true)
+                    ->regex('/^[A-Z0-9\-]+$/')
+                    ->label('Código')
+                    ->helperText('Solo letras mayúsculas, números y guiones. Ej: MAT-001'),
                 Forms\Components\Select::make('grados')
                     ->relationship('grados', 'nombre')
                     ->multiple()
@@ -65,11 +68,12 @@ class MateriaResource extends Resource
                     ])
                     ->label('Grados'),
                 Forms\Components\Select::make('docente_id')
-                    ->relationship('docente', 'name')
+                    ->relationship('docente', 'name', fn($query) => $query->role('profesor'))
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->label('Docente'),
+                    ->label('Docente')
+                    ->helperText('Solo usuarios con rol de profesor'),
                 Forms\Components\Textarea::make('descripcion')
                     ->maxLength(65535)
                     ->columnSpanFull()

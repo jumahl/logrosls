@@ -13,6 +13,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Notifications\Notification;
+use App\Rules\FechaFinPosteriorInicio;
+use App\Rules\PeriodoUnicoActivo;
+use App\Rules\PeriodoUnico;
 
 class PeriodoResource extends Resource
 {
@@ -41,7 +44,8 @@ class PeriodoResource extends Resource
                     ])
                     ->required()
                     ->label('Número de Período')
-                    ->helperText('Seleccione si es el primer o segundo período del año escolar'),
+                    ->helperText('Seleccione si es el primer o segundo período del año escolar')
+                    ->live(),
                 Forms\Components\Select::make('corte')
                     ->options([
                         'Primer Corte' => 'Primer Corte',
@@ -49,26 +53,49 @@ class PeriodoResource extends Resource
                     ])
                     ->required()
                     ->label('Corte')
-                    ->helperText('Primer Corte: Preinforme, Segundo Corte: Boletín final'),
+                    ->helperText('Primer Corte: Preinforme, Segundo Corte: Boletín final')
+                    ->live(),
                 Forms\Components\TextInput::make('año_escolar')
                     ->required()
                     ->numeric()
-                    ->minValue(2020)
-                    ->maxValue(2030)
+                    ->minValue(date('Y') - 1)
+                    ->maxValue(date('Y') + 2)
                     ->default(date('Y'))
                     ->label('Año Escolar')
-                    ->helperText('Año escolar al que pertenece este período'),
+                    ->helperText('Año escolar al que pertenece este período')
+                    ->live()
+                    ->rules([
+                        function ($get, $record) {
+                            return new PeriodoUnico(
+                                $get('numero_periodo'),
+                                $get('corte'),
+                                $get('año_escolar'),
+                                $record?->id
+                            );
+                        }
+                    ]),
                 Forms\Components\DatePicker::make('fecha_inicio')
                     ->required()
-                    ->label('Fecha de Inicio'),
+                    ->label('Fecha de Inicio')
+                    ->live(),
                 Forms\Components\DatePicker::make('fecha_fin')
                     ->required()
-                    ->label('Fecha de Fin'),
+                    ->label('Fecha de Fin')
+                    ->rules([
+                        function ($get) {
+                            return new FechaFinPosteriorInicio($get('fecha_inicio'));
+                        }
+                    ]),
                 Forms\Components\Toggle::make('activo')
                     ->required()
                     ->default(true)
                     ->label('Período Activo')
-                    ->helperText('Solo un período puede estar activo a la vez'),
+                    ->helperText('Solo un período puede estar activo a la vez')
+                    ->rules([
+                        function ($record) {
+                            return new PeriodoUnicoActivo($record?->id);
+                        }
+                    ]),
             ]);
     }
 

@@ -43,8 +43,9 @@ class LogroResource extends Resource
                 Forms\Components\TextInput::make('titulo')
                     ->required()
                     ->maxLength(255)
+                    ->minLength(10)
                     ->label('Título del Logro')
-                    ->helperText('Título descriptivo del logro'),
+                    ->helperText('Título descriptivo del logro (mínimo 10 caracteres)'),
                 Forms\Components\Select::make('materia_id')
                     ->relationship('materia', 'nombre')
                     ->required()
@@ -77,8 +78,9 @@ class LogroResource extends Resource
                 Forms\Components\TextInput::make('competencia')
                     ->required()
                     ->maxLength(255)
+                    ->minLength(15)
                     ->label('Competencia')
-                    ->helperText('Competencia que evalúa este logro'),
+                    ->helperText('Competencia que evalúa este logro (mínimo 15 caracteres)'),
                 Forms\Components\TextInput::make('tema')
                     ->required()
                     ->maxLength(255)
@@ -87,8 +89,9 @@ class LogroResource extends Resource
                 Forms\Components\TextInput::make('indicador_desempeno')
                     ->required()
                     ->maxLength(255)
+                    ->minLength(15)
                     ->label('Indicador de Desempeño')
-                    ->helperText('Indicador específico que se evalúa'),
+                    ->helperText('Indicador específico que se evalúa (mínimo 15 caracteres)'),
                 Forms\Components\TextInput::make('dimension')
                     ->maxLength(255)
                     ->label('Dimensión')
@@ -119,6 +122,9 @@ class LogroResource extends Resource
                     ->multiple()
                     ->preload()
                     ->searchable()
+                    ->required()
+                    ->label('Períodos')
+                    ->helperText('Debe seleccionar al menos un período')
                     ->createOptionForm([
                         Forms\Components\Select::make('numero_periodo')
                             ->options([

@@ -39,7 +39,9 @@ class GradoResource extends Resource
                         Forms\Components\TextInput::make('nombre')
                             ->required()
                             ->maxLength(255)
-                            ->label('Nombre del Grado'),
+                            ->unique(ignoreRecord: true)
+                            ->label('Nombre del Grado')
+                            ->helperText('Ej: 1°, 2°, Transición, etc.'),
                         Forms\Components\Select::make('tipo')
                             ->required()
                             ->options([

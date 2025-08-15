@@ -14,6 +14,7 @@ use App\Models\Logro;
 use App\Models\Materia;
 use App\Models\Grado;
 use Filament\Notifications\Notification;
+use App\Rules\FechaNoPosterior;
 
 class CreateNota extends CreateRecord
 {
@@ -150,33 +151,64 @@ class CreateNota extends CreateRecord
                 Forms\Components\DatePicker::make('fecha_asignacion')
                     ->required()
                     ->label('Fecha de Asignación')
-                    ->default(now()),
+                    ->default(now())
+                    ->rules([new FechaNoPosterior()])
+                    ->helperText('No puede ser una fecha futura'),
             ]);
     }
 
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
         $created = null;
+        $createdCount = 0;
+        $skippedCount = 0;
+        
         if (isset($data['logros']) && is_array($data['logros'])) {
             $logros = $data['logros'];
             unset($data['logros']);
+            
             foreach ($logros as $logroId) {
                 $existe = \App\Models\EstudianteLogro::where('estudiante_id', $data['estudiante_id'])
                     ->where('logro_id', $logroId)
                     ->where('periodo_id', $data['periodo_id'])
                     ->exists();
+                    
                 if (!$existe) {
-                    $created = \App\Models\EstudianteLogro::create([
-                        'estudiante_id' => $data['estudiante_id'],
-                        'logro_id' => $logroId,
-                        'periodo_id' => $data['periodo_id'],
-                        'nivel_desempeno' => $data['nivel_desempeno'],
-                        'observaciones' => $data['observaciones'] ?? null,
-                        'fecha_asignacion' => $data['fecha_asignacion'],
-                    ]);
+                    // Validar que el estudiante pertenezca al grado correcto para la materia
+                    $logro = \App\Models\Logro::with('materia.grados')->find($logroId);
+                    $estudiante = \App\Models\Estudiante::find($data['estudiante_id']);
+                    
+                    if ($logro && $estudiante && $logro->materia->grados->contains($estudiante->grado_id)) {
+                        $created = \App\Models\EstudianteLogro::create([
+                            'estudiante_id' => $data['estudiante_id'],
+                            'logro_id' => $logroId,
+                            'periodo_id' => $data['periodo_id'],
+                            'nivel_desempeno' => $data['nivel_desempeno'],
+                            'observaciones' => $data['observaciones'] ?? null,
+                            'fecha_asignacion' => $data['fecha_asignacion'],
+                        ]);
+                        $createdCount++;
+                    }
+                } else {
+                    $skippedCount++;
                 }
             }
+            
+            // Notificación personalizada
+            if ($createdCount > 0) {
+                $message = "Se crearon {$createdCount} nota(s) exitosamente.";
+                if ($skippedCount > 0) {
+                    $message .= " Se omitieron {$skippedCount} nota(s) que ya existían.";
+                }
+                
+                Notification::make()
+                    ->success()
+                    ->title('Notas procesadas')
+                    ->body($message)
+                    ->send();
+            }
         }
-        return $created;
+        
+        return $created ?: new \App\Models\EstudianteLogro();
     }
 } 
