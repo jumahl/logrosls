@@ -47,6 +47,22 @@ class Materia extends Model
     {
         return $this->hasMany(Logro::class);
     }
+
+    /**
+     * Scope para filtrar materias activas.
+     */
+    public function scopeActivas($query)
+    {
+        return $query->where('activa', true);
+    }
+
+    /**
+     * Scope para filtrar por docente.
+     */
+    public function scopePorDocente($query, $docenteId)
+    {
+        return $query->where('docente_id', $docenteId);
+    }
     
     /**
      * Boot the model.
