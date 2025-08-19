@@ -43,7 +43,9 @@ class UserResource extends Resource
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255)
-                            ->label('Nombre'),
+                            ->regex('/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/')
+                            ->label('Nombre')
+                            ->helperText('Solo letras y espacios'),
                         TextInput::make('email')
                             ->email()
                             ->required()
@@ -58,7 +60,10 @@ class UserResource extends Resource
                             ->password()
                             ->dehydrated(fn ($state) => filled($state))
                             ->required(fn (string $context): bool => $context === 'create')
-                            ->label('Contraseña'),
+                            ->minLength(8)
+                            ->regex('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/')
+                            ->label('Contraseña')
+                            ->helperText('Mínimo 8 caracteres, debe incluir mayúscula, minúscula, número y símbolo'),
                         TextInput::make('password_confirmation')
                             ->password()
                             ->required(fn (string $context): bool => $context === 'create')
@@ -72,7 +77,9 @@ class UserResource extends Resource
                             ->multiple()
                             ->relationship('roles', 'name')
                             ->preload()
-                            ->label('Roles'),
+                            ->required()
+                            ->label('Roles')
+                            ->helperText('Debe seleccionar al menos un rol'),
                     ]),
 
                 Forms\Components\Section::make('Director de Grupo')
