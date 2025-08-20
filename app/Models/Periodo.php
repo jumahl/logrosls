@@ -13,7 +13,7 @@ class Periodo extends Model
 
     protected $fillable = [
         'corte',
-        'año_escolar',
+    'anio_escolar',
         'numero_periodo',
         'fecha_inicio',
         'fecha_fin',
@@ -24,7 +24,7 @@ class Periodo extends Model
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
         'activo' => 'boolean',
-        'año_escolar' => 'integer',
+    'anio_escolar' => 'integer',
         'numero_periodo' => 'integer'
     ];
 
@@ -66,7 +66,7 @@ class Periodo extends Model
      */
     public function scopePorAñoEscolar($query, $año)
     {
-        return $query->where('año_escolar', $año);
+        return $query->where('anio_escolar', $año);
     }
 
     /**
@@ -90,7 +90,7 @@ class Periodo extends Model
      */
     public function getPeriodoCompletoAttribute()
     {
-        return "{$this->nombre} - {$this->corte} {$this->año_escolar}";
+    return "{$this->nombre} - {$this->corte} {$this->anio_escolar}";
     }
 
     /**
@@ -100,13 +100,13 @@ class Periodo extends Model
     {
         if ($this->corte === 'Segundo Corte' && $this->numero_periodo === 1) {
             // Retornar el primer corte del primer período
-            return static::where('año_escolar', $this->año_escolar)
+            return static::where('anio_escolar', $this->anio_escolar)
                 ->where('numero_periodo', 1)
                 ->where('corte', 'Primer Corte')
                 ->first();
         } elseif ($this->corte === 'Primer Corte' && $this->numero_periodo === 2) {
             // Retornar el segundo corte del primer período
-            return static::where('año_escolar', $this->año_escolar)
+            return static::where('anio_escolar', $this->anio_escolar)
                 ->where('numero_periodo', 1)
                 ->where('corte', 'Segundo Corte')
                 ->first();

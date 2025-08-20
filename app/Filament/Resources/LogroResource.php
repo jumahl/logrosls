@@ -122,7 +122,6 @@ class LogroResource extends Resource
                     ->multiple()
                     ->preload()
                     ->searchable()
-                    ->required()
                     ->label('Períodos')
                     ->helperText('Debe seleccionar al menos un período')
                     ->createOptionForm([
@@ -140,7 +139,7 @@ class LogroResource extends Resource
                             ])
                             ->required()
                             ->label('Corte'),
-                        Forms\Components\TextInput::make('año_escolar')
+                        Forms\Components\TextInput::make('anio_escolar')
                             ->required()
                             ->numeric()
                             ->default(date('Y'))

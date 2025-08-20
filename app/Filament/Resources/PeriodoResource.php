@@ -55,7 +55,7 @@ class PeriodoResource extends Resource
                     ->label('Corte')
                     ->helperText('Primer Corte: Preinforme, Segundo Corte: Boletín final')
                     ->live(),
-                Forms\Components\TextInput::make('año_escolar')
+                Forms\Components\TextInput::make('anio_escolar')
                     ->required()
                     ->numeric()
                     ->minValue(date('Y') - 1)
@@ -69,7 +69,7 @@ class PeriodoResource extends Resource
                             return new PeriodoUnico(
                                 $get('numero_periodo'),
                                 $get('corte'),
-                                $get('año_escolar'),
+                                $get('anio_escolar'),
                                 $record?->id
                             );
                         }
@@ -114,7 +114,7 @@ class PeriodoResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Corte'),
-                Tables\Columns\TextColumn::make('año_escolar')
+                Tables\Columns\TextColumn::make('anio_escolar')
                     ->searchable()
                     ->sortable()
                     ->label('Año Escolar'),
@@ -146,10 +146,10 @@ class PeriodoResource extends Resource
                         '0' => 'Inactivo',
                     ])
                     ->label('Estado'),
-                Tables\Filters\SelectFilter::make('año_escolar')
+        Tables\Filters\SelectFilter::make('anio_escolar')
                     ->options(function () {
-                        $años = Periodo::distinct()->pluck('año_escolar')->sort()->toArray();
-                        return array_combine($años, $años);
+            $anios = Periodo::distinct()->pluck('anio_escolar')->sort()->toArray();
+            return array_combine($anios, $anios);
                     })
                     ->label('Año Escolar'),
                 Tables\Filters\SelectFilter::make('numero_periodo')

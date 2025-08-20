@@ -18,7 +18,7 @@ class PeriodoCRUDTest extends TestCase
         
         $periodoData = [
             'corte' => 'Primer Corte',
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'numero_periodo' => 1,
             'fecha_inicio' => '2024-02-01',
             'fecha_fin' => '2024-04-30',
@@ -29,7 +29,7 @@ class PeriodoCRUDTest extends TestCase
         
         $this->assertDatabaseHas('periodos', [
             'corte' => 'Primer Corte',
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'numero_periodo' => 1,
             'fecha_inicio' => '2024-02-01 00:00:00',
             'fecha_fin' => '2024-04-30 00:00:00',
@@ -80,7 +80,7 @@ class PeriodoCRUDTest extends TestCase
         $admin = $this->createAdmin();
         $periodo = Periodo::factory()->create([
             'corte' => 'Primer Corte',
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'numero_periodo' => 1,
         ]);
         
@@ -88,14 +88,14 @@ class PeriodoCRUDTest extends TestCase
         
         $periodo->update([
             'corte' => 'Segundo Corte',
-            'año_escolar' => 2025,
+            'anio_escolar' => 2025,
             'numero_periodo' => 2,
         ]);
         
         $this->assertDatabaseHas('periodos', [
             'id' => $periodo->id,
             'corte' => 'Segundo Corte',
-            'año_escolar' => 2025,
+            'anio_escolar' => 2025,
             'numero_periodo' => 2,
         ]);
     }
@@ -197,8 +197,8 @@ class PeriodoCRUDTest extends TestCase
     {
         $admin = $this->createAdmin();
         
-        $periodo2024 = Periodo::factory()->create(['año_escolar' => 2024]);
-        $periodo2023 = Periodo::factory()->create(['año_escolar' => 2023]);
+    $periodo2024 = Periodo::factory()->create(['anio_escolar' => 2024]);
+    $periodo2023 = Periodo::factory()->create(['anio_escolar' => 2023]);
         
         $this->actingAs($admin);
         
@@ -243,7 +243,7 @@ class PeriodoCRUDTest extends TestCase
         // En su lugar verificamos que los campos numéricos funcionan correctamente
         $this->assertEquals(1, $periodo->numero_periodo);
         $this->assertIsInt($periodo->numero_periodo);
-        $this->assertIsInt($periodo->año_escolar);
+    $this->assertIsInt($periodo->anio_escolar);
     }
 
     /** @test */
@@ -299,7 +299,7 @@ class PeriodoCRUDTest extends TestCase
         
         $this->expectException(\Illuminate\Database\QueryException::class);
         
-        // Intentar crear sin campos requeridos
+    // Intentar crear sin campos requeridos (corte, anio_escolar, numero_periodo, fecha_inicio, fecha_fin)
         Periodo::create([
             // Faltan campos requeridos como corte, año_escolar, numero_periodo, fecha_inicio, fecha_fin
         ]);
@@ -364,10 +364,10 @@ class PeriodoCRUDTest extends TestCase
         $admin = $this->createAdmin();
         $this->actingAs($admin);
         
-        $periodo1 = Periodo::factory()->create(['año_escolar' => 2024, 'numero_periodo' => 1, 'corte' => 'Primer Corte']);
-        $periodo2 = Periodo::factory()->create(['año_escolar' => 2024, 'numero_periodo' => 1, 'corte' => 'Segundo Corte']);
-        $periodo3 = Periodo::factory()->create(['año_escolar' => 2024, 'numero_periodo' => 2, 'corte' => 'Primer Corte']);
-        $periodo4 = Periodo::factory()->create(['año_escolar' => 2024, 'numero_periodo' => 2, 'corte' => 'Segundo Corte']);
+    $periodo1 = Periodo::factory()->create(['anio_escolar' => 2024, 'numero_periodo' => 1, 'corte' => 'Primer Corte']);
+    $periodo2 = Periodo::factory()->create(['anio_escolar' => 2024, 'numero_periodo' => 1, 'corte' => 'Segundo Corte']);
+    $periodo3 = Periodo::factory()->create(['anio_escolar' => 2024, 'numero_periodo' => 2, 'corte' => 'Primer Corte']);
+    $periodo4 = Periodo::factory()->create(['anio_escolar' => 2024, 'numero_periodo' => 2, 'corte' => 'Segundo Corte']);
         
         $periodos2024 = Periodo::porAñoEscolar(2024)->get();
         

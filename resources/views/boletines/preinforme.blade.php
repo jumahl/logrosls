@@ -69,7 +69,7 @@
         <td>{{ strtoupper($estudiante->grado->tipo ?? '') }}</td>
         <td>{{ $estudiante->grado->nombre ?? '' }}</td>
         <td>{{ $periodo->numero_periodo ?? '' }}</td>
-        <td>{{ $periodo->año_escolar ?? now()->year }}</td>
+    <td>{{ $periodo->anio_escolar ?? now()->year }}</td>
     </tr>
     <tr>
         <th>DIRECTORA DE GRUPO</th>

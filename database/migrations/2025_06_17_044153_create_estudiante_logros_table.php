@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('estudiante_logros', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('estudiante_id')->constrained('estudiantes');
-            $table->foreignId('logro_id')->constrained('logros');
-            $table->foreignId('periodo_id')->constrained('periodos');
+            $table->foreignId('estudiante_id')->constrained('estudiantes')->onDelete('cascade');
+            $table->foreignId('logro_id')->constrained('logros')->onDelete('cascade');
+            $table->foreignId('periodo_id')->constrained('periodos')->onDelete('cascade');
             $table->enum('nivel_desempeno', ['E', 'S', 'A', 'I']);
             $table->text('observaciones')->nullable();
             $table->date('fecha_asignacion');

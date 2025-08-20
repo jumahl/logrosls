@@ -162,10 +162,10 @@ abstract class TestCase extends BaseTestCase
         // Crear períodos
         $periodos = [
             'periodo1' => Periodo::factory()->primerPeriodo()->primerCorte()->create([
-                'año_escolar' => 2024,
+                'anio_escolar' => 2024,
             ]),
             'periodo2' => Periodo::factory()->primerPeriodo()->segundoCorte()->create([
-                'año_escolar' => 2024,
+                'anio_escolar' => 2024,
             ]),
         ];
 

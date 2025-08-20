@@ -68,7 +68,7 @@
         <td>{{ strtoupper($estudiante->grado->tipo ?? '') }}</td>
         <td>{{ $estudiante->grado->nombre ?? '' }}</td>
         <td>{{ $periodo->numero_periodo ?? '' }}</td>
-        <td>{{ $periodo->año_escolar ?? now()->year }}</td>
+    <td>{{ $periodo->anio_escolar ?? now()->year }}</td>
     </tr>
     <tr>
         <th>DIRECTORA DE GRUPO</th>
@@ -98,7 +98,7 @@
     @foreach($logrosPorMateria as $materia => $logros)
         @php
             $logrosSegundoCorte = $logros->filter(function($logro) use ($periodo) {
-                return $logro->periodo->corte === 'Segundo Corte' && $logro->periodo->año_escolar == $periodo->año_escolar && $logro->periodo->numero_periodo == $periodo->numero_periodo;
+                return $logro->periodo->corte === 'Segundo Corte' && $logro->periodo->anio_escolar == $periodo->anio_escolar && $logro->periodo->numero_periodo == $periodo->numero_periodo;
             });
         @endphp
         @if($logrosSegundoCorte->isNotEmpty())
@@ -160,10 +160,10 @@
                     '2_Segundo Corte' => ''
                 ];
                 foreach($logros as $logro) {
-                    $anio = $logro->periodo->año_escolar ?? null;
+                    $anio = $logro->periodo->anio_escolar ?? null;
                     $periodoN = $logro->periodo->numero_periodo ?? null;
                     $corte = $logro->periodo->corte ?? null;
-                    if($anio == ($periodo->año_escolar ?? null)) {
+                    if($anio == ($periodo->anio_escolar ?? null)) {
                         if($periodoN == 1 && $corte == 'Primer Corte') $desempenos['1_Primer Corte'] = $logro->nivel_desempeno;
                         if($periodoN == 1 && $corte == 'Segundo Corte') $desempenos['1_Segundo Corte'] = $logro->nivel_desempeno;
                         if($periodoN == 2 && $corte == 'Primer Corte') $desempenos['2_Primer Corte'] = $logro->nivel_desempeno;

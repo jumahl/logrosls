@@ -129,7 +129,7 @@ class LogrosRelationManager extends RelationManager
                             ])
                             ->required()
                             ->label('Corte'),
-                        Forms\Components\TextInput::make('año_escolar')
+                        Forms\Components\TextInput::make('anio_escolar')
                             ->required()
                             ->numeric()
                             ->default(date('Y'))

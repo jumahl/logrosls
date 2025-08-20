@@ -58,7 +58,7 @@ class BusinessRulesTest extends TestCase
             'numero_periodo' => 1,
             'fecha_inicio' => Carbon::parse('2024-02-01'),
             'fecha_fin' => Carbon::parse('2024-04-30'),
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'corte' => 'Primer Corte',
         ]);
         
@@ -66,7 +66,7 @@ class BusinessRulesTest extends TestCase
             'numero_periodo' => 2,
             'fecha_inicio' => Carbon::parse('2024-05-01'),
             'fecha_fin' => Carbon::parse('2024-07-31'),
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'corte' => 'Segundo Corte',
         ]);
         
@@ -74,7 +74,7 @@ class BusinessRulesTest extends TestCase
             'numero_periodo' => 1,
             'fecha_inicio' => Carbon::parse('2024-08-01'),
             'fecha_fin' => Carbon::parse('2024-10-31'),
-            'año_escolar' => 2025,
+            'anio_escolar' => 2025,
             'corte' => 'Primer Corte',
         ]);
         
@@ -88,9 +88,9 @@ class BusinessRulesTest extends TestCase
         $this->assertTrue($periodo2->fecha_fin < $periodo3->fecha_inicio);
         
         // Verificar que los períodos están en el mismo año escolar o secuencial
-        $this->assertEquals(2024, $periodo1->año_escolar);
-        $this->assertEquals(2024, $periodo2->año_escolar);
-        $this->assertEquals(2025, $periodo3->año_escolar);
+    $this->assertEquals(2024, $periodo1->anio_escolar);
+    $this->assertEquals(2024, $periodo2->anio_escolar);
+    $this->assertEquals(2025, $periodo3->anio_escolar);
         
         // Verificar duración mínima de cada período (ejemplo: al menos 60 días)
         $duracion1 = $periodo1->fecha_inicio->diffInDays($periodo1->fecha_fin);
@@ -186,28 +186,28 @@ class BusinessRulesTest extends TestCase
                 'fecha_inicio' => Carbon::parse("$año-02-01"),
                 'fecha_fin' => Carbon::parse("$año-04-30"),
                 'corte' => 'Primer Corte',
-                'año_escolar' => $año,
+                'anio_escolar' => $año,
             ]),
             Periodo::factory()->create([
                 'numero_periodo' => 2,
                 'fecha_inicio' => Carbon::parse("$año-05-01"),
                 'fecha_fin' => Carbon::parse("$año-07-31"),
                 'corte' => 'Segundo Corte',
-                'año_escolar' => $año,
+                'anio_escolar' => $año,
             ]),
             Periodo::factory()->create([
                 'numero_periodo' => 1,
                 'fecha_inicio' => Carbon::parse(($año+1)."-02-01"),
                 'fecha_fin' => Carbon::parse(($año+1)."-04-30"),
                 'corte' => 'Primer Corte',
-                'año_escolar' => $año + 1,
+                'anio_escolar' => $año + 1,
             ]),
             Periodo::factory()->create([
                 'numero_periodo' => 2,
                 'fecha_inicio' => Carbon::parse(($año+1)."-05-01"),
                 'fecha_fin' => Carbon::parse(($año+1)."-07-31"),
                 'corte' => 'Segundo Corte',
-                'año_escolar' => $año + 1,
+                'anio_escolar' => $año + 1,
             ]),
         ];
         
@@ -215,8 +215,8 @@ class BusinessRulesTest extends TestCase
         $this->assertCount(4, $periodos);
         
         // Verificar que se distribuyen entre dos años escolares
-        $periodosAño1 = collect($periodos)->where('año_escolar', $año)->count();
-        $periodosAño2 = collect($periodos)->where('año_escolar', $año + 1)->count();
+    $periodosAño1 = collect($periodos)->where('anio_escolar', $año)->count();
+    $periodosAño2 = collect($periodos)->where('anio_escolar', $año + 1)->count();
         
         $this->assertEquals(2, $periodosAño1);
         $this->assertEquals(2, $periodosAño2);
@@ -235,7 +235,7 @@ class BusinessRulesTest extends TestCase
         $this->assertTrue($duraciones[3] >= 30); // Al menos 30 días
         
         // Verificar que no hay gaps significativos entre períodos del mismo año
-        $periodosOrdenados = collect($periodos)->sortBy(['año_escolar', 'numero_periodo']);
+    $periodosOrdenados = collect($periodos)->sortBy(['anio_escolar', 'numero_periodo']);
         $periodosArray = $periodosOrdenados->values()->all();
         
         // Verificar gaps dentro del mismo año escolar
@@ -442,10 +442,10 @@ class BusinessRulesTest extends TestCase
         
         // Crear períodos consecutivos
         $periodos = [
-            Periodo::factory()->create(['numero_periodo' => 1, 'año_escolar' => 2024, 'corte' => 'Primer Corte']),
-            Periodo::factory()->create(['numero_periodo' => 2, 'año_escolar' => 2024, 'corte' => 'Segundo Corte']),
-            Periodo::factory()->create(['numero_periodo' => 1, 'año_escolar' => 2025, 'corte' => 'Primer Corte']),
-            Periodo::factory()->create(['numero_periodo' => 2, 'año_escolar' => 2025, 'corte' => 'Segundo Corte']),
+            Periodo::factory()->create(['numero_periodo' => 1, 'anio_escolar' => 2024, 'corte' => 'Primer Corte']),
+            Periodo::factory()->create(['numero_periodo' => 2, 'anio_escolar' => 2024, 'corte' => 'Segundo Corte']),
+            Periodo::factory()->create(['numero_periodo' => 1, 'anio_escolar' => 2025, 'corte' => 'Primer Corte']),
+            Periodo::factory()->create(['numero_periodo' => 2, 'anio_escolar' => 2025, 'corte' => 'Segundo Corte']),
         ];
         
         // Crear progresión de evaluaciones (mejora gradual)
@@ -471,7 +471,7 @@ class BusinessRulesTest extends TestCase
         $evaluacionesOrdenadas = EstudianteLogro::where('estudiante_id', $estudiante->id)
             ->where('logro_id', $logro->id)
             ->join('periodos', 'estudiante_logros.periodo_id', '=', 'periodos.id')
-            ->orderBy('periodos.año_escolar')
+            ->orderBy('periodos.anio_escolar')
             ->orderBy('periodos.numero_periodo')
             ->select('estudiante_logros.*')
             ->get();
