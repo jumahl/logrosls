@@ -110,7 +110,11 @@ class CreateNota extends CreateRecord
                     ->options(function ($get) use ($user) {
                         $materiaId = $get('materia_id');
                         if ($materiaId) {
-                            $query = Logro::where('materia_id', $materiaId)->where('activo', true);
+                            $query = Logro::where('materia_id', $materiaId)
+                                ->where('activo', true)
+                                ->select('id', 'codigo', 'titulo', 'desempeno', 'orden')
+                                ->orderBy('orden')
+                                ->orderBy('titulo');
                             
                             if ($user && $user->hasRole('profesor')) {
                                 // Solo mostrar logros de materias del profesor
@@ -120,9 +124,32 @@ class CreateNota extends CreateRecord
                                 }
                             }
                             
-                            return $query->orderBy('titulo')->pluck('titulo', 'id')->map(function ($titulo, $id) {
-                                $logro = Logro::find($id);
-                                return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
+                            // Construir opciones con código, título y desempeño de manera más clara
+                            return $query->get()->mapWithKeys(function ($logro) {
+                                // Formato más claro y completo
+                                $codigo = $logro->codigo ? "[{$logro->codigo}] " : "";
+                                $titulo = $logro->titulo ? "{$logro->titulo}" : "";
+                                
+                                // Limpiar y formatear la descripción del desempeño
+                                $desempeno = trim($logro->desempeno ?? '');
+                                $desempeno = preg_replace('/\s+/', ' ', $desempeno);
+                                
+                                // Construir la etiqueta del selector con formato mejorado
+                                $label = $codigo;
+                                
+                                if (!empty($titulo)) {
+                                    $label .= $titulo;
+                                    
+                                    // Agregar desempeño solo si hay título y desempeño
+                                    if (!empty($desempeno)) {
+                                        $label .= " — {$desempeno}";
+                                    }
+                                } else {
+                                    // Si no hay título, mostrar solo el desempeño
+                                    $label .= $desempeno;
+                                }
+                                
+                                return [$logro->id => $label];
                             });
                         }
                         return [];

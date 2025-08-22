@@ -15,16 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('codigo')->unique();
             $table->foreignId('materia_id')->constrained('materias')->onDelete('cascade');
-            $table->string('titulo');
-            $table->string('competencia');
-            $table->string('tema');
-            $table->string('indicador_desempeno');
-            $table->text('descripcion')->nullable();
-            $table->enum('nivel_dificultad', ['bajo', 'medio', 'alto'])->default('medio');
-            $table->enum('tipo', ['conocimiento', 'habilidad', 'actitud', 'valor'])->default('conocimiento');
+            $table->string('titulo')->nullable();
+            $table->text('desempeno');
             $table->boolean('activo')->default(true);
             $table->integer('orden')->default(0);
-            $table->string('dimension')->nullable();
             $table->timestamps();
         });
     }

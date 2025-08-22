@@ -109,10 +109,11 @@
                 <ul class="logros-list">
                     @foreach($logros as $logro)
                         <li>
-                            <b>{{ $logro->logro->titulo }}</b>
-                            @if($logro->logro->competencia)
-                                - {{ $logro->logro->competencia }}
-                            @endif
+                            @php
+                                $titulo = $logro->logro->titulo;
+                                $texto = $titulo ? $titulo . ' - ' . ($logro->logro->desempeno ?? '') : ($logro->logro->desempeno ?? '');
+                            @endphp
+                            {{ trim($texto, ' -') }}
                         </li>
                     @endforeach
                 </ul>
