@@ -49,6 +49,14 @@ class Materia extends Model
     }
 
     /**
+     * Obtener los desempeños de esta materia.
+     */
+    public function desempenosMateria(): HasMany
+    {
+        return $this->hasMany(DesempenoMateria::class);
+    }
+
+    /**
      * Scope para filtrar materias activas.
      */
     public function scopeActivas($query)
@@ -74,6 +82,9 @@ class Materia extends Model
         static::deleting(function ($materia) {
             // Eliminar en cascada los logros de la materia
             $materia->logros()->delete();
+            
+            // Eliminar en cascada los desempeños de la materia
+            $materia->desempenosMateria()->delete();
         });
     }
 }

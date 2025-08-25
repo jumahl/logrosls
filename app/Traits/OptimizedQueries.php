@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Models\Estudiante;
+use App\Models\DesempenoMateria;
 use App\Models\EstudianteLogro;
 use App\Models\Logro;
 use App\Models\Periodo;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\DB;
  * 
  * Este trait contiene métodos optimizados con eager loading para evitar el problema N+1
  * y mejorar significativamente el rendimiento de las consultas más comunes del sistema.
+ * 
+ * Actualizado para usar la nueva estructura con tabla consolidada de desempeños.
  */
 trait OptimizedQueries
 {
@@ -49,7 +52,7 @@ trait OptimizedQueries
     /**
      * ✅ OPTIMIZADO: Boletín de estudiante con eager loading
      * 
-     * Carga todas las evaluaciones de un estudiante en un período específico
+     * Carga todas las calificaciones de un estudiante en un período específico
      * con todas sus relaciones en una sola consulta optimizada.
      */
     public function getBoletinEstudianteOptimizado($estudianteId, $periodoId)
@@ -57,36 +60,34 @@ trait OptimizedQueries
         return Cache::remember("boletin_estudiante_{$estudianteId}_{$periodoId}", 1800, function() use ($estudianteId, $periodoId) {
             $estudiante = Estudiante::with([
                 'grado',
-                'estudianteLogros' => function($query) use ($periodoId) {
+                'desempenosMateria' => function($query) use ($periodoId) {
                     $query->where('periodo_id', $periodoId)
-                          ->with(['logro.materia', 'periodo']);
+                          ->with(['materia', 'periodo', 'estudianteLogros.logro']);
                 }
             ])->findOrFail($estudianteId);
             
-            // Agrupar evaluaciones por materia (ya están precargadas)
-            $evaluacionesPorMateria = $estudiante->estudianteLogros
-                ->groupBy('logro.materia.nombre')
-                ->map(function($evaluaciones) {
+            // Procesar calificaciones por materia (ya están precargadas)
+            $calificacionesPorMateria = $estudiante->desempenosMateria
+                ->mapWithKeys(function($desempeno) {
                     return [
-                        'evaluaciones' => $evaluaciones,
-                        'promedio_numerico' => $evaluaciones->avg(function($eval) {
-                            return match($eval->nivel_desempeno) {
-                                'E' => 5, 'S' => 4, 'A' => 3, 'I' => 2, default => 0
-                            };
-                        }),
-                        'total_logros' => $evaluaciones->count(),
-                        'excelentes' => $evaluaciones->where('nivel_desempeno', 'E')->count(),
-                        'insuficientes' => $evaluaciones->where('nivel_desempeno', 'I')->count(),
+                        $desempeno->materia->nombre => [
+                            'calificacion' => $desempeno,
+                            'logros_asociados' => $desempeno->estudianteLogros,
+                            'valor_numerico' => $desempeno->valor_numerico,
+                            'total_logros' => $desempeno->estudianteLogros->count(),
+                            'logros_alcanzados' => $desempeno->estudianteLogros->where('alcanzado', true)->count(),
+                        ]
                     ];
                 });
             
             return [
                 'estudiante' => $estudiante,
-                'evaluaciones_por_materia' => $evaluacionesPorMateria,
+                'calificaciones_por_materia' => $calificacionesPorMateria,
                 'resumen_general' => [
-                    'total_evaluaciones' => $estudiante->estudianteLogros->count(),
-                    'promedio_general' => $evaluacionesPorMateria->avg('promedio_numerico'),
-                    'materias_evaluadas' => $evaluacionesPorMateria->count()
+                    'total_materias' => $calificacionesPorMateria->count(),
+                    'promedio_general' => $calificacionesPorMateria->avg('valor_numerico'),
+                    'materias_excelentes' => $calificacionesPorMateria->where('calificacion.nivel_desempeno', 'E')->count(),
+                    'materias_insuficientes' => $calificacionesPorMateria->where('calificacion.nivel_desempeno', 'I')->count(),
                 ]
             ];
         });
@@ -101,16 +102,15 @@ trait OptimizedQueries
     public function getRendimientoGradoOptimizado($gradoId, $periodoId)
     {
         return Cache::remember("rendimiento_grado_{$gradoId}_{$periodoId}", 1800, function() use ($gradoId, $periodoId) {
-            // Consulta SQL optimizada con agregaciones
-            $estadisticas = DB::table('estudiante_logros')
-                ->join('estudiantes', 'estudiante_logros.estudiante_id', '=', 'estudiantes.id')
-                ->join('logros', 'estudiante_logros.logro_id', '=', 'logros.id')
-                ->join('materias', 'logros.materia_id', '=', 'materias.id')
+            // Consulta SQL optimizada con agregaciones usando la tabla consolidada
+            $estadisticas = DB::table('desempenos_materia')
+                ->join('estudiantes', 'desempenos_materia.estudiante_id', '=', 'estudiantes.id')
+                ->join('materias', 'desempenos_materia.materia_id', '=', 'materias.id')
                 ->where('estudiantes.grado_id', $gradoId)
-                ->where('estudiante_logros.periodo_id', $periodoId)
+                ->where('desempenos_materia.periodo_id', $periodoId)
                 ->select([
                     'materias.nombre as materia',
-                    'estudiante_logros.nivel_desempeno',
+                    'desempenos_materia.nivel_desempeno',
                     DB::raw('COUNT(*) as cantidad'),
                     DB::raw('ROUND(AVG(CASE 
                         WHEN nivel_desempeno = "E" THEN 5
@@ -119,16 +119,16 @@ trait OptimizedQueries
                         WHEN nivel_desempeno = "I" THEN 2
                         ELSE 0 END), 2) as promedio_numerico')
                 ])
-                ->groupBy('materias.nombre', 'estudiante_logros.nivel_desempeno')
+                ->groupBy('materias.nombre', 'desempenos_materia.nivel_desempeno')
                 ->get()
                 ->groupBy('materia');
             
             // Procesar estadísticas para obtener porcentajes
-            return $estadisticas->map(function($evaluaciones, $materia) {
-                $total = $evaluaciones->sum('cantidad');
-                $promedio = $evaluaciones->first()->promedio_numerico ?? 0;
+            return $estadisticas->map(function($calificaciones, $materia) {
+                $total = $calificaciones->sum('cantidad');
+                $promedio = $calificaciones->first()->promedio_numerico ?? 0;
                 
-                $distribucion = $evaluaciones->mapWithKeys(function($item) use ($total) {
+                $distribucion = $calificaciones->mapWithKeys(function($item) use ($total) {
                     return [
                         $item->nivel_desempeno => [
                             'cantidad' => $item->cantidad,
@@ -139,7 +139,7 @@ trait OptimizedQueries
                 
                 return [
                     'materia' => $materia,
-                    'total_evaluaciones' => $total,
+                    'total_calificaciones' => $total,
                     'promedio_numerico' => $promedio,
                     'distribucion' => $distribucion,
                     'estudiantes_en_riesgo' => $distribucion['I']['cantidad'] ?? 0,
@@ -159,12 +159,12 @@ trait OptimizedQueries
         $query = Estudiante::query()
             ->with(['grado']); // Eager loading básico
         
-        // Si necesita datos de evaluaciones, cargarlos de una vez
+        // Si necesita datos de calificaciones, cargarlos de una vez
         if (!empty($filtros['rendimiento']) || !empty($filtros['materia_id'])) {
             $query->with([
-                'estudianteLogros' => function($q) {
+                'desempenosMateria' => function($q) {
                     $q->whereHas('periodo', fn($p) => $p->where('activo', true))
-                      ->with(['logro.materia', 'periodo']);
+                      ->with(['materia', 'periodo']);
                 }
             ]);
         }
@@ -183,14 +183,14 @@ trait OptimizedQueries
         }
         
         if (!empty($filtros['rendimiento'])) {
-            $query->whereHas('estudianteLogros', function($q) use ($filtros) {
+            $query->whereHas('desempenosMateria', function($q) use ($filtros) {
                 $q->where('nivel_desempeno', $filtros['rendimiento'])
                   ->whereHas('periodo', fn($p) => $p->where('activo', true));
             });
         }
         
         if (!empty($filtros['materia_id'])) {
-            $query->whereHas('estudianteLogros.logro', function($q) use ($filtros) {
+            $query->whereHas('desempenosMateria', function($q) use ($filtros) {
                 $q->where('materia_id', $filtros['materia_id']);
             });
         }
@@ -209,12 +209,13 @@ trait OptimizedQueries
             return Logro::select([
                     'logros.*',
                     DB::raw('COUNT(el.id) as total_evaluaciones'),
-                    DB::raw('COUNT(CASE WHEN el.nivel_desempeno = "I" THEN 1 END) as evaluaciones_insuficientes'),
-                    DB::raw('ROUND((COUNT(CASE WHEN el.nivel_desempeno = "I" THEN 1 END) / COUNT(el.id)) * 100, 1) as porcentaje_dificultad')
+                    DB::raw('COUNT(CASE WHEN dm.nivel_desempeno = "I" THEN 1 END) as evaluaciones_insuficientes'),
+                    DB::raw('ROUND((COUNT(CASE WHEN dm.nivel_desempeno = "I" THEN 1 END) / COUNT(el.id)) * 100, 1) as porcentaje_dificultad')
                 ])
-                ->leftJoin('estudiante_logros as el', function($join) use ($periodoId) {
-                    $join->on('logros.id', '=', 'el.logro_id')
-                         ->where('el.periodo_id', $periodoId);
+                ->leftJoin('estudiante_logros as el', 'logros.id', '=', 'el.logro_id')
+                ->leftJoin('desempenos_materia as dm', function($join) use ($periodoId) {
+                    $join->on('el.desempeno_materia_id', '=', 'dm.id')
+                         ->where('dm.periodo_id', $periodoId);
                 })
                 ->with(['materia']) // Eager loading para la relación materia
                 ->groupBy('logros.id')
@@ -226,26 +227,43 @@ trait OptimizedQueries
     }
     
     /**
-     * 🚫 EJEMPLO: Método NO optimizado (para comparación)
-     * 
-     * Este método tiene el problema N+1 - NO usar en producción
+     * ✅ OPTIMIZADO: Estadísticas de desempeño por materia y período
      */
-    public function getBoletinSinOptimizar($estudianteId, $periodoId)
+    public function getEstadisticasDesempenoMateria($materiaId, $periodoId)
     {
-        // ❌ PROBLEMA N+1 - Una consulta por cada relación
-        $estudiante = Estudiante::find($estudianteId); // 1 consulta
-        $grado = $estudiante->grado; // 1 consulta adicional
-        $evaluaciones = $estudiante->estudianteLogros()->where('periodo_id', $periodoId)->get(); // 1 consulta
-        
-        foreach($evaluaciones as $evaluacion) {
-            $logro = $evaluacion->logro; // 1 consulta por evaluación
-            $materia = $logro->materia; // 1 consulta por logro
-            $periodo = $evaluacion->periodo; // 1 consulta por evaluación
+        return Cache::remember("stats_materia_{$materiaId}_{$periodoId}", 1800, function() use ($materiaId, $periodoId) {
+            $estadisticas = DesempenoMateria::where('materia_id', $materiaId)
+                ->where('periodo_id', $periodoId)
+                ->select([
+                    'nivel_desempeno',
+                    DB::raw('COUNT(*) as cantidad'),
+                    DB::raw('ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM desempenos_materia WHERE materia_id = ? AND periodo_id = ?)), 1) as porcentaje')
+                ])
+                ->addBinding([$materiaId, $periodoId], 'select')
+                ->groupBy('nivel_desempeno')
+                ->get()
+                ->keyBy('nivel_desempeno');
             
-            // Si tiene 20 evaluaciones = 1 + 1 + 1 + (20 * 3) = 63 consultas! 😱
-        }
-        
-        return $evaluaciones;
+            $total = $estadisticas->sum('cantidad');
+            $promedio = $estadisticas->sum(function($item) {
+                return match($item->nivel_desempeno) {
+                    'E' => 5 * $item->cantidad,
+                    'S' => 4 * $item->cantidad,
+                    'A' => 3 * $item->cantidad,
+                    'I' => 2 * $item->cantidad,
+                    default => 0
+                };
+            }) / ($total ?: 1);
+            
+            return [
+                'total_estudiantes' => $total,
+                'promedio_numerico' => round($promedio, 2),
+                'distribucion' => $estadisticas,
+                'porcentaje_aprobados' => $total > 0 ? round((($estadisticas->get('E', (object)['cantidad' => 0])->cantidad + 
+                                                                $estadisticas->get('S', (object)['cantidad' => 0])->cantidad + 
+                                                                $estadisticas->get('A', (object)['cantidad' => 0])->cantidad) / $total) * 100, 1) : 0
+            ];
+        });
     }
     
     /**
@@ -261,6 +279,34 @@ trait OptimizedQueries
         
         foreach($tags as $pattern) {
             Cache::forget($pattern);
+        }
+    }
+    
+    /**
+     * Invalidar cache relacionado cuando se actualice una calificación
+     */
+    public function invalidarCacheCalificacion($desempenoMateria)
+    {
+        $estudianteId = $desempenoMateria->estudiante_id;
+        $materiaId = $desempenoMateria->materia_id;
+        $periodoId = $desempenoMateria->periodo_id;
+        
+        // Obtener el grado del estudiante para invalidar cache del grado
+        $estudiante = Estudiante::find($estudianteId);
+        $gradoId = $estudiante->grado_id ?? null;
+        
+        $tags = [
+            "boletin_estudiante_{$estudianteId}_{$periodoId}",
+            "stats_materia_{$materiaId}_{$periodoId}",
+            "logros_dificiles_{$periodoId}_*"
+        ];
+        
+        if ($gradoId) {
+            $tags[] = "rendimiento_grado_{$gradoId}_{$periodoId}";
+        }
+        
+        foreach($tags as $tag) {
+            Cache::forget($tag);
         }
     }
 }

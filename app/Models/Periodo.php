@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Periodo extends Model
 {
@@ -46,11 +47,26 @@ class Periodo extends Model
     }
 
     /**
-     * Obtener los logros de estudiantes de este período.
+     * Obtener los desempeños de materias de este período.
      */
-    public function estudianteLogros(): HasMany
+    public function desempenosMateria(): HasMany
     {
-        return $this->hasMany(EstudianteLogro::class);
+        return $this->hasMany(DesempenoMateria::class);
+    }
+
+    /**
+     * Obtener los logros de estudiantes a través de desempeños de materia.
+     */
+    public function estudianteLogros(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            EstudianteLogro::class,
+            DesempenoMateria::class,
+            'periodo_id',
+            'desempeno_materia_id',
+            'id',
+            'id'
+        );
     }
 
     /**
@@ -133,6 +149,9 @@ class Periodo extends Model
         static::deleting(function ($periodo) {
             // Desvincular los logros del período
             $periodo->logros()->detach();
+            
+            // Eliminar en cascada los desempeños del período
+            $periodo->desempenosMateria()->delete();
         });
     }
 }

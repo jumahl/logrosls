@@ -21,26 +21,4 @@ class ListNotas extends ListRecords
         ];
     }
     
-    protected function getTableQuery(): Builder
-    {
-        $user = auth()->user();
-        
-        // Esta subquery selecciona un ID representativo por cada combinación 
-        // de estudiante, materia y período
-        $subQuery = DB::table('estudiante_logros AS el')
-            ->select(DB::raw('MIN(el.id) AS id'))
-            ->join('logros AS l', 'el.logro_id', '=', 'l.id')
-            ->groupBy('el.estudiante_id', 'l.materia_id', 'el.periodo_id');
-            
-        // Filtrar por materias del profesor si aplica
-        if ($user && $user->hasRole('profesor')) {
-            $materiaIds = $user->materias()->pluck('id');
-            $subQuery->whereIn('l.materia_id', $materiaIds);
-        }
-            
-        // La query principal selecciona solo los registros identificados en la subquery
-        $query = EstudianteLogro::whereIn('id', $subQuery);
-        
-        return $query;
-    }
 } 

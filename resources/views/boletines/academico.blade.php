@@ -95,27 +95,33 @@
         <th>Nivel de Desempeño</th>
         <th>Docente</th>
     </tr>
-    @foreach($logrosPorMateria as $materia => $logros)
+    @foreach($desempenosPorMateria as $materia => $desempenos)
         @php
-            $logrosSegundoCorte = $logros->filter(function($logro) use ($periodo) {
-                return $logro->periodo->corte === 'Segundo Corte' && $logro->periodo->anio_escolar == $periodo->anio_escolar && $logro->periodo->numero_periodo == $periodo->numero_periodo;
-            });
+            // Obtener el desempeño más reciente de la materia
+            $desempenoMasReciente = $desempenos->sortByDesc(function($desempeno) {
+                return $desempeno->periodo->numero_periodo . '_' . $desempeno->periodo->corte;
+            })->first();
         @endphp
-        @if($logrosSegundoCorte->isNotEmpty())
+        @if($desempenoMasReciente)
         <tr class="asignatura-row">
             <td>{{ $materia }}</td>
-            <td class="center">{{ $logrosSegundoCorte->first()->nivel_desempeno ?? '' }}</td>
-            <td class="center">{{ $logrosSegundoCorte->first()->nivel_desempeno_completo ?? '' }}</td>
-            <td>{{ $logrosSegundoCorte->first()->logro->materia->docente->name ?? '' }}</td>
+            <td class="center">{{ $desempenoMasReciente->nivel_desempeno ?? 'N/A' }}</td>
+            <td class="center">{{ 
+                $desempenoMasReciente->nivel_desempeno == 'E' ? 'Excelente' :
+                ($desempenoMasReciente->nivel_desempeno == 'S' ? 'Sobresaliente' :
+                ($desempenoMasReciente->nivel_desempeno == 'A' ? 'Aceptable' :
+                ($desempenoMasReciente->nivel_desempeno == 'I' ? 'Insuficiente' : 'N/A')))
+            }}</td>
+            <td>{{ $desempenoMasReciente->materia->docente->name ?? 'N/A' }}</td>
         </tr>
         <tr>
             <td colspan="4">
                 <ul class="logros-list">
-                    @foreach($logrosSegundoCorte as $logro)
+                    @foreach($desempenoMasReciente->estudianteLogros as $estudianteLogro)
                         <li>
                             @php
-                                $titulo = $logro->logro->titulo;
-                                $texto = $titulo ? $titulo . ' - ' . ($logro->logro->desempeno ?? '') : ($logro->logro->desempeno ?? '');
+                                $titulo = $estudianteLogro->logro->titulo;
+                                $texto = $titulo ? $titulo . ' - ' . ($estudianteLogro->logro->desempeno ?? '') : ($estudianteLogro->logro->desempeno ?? '');
                             @endphp
                             {{ trim($texto, ' -') }}
                         </li>
@@ -138,44 +144,77 @@
         <th rowspan="2" style="text-align:center; vertical-align:middle;">AREA</th>
         <th rowspan="2" style="text-align:center; vertical-align:middle;">Asignatura</th>
         <th rowspan="2" style="text-align:center; vertical-align:middle;">IH</th>
-        <th colspan="2" style="text-align:center;">1 Periodo</th>
-        <th colspan="2" style="text-align:center;">2 Periodo</th>
+        @if($esUltimoPeriodo ?? false)
+            <th colspan="2" style="text-align:center;">1 Periodo</th>
+            <th colspan="2" style="text-align:center;">2 Periodo</th>
+        @else
+            @if($periodo->numero_periodo == 1)
+                <th colspan="2" style="text-align:center;">1 Periodo</th>
+            @else
+                <th colspan="2" style="text-align:center;">1 Periodo</th>
+                <th colspan="2" style="text-align:center;">2 Periodo</th>
+            @endif
+        @endif
     </tr>
     <tr>
-        <th style="text-align:center;">1er Corte</th>
-        <th style="text-align:center;">2do Corte</th>
-        <th style="text-align:center;">1er Corte</th>
-        <th style="text-align:center;">2do Corte</th>
+        @if($esUltimoPeriodo ?? false)
+            <th style="text-align:center;">1er Corte</th>
+            <th style="text-align:center;">2do Corte</th>
+            <th style="text-align:center;">1er Corte</th>
+            <th style="text-align:center;">2do Corte</th>
+        @else
+            @if($periodo->numero_periodo == 1)
+                <th style="text-align:center;">1er Corte</th>
+                <th style="text-align:center;">2do Corte</th>
+            @else
+                <th style="text-align:center;">1er Corte</th>
+                <th style="text-align:center;">2do Corte</th>
+                <th style="text-align:center;">1er Corte</th>
+                <th style="text-align:center;">2do Corte</th>
+            @endif
+        @endif
     </tr>
-    @foreach($logrosPorMateria as $materia => $logros)
-        @if($logros->isNotEmpty())
+    @foreach($desempenosPorMateria as $materia => $desempenos)
+        @if($desempenos->isNotEmpty())
         <tr>
-            <td style="text-align:center;">{{ $logros->first()->logro->materia->area ?? '' }}</td>
+            <td style="text-align:center;">{{ $desempenos->first()->materia->area ?? '' }}</td>
             <td style="text-align:center;">{{ $materia }}</td>
             <td style="text-align:center;"></td>
             @php
-                $desempenos = [
+                $nivelesDesempeno = [
                     '1_Primer Corte' => '',
                     '1_Segundo Corte' => '',
                     '2_Primer Corte' => '',
                     '2_Segundo Corte' => ''
                 ];
-                foreach($logros as $logro) {
-                    $anio = $logro->periodo->anio_escolar ?? null;
-                    $periodoN = $logro->periodo->numero_periodo ?? null;
-                    $corte = $logro->periodo->corte ?? null;
+                foreach($desempenos as $desempeno) {
+                    $anio = $desempeno->periodo->anio_escolar ?? null;
+                    $periodoN = $desempeno->periodo->numero_periodo ?? null;
+                    $corte = $desempeno->periodo->corte ?? null;
                     if($anio == ($periodo->anio_escolar ?? null)) {
-                        if($periodoN == 1 && $corte == 'Primer Corte') $desempenos['1_Primer Corte'] = $logro->nivel_desempeno;
-                        if($periodoN == 1 && $corte == 'Segundo Corte') $desempenos['1_Segundo Corte'] = $logro->nivel_desempeno;
-                        if($periodoN == 2 && $corte == 'Primer Corte') $desempenos['2_Primer Corte'] = $logro->nivel_desempeno;
-                        if($periodoN == 2 && $corte == 'Segundo Corte') $desempenos['2_Segundo Corte'] = $logro->nivel_desempeno;
+                        if($periodoN == 1 && $corte == 'Primer Corte') $nivelesDesempeno['1_Primer Corte'] = $desempeno->nivel_desempeno;
+                        if($periodoN == 1 && $corte == 'Segundo Corte') $nivelesDesempeno['1_Segundo Corte'] = $desempeno->nivel_desempeno;
+                        if($periodoN == 2 && $corte == 'Primer Corte') $nivelesDesempeno['2_Primer Corte'] = $desempeno->nivel_desempeno;
+                        if($periodoN == 2 && $corte == 'Segundo Corte') $nivelesDesempeno['2_Segundo Corte'] = $desempeno->nivel_desempeno;
                     }
                 }
             @endphp
-            <td style="text-align:center;">{{ $desempenos['1_Primer Corte'] }}</td>
-            <td style="text-align:center;">{{ $desempenos['1_Segundo Corte'] }}</td>
-            <td style="text-align:center;">{{ $desempenos['2_Primer Corte'] }}</td>
-            <td style="text-align:center;">{{ $desempenos['2_Segundo Corte'] }}</td>
+            @if($esUltimoPeriodo ?? false)
+                <td style="text-align:center;">{{ $nivelesDesempeno['1_Primer Corte'] }}</td>
+                <td style="text-align:center;">{{ $nivelesDesempeno['1_Segundo Corte'] }}</td>
+                <td style="text-align:center;">{{ $nivelesDesempeno['2_Primer Corte'] }}</td>
+                <td style="text-align:center;">{{ $nivelesDesempeno['2_Segundo Corte'] }}</td>
+            @else
+                @if($periodo->numero_periodo == 1)
+                    <td style="text-align:center;">{{ $nivelesDesempeno['1_Primer Corte'] }}</td>
+                    <td style="text-align:center;">{{ $nivelesDesempeno['1_Segundo Corte'] }}</td>
+                @else
+                    <td style="text-align:center;">{{ $nivelesDesempeno['1_Primer Corte'] }}</td>
+                    <td style="text-align:center;">{{ $nivelesDesempeno['1_Segundo Corte'] }}</td>
+                    <td style="text-align:center;">{{ $nivelesDesempeno['2_Primer Corte'] }}</td>
+                    <td style="text-align:center;">{{ $nivelesDesempeno['2_Segundo Corte'] }}</td>
+                @endif
+            @endif
         </tr>
         @endif
     @endforeach

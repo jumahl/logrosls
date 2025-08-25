@@ -96,25 +96,32 @@
         <th>Nivel de Desempeño</th>
         <th>Docente</th>
     </tr>
-    @foreach($logrosPorMateria as $materia => $logros)
-        @if($logros->isNotEmpty())
+    @foreach($desempenosPorMateria as $materia => $desempenos)
+        @if($desempenos->isNotEmpty())
         <tr class="asignatura-row">
             <td>{{ $materia }}</td>
-            <td class="center">{{ $logros->first()->nivel_desempeno ?? '' }}</td>
-            <td class="center">{{ $logros->first()->nivel_desempeno_completo ?? '' }}</td>
-            <td>{{ $logros->first()->logro->materia->docente->name ?? '' }}</td>
+            <td class="center">{{ $desempenos->first()->nivel_desempeno ?? 'N/A' }}</td>
+            <td class="center">{{ 
+                $desempenos->first()->nivel_desempeno == 'E' ? 'Excelente' :
+                ($desempenos->first()->nivel_desempeno == 'S' ? 'Sobresaliente' :
+                ($desempenos->first()->nivel_desempeno == 'A' ? 'Aceptable' :
+                ($desempenos->first()->nivel_desempeno == 'I' ? 'Insuficiente' : 'N/A')))
+            }}</td>
+            <td>{{ $desempenos->first()->materia->docente->name ?? 'N/A' }}</td>
         </tr>
         <tr>
             <td colspan="4">
                 <ul class="logros-list">
-                    @foreach($logros as $logro)
-                        <li>
-                            @php
-                                $titulo = $logro->logro->titulo;
-                                $texto = $titulo ? $titulo . ' - ' . ($logro->logro->desempeno ?? '') : ($logro->logro->desempeno ?? '');
-                            @endphp
-                            {{ trim($texto, ' -') }}
-                        </li>
+                    @foreach($desempenos as $desempeno)
+                        @foreach($desempeno->estudianteLogros as $estudianteLogro)
+                            <li>
+                                @php
+                                    $titulo = $estudianteLogro->logro->titulo;
+                                    $texto = $titulo ? $titulo . ' - ' . ($estudianteLogro->logro->desempeno ?? '') : ($estudianteLogro->logro->desempeno ?? '');
+                                @endphp
+                                {{ trim($texto, ' -') }}
+                            </li>
+                        @endforeach
                     @endforeach
                 </ul>
             </td>

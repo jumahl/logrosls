@@ -34,7 +34,10 @@ class DatabaseSeeder extends Seeder
             // 6. Crear logros por materia (requiere materias)
             LogroSeeder::class,
             
-            // 7. Finalmente crear evaluaciones de estudiantes (requiere todo lo anterior)
+            // 7. Crear desempeños de materia (requiere estudiantes, materias, períodos)
+            DesempenoMateriaSeeder::class,
+            
+            // 8. Finalmente crear asignaciones de logros (requiere desempeños)
             EstudianteLogroSeeder::class,
         ]);
         
@@ -48,7 +51,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info('   👨‍🏫 Directores: 10 directores de grupo asignados');
         $this->command->info('   👨‍🎓 Estudiantes: ~60 estudiantes distribuidos en todos los grados');
         $this->command->info('   🎯 Logros: ~100 logros académicos por materias');
-        $this->command->info('   📝 Evaluaciones: Evaluaciones de muestra para 20 estudiantes');
+        $this->command->info('   � Desempeños: Notas consolidadas por estudiante/materia/período');
+        $this->command->info('   ✅ Logros Asignados: Múltiples logros asociados a cada desempeño');
         $this->command->info('');
         $this->command->info('🔑 Credenciales de acceso:');
         $this->command->info('   Admin: admin@admin.com / Password');

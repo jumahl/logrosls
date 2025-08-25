@@ -3,111 +3,75 @@
 namespace Database\Seeders;
 
 use App\Models\EstudianteLogro;
+use App\Models\DesempenoMateria;
+use App\Models\Logro;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class EstudianteLogroSeeder extends Seeder
 {
     public function run(): void
     {
-        // Obtener datos necesarios
-        $estudiantes = \App\Models\Estudiante::all();
-        $logros = \App\Models\Logro::all();
-        $periodos = \App\Models\Periodo::all();
+        // Limpiar tabla existente usando DELETE en lugar de TRUNCATE
+        // debido a foreign key constraints
+        EstudianteLogro::query()->delete();
 
-        if ($estudiantes->isEmpty() || $logros->isEmpty() || $periodos->isEmpty()) {
-            $this->command->warn('No se encontraron estudiantes, logros o períodos. Ejecutar seeders correspondientes primero.');
+        // Obtener todos los desempeños de materia existentes
+        $desempenos = DesempenoMateria::with(['materia.logros'])->get();
+
+        if ($desempenos->isEmpty()) {
+            $this->command->warn('No se encontraron desempeños de materia. Ejecutar DesempenoMateriaSeeder primero.');
             return;
         }
 
-        $niveles = ['E', 'S', 'A', 'I']; // E=Excelente, S=Sobresaliente, A=Aceptable, I=Insuficiente
-        $observaciones = [
-            'E' => [
-                'Demuestra un dominio excepcional del tema, superando las expectativas.',
-                'Excellent trabajo, muestra creatividad y pensamiento crítico avanzado.',
-                'Participación sobresaliente y liderazgo en actividades grupales.',
-                'Aplicación correcta y creativa de los conceptos aprendidos.',
-            ],
-            'S' => [
-                'Buen manejo de los conceptos, con algunas demostraciones de excelencia.',
-                'Trabajo de calidad que cumple con todos los requisitos establecidos.',
-                'Participación activa y aportes significativos en clase.',
-                'Comprende claramente el tema y lo aplica correctamente.',
-            ],
-            'A' => [
-                'Comprende los conceptos básicos pero requiere refuerzo en algunos aspectos.',
-                'Trabajo satisfactorio que cumple con los requisitos mínimos.',
-                'Participación regular, aunque podría ser más activa.',
-                'Necesita practicar más para afianzar los conocimientos.',
-            ],
-            'I' => [
-                'Presenta dificultades para comprender los conceptos básicos.',
-                'Requiere apoyo adicional y acompañamiento personalizado.',
-                'Se recomienda trabajo de refuerzo y práctica adicional.',
-                'Necesita dedicar más tiempo y esfuerzo al estudio del tema.',
-            ]
-        ];
+        $logrosAsignados = [];
 
-        $evaluaciones = [];
+        foreach ($desempenos as $desempeno) {
+            // Obtener logros disponibles para esta materia
+            $logrosDisponibles = $desempeno->materia->logros;
 
-        // Generar evaluaciones para algunos estudiantes de diferentes grados
-        foreach ($estudiantes->take(20) as $estudiante) {
-            // Obtener logros de las materias que corresponden al grado del estudiante
-            $logrosDelGrado = $logros->filter(function($logro) use ($estudiante) {
-                return $logro->materia && $logro->materia->grados->contains($estudiante->grado);
-            });
-
-            if ($logrosDelGrado->isEmpty()) {
+            if ($logrosDisponibles->isEmpty()) {
                 continue;
             }
 
-            // Evaluar en algunos períodos
-            foreach ($periodos->take(2) as $periodo) {
-                // Evaluar algunos logros aleatoriamente
-                $logrosParaEvaluar = $logrosDelGrado->random(min(5, $logrosDelGrado->count()));
-                
-                foreach ($logrosParaEvaluar as $logro) {
-                    // Simular diferentes niveles de desempeño con distribución realista
-                    $probabilidades = [
-                        'E' => 15, // 15% Excelente
-                        'S' => 35, // 35% Sobresaliente  
-                        'A' => 40, // 40% Aceptable
-                        'I' => 10  // 10% Insuficiente
-                    ];
-                    
-                    $random = rand(1, 100);
-                    $nivelSeleccionado = 'A'; // valor por defecto
-                    
-                    if ($random <= 15) {
-                        $nivelSeleccionado = 'E';
-                    } elseif ($random <= 50) {
-                        $nivelSeleccionado = 'S';
-                    } elseif ($random <= 90) {
-                        $nivelSeleccionado = 'A';
-                    } else {
-                        $nivelSeleccionado = 'I';
-                    }
+            // Asignar entre 2 y 5 logros por desempeño (aleatorio)
+            $cantidadLogros = rand(2, min(5, $logrosDisponibles->count()));
+            $logrosSeleccionados = $logrosDisponibles->random($cantidadLogros);
 
-                    $observacion = $observaciones[$nivelSeleccionado][array_rand($observaciones[$nivelSeleccionado])];
+            foreach ($logrosSeleccionados as $logro) {
+                // Determinar si el logro fue alcanzado basado en el nivel de desempeño
+                $alcanzado = $this->determinarSiAlcanzo($desempeno->nivel_desempeno);
 
-                    $evaluaciones[] = [
-                        'estudiante_id' => $estudiante->id,
-                        'logro_id' => $logro->id,
-                        'periodo_id' => $periodo->id,
-                        'nivel_desempeno' => $nivelSeleccionado,
-                        'observaciones' => $observacion,
-                        'fecha_asignacion' => $periodo->fecha_inicio->addDays(rand(1, 30)),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
+                $logrosAsignados[] = [
+                    'logro_id' => $logro->id,
+                    'desempeno_materia_id' => $desempeno->id,
+                    'alcanzado' => $alcanzado,
+                    'created_at' => $desempeno->created_at,
+                    'updated_at' => $desempeno->updated_at,
+                ];
             }
         }
 
-        // Insertar todas las evaluaciones de una vez (más eficiente)
-        foreach (array_chunk($evaluaciones, 100) as $chunk) {
-            \App\Models\EstudianteLogro::insert($chunk);
+        // Insertar en chunks para mejor rendimiento
+        $chunks = array_chunk($logrosAsignados, 500);
+        foreach ($chunks as $chunk) {
+            DB::table('estudiante_logros')->insert($chunk);
         }
 
-        $this->command->info('Evaluaciones de logros creadas exitosamente: ' . count($evaluaciones) . ' evaluaciones para ' . min(20, $estudiantes->count()) . ' estudiantes.');
+        $this->command->info('✅ Creados ' . count($logrosAsignados) . ' logros asignados a desempeños');
+    }
+
+    /**
+     * Determinar si un logro fue alcanzado basado en el nivel de desempeño.
+     */
+    private function determinarSiAlcanzo(string $nivelDesempeno): bool
+    {
+        return match($nivelDesempeno) {
+            'E' => rand(1, 100) <= 95, // 95% de probabilidad con Excelente
+            'S' => rand(1, 100) <= 85, // 85% de probabilidad con Sobresaliente
+            'A' => rand(1, 100) <= 65, // 65% de probabilidad con Aceptable
+            'I' => rand(1, 100) <= 25, // 25% de probabilidad con Insuficiente
+            default => false
+        };
     }
 } 
