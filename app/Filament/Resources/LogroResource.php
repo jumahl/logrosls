@@ -55,7 +55,7 @@ class LogroResource extends Resource
                         }
                         return \App\Models\Materia::pluck('nombre', 'id');
                     })
-                    ->createOptionForm([
+                    ->createOptionForm($user && $user->hasRole('admin') ? [
                         Forms\Components\TextInput::make('nombre')
                             ->required()
                             ->maxLength(255)
@@ -71,11 +71,10 @@ class LogroResource extends Resource
                             ->searchable()
                             ->preload()
                             ->label('Grados'),
-                    ])
+                    ] : null)
                     ->label('Materia'),
                 Forms\Components\Textarea::make('desempeno')
                     ->required()
-                    ->searchable()
                     ->maxLength(65535)
                     ->label('Desempeño')
                     ->helperText('Descripción del desempeño esperado'),
@@ -86,7 +85,7 @@ class LogroResource extends Resource
                     ->searchable()
                     ->label('Períodos')
                     ->helperText('Debe seleccionar al menos un período')
-                    ->createOptionForm([
+                    ->createOptionForm($user && $user->hasRole('admin') ? [
                         Forms\Components\Select::make('numero_periodo')
                             ->options([
                                 1 => 'Primer Período',
@@ -112,7 +111,7 @@ class LogroResource extends Resource
                         Forms\Components\DatePicker::make('fecha_fin')
                             ->required()
                             ->label('Fecha de Fin'),
-                    ])
+                    ] : null)
                     ->label('Períodos'),
                 Forms\Components\Toggle::make('activo')
                     ->required()

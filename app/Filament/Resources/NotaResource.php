@@ -219,10 +219,13 @@ class NotaResource extends Resource
         $user = auth()->user();
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('estudiante.nombre')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Estudiante'),
+                Tables\Columns\TextColumn::make('estudiante_full_name')
+                    ->label('Estudiante')
+                    ->getStateUsing(function ($record) {
+                        return $record->estudiante?->nombre . ' ' . $record->estudiante?->apellido;
+                    })
+                    ->searchable(['estudiante.nombre', 'estudiante.apellido'])
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('logro.materia.nombre')
                     ->searchable()
                     ->sortable()
@@ -265,7 +268,6 @@ class NotaResource extends Resource
                             default => $state
                         };
                     }),
-                    
                 Tables\Columns\TextColumn::make('logros_count')
                     ->label('Logros Evaluados')
                     ->badge()
@@ -287,9 +289,30 @@ class NotaResource extends Resource
                     ->date()
                     ->sortable()
                     ->label('Fecha de Asignación'),
-
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('grado_id')
+                    ->label('Grado')
+                    ->options(function () {
+                        $user = auth()->user();
+                        if ($user && $user->hasRole('profesor')) {
+                            // Obtener los grados donde el profesor imparte materias
+                            $materiaIds = $user->materias()->pluck('id');
+                            $gradoIds = \App\Models\Grado::whereHas('materias', function ($q) use ($materiaIds) {
+                                $q->whereIn('materias.id', $materiaIds);
+                            })->pluck('nombre', 'id');
+                            return $gradoIds->toArray();
+                        }
+                        // Admin ve todos los grados
+                        return \App\Models\Grado::pluck('nombre', 'id')->toArray();
+                    })
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['value'])) {
+                            $query->whereHas('estudiante', function ($q) use ($data) {
+                                $q->where('grado_id', $data['value']);
+                            });
+                        }
+                    }),
                 Tables\Filters\SelectFilter::make('periodo_id')
                     ->relationship('periodo', 'corte')
                     ->label('Período')
@@ -299,17 +322,6 @@ class NotaResource extends Resource
                 Tables\Filters\SelectFilter::make('materia_id')
                     ->relationship('logro.materia', 'nombre')
                     ->label('Materia'),
-                Tables\Filters\SelectFilter::make('nivel_desempeno')
-                    ->options([
-                        'E' => 'E - Excelente',
-                        'S' => 'S - Sobresaliente',
-                        'A' => 'A - Aceptable',
-                        'I' => 'I - Insuficiente',
-                    ])
-                    ->label('Nivel de Desempeño'),
-                Tables\Filters\SelectFilter::make('estudiante_id')
-                    ->relationship('estudiante', 'nombre')
-                    ->label('Estudiante'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
@@ -371,15 +383,12 @@ class NotaResource extends Resource
                                 ->where('estudiante_id', $estudianteId)
                                 ->where('periodo_id', $periodoId)
                                 ->get();
-                                
                                 $count = $registros->count();
                                 $totalEliminados += $count;
-                                
                                 foreach ($registros as $registro) {
                                     $registro->delete();
                                 }
                             }
-                            
                             \Filament\Notifications\Notification::make()
                                 ->success()
                                 ->title("Notas eliminadas")

@@ -15,11 +15,10 @@ class PeriodoSeeder extends Seeder
     {
     $anioActual = date('Y');
         
-    // Crear períodos para el año actual
+        // Crear períodos para el año actual
         $periodos = [
             // Primer Período - Primer Corte
             [
-                'nombre' => 'Primer Período',
                 'corte' => 'Primer Corte',
                 'anio_escolar' => $anioActual,
                 'numero_periodo' => 1,
@@ -29,7 +28,6 @@ class PeriodoSeeder extends Seeder
             ],
             // Primer Período - Segundo Corte
             [
-                'nombre' => 'Primer Período',
                 'corte' => 'Segundo Corte',
                 'anio_escolar' => $anioActual,
                 'numero_periodo' => 1,
@@ -39,7 +37,6 @@ class PeriodoSeeder extends Seeder
             ],
             // Segundo Período - Primer Corte
             [
-                'nombre' => 'Segundo Período',
                 'corte' => 'Primer Corte',
                 'anio_escolar' => $anioActual,
                 'numero_periodo' => 2,
@@ -49,7 +46,6 @@ class PeriodoSeeder extends Seeder
             ],
             // Segundo Período - Segundo Corte
             [
-                'nombre' => 'Segundo Período',
                 'corte' => 'Segundo Corte',
                 'anio_escolar' => $anioActual,
                 'numero_periodo' => 2,
@@ -57,9 +53,7 @@ class PeriodoSeeder extends Seeder
                 'fecha_fin' => "{$anioActual}-11-30",
                 'activo' => false,
             ],
-        ];
-
-        foreach ($periodos as $periodo) {
+        ];        foreach ($periodos as $periodo) {
             Periodo::create($periodo);
         }
 
