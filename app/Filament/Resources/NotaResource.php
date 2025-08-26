@@ -25,7 +25,7 @@ class NotaResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Calificaciones';
     
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
     protected static ?string $navigationGroup = 'Reportes';
 
     public static function form(Form $form): Form

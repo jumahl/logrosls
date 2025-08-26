@@ -1,0 +1,344 @@
+@startuml Database_Schema_Logros_Academicos
+
+!define TABLE(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define PK(x) <u>x</u>
+!define FK(x) <i>x</i>
+!define UK(x) <color:green>x</color>
+
+title Sistema de Logros Académicos - Diagrama de Base de Datos
+
+' ===============================================
+' ENTIDADES PRINCIPALES DEL SISTEMA ACADÉMICO
+' ===============================================
+
+TABLE(users, "users\n(Usuarios del Sistema)") {
+  PK(id) : bigint
+  --
+  name : varchar(255)
+  UK(email) : varchar(255)
+  email_verified_at : timestamp
+  password : varchar(255)
+  FK(director_grado_id) : bigint [NULL]
+  remember_token : varchar(100)
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Usuarios del sistema: administradores,
+  profesores y directores de grupo
+}
+
+TABLE(grados, "grados\n(Niveles Académicos)") {
+  PK(id) : bigint
+  --
+  nombre : varchar(255)
+  tipo : enum('preescolar', 'primaria', 'secundaria', 'media_academica')
+  activo : boolean [default: true]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Define los niveles educativos:
+  preescolar, primaria, secundaria, media
+}
+
+TABLE(estudiantes, "estudiantes\n(Estudiantes Matriculados)") {
+  PK(id) : bigint
+  --
+  nombre : varchar(255)
+  apellido : varchar(255)
+  UK(documento) : varchar(255)
+  fecha_nacimiento : date
+  direccion : varchar(255) [NULL]
+  telefono : varchar(255) [NULL]
+  email : varchar(255) [NULL]
+  FK(grado_id) : bigint
+  activo : boolean [default: true]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Información personal y académica
+  de estudiantes matriculados
+}
+
+TABLE(materias, "materias\n(Asignaturas del Currículo)") {
+  PK(id) : bigint
+  --
+  nombre : varchar(255)
+  UK(codigo) : varchar(255)
+  FK(docente_id) : bigint [NULL]
+  activa : boolean [default: true]
+  descripcion : text [NULL]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Materias o asignaturas del
+  plan de estudios institucional
+}
+
+TABLE(periodos, "periodos\n(Períodos Académicos)") {
+  PK(id) : bigint
+  --
+  corte : enum('Primer Corte', 'Segundo Corte')
+  anio_escolar : integer
+  numero_periodo : integer
+  fecha_inicio : date
+  fecha_fin : date
+  activo : boolean [default: false]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Períodos de evaluación académica
+  con cortes por año escolar
+  --
+  INDEX: (anio_escolar, numero_periodo, corte)
+  INDEX: (activo)
+}
+
+TABLE(logros, "logros\n(Logros Académicos)") {
+  PK(id) : bigint
+  --
+  UK(codigo) : varchar(255)
+  FK(materia_id) : bigint
+  titulo : varchar(255) [NULL]
+  desempeno : text
+  activo : boolean [default: true]
+  orden : integer [default: 0]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Logros específicos de aprendizaje
+  asociados a cada materia
+}
+
+' ===============================================
+' TABLAS DE RELACIÓN (MANY-TO-MANY)
+' ===============================================
+
+TABLE(grado_materia, "grado_materia\n(Relación Grados-Materias)") {
+  PK(id) : bigint
+  --
+  FK(grado_id) : bigint
+  FK(materia_id) : bigint
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Tabla pivot para relacionar
+  grados con materias (N:N)
+  --
+  UNIQUE: (grado_id, materia_id)
+  INDEX: (grado_id)
+  INDEX: (materia_id)
+}
+
+TABLE(logro_periodo, "logro_periodo\n(Relación Logros-Períodos)") {
+  PK(id) : bigint
+  --
+  FK(logro_id) : bigint
+  FK(periodo_id) : bigint
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Relaciona logros con períodos
+  específicos de evaluación (N:N)
+  --
+  UNIQUE: (logro_id, periodo_id)
+}
+
+' ===============================================
+' TABLAS DE EVALUACIÓN Y DESEMPEÑO
+' ===============================================
+
+TABLE(desempenos_materia, "desempenos_materia\n(Evaluaciones Consolidadas)") {
+  PK(id) : bigint
+  --
+  FK(estudiante_id) : bigint
+  FK(materia_id) : bigint
+  FK(periodo_id) : bigint
+  nivel_desempeno : enum('E', 'S', 'A', 'I')
+  observaciones_finales : text [NULL]
+  fecha_asignacion : date
+  estado : enum('borrador', 'publicado', 'revisado') [default: 'borrador']
+  locked_at : datetime [NULL]
+  FK(locked_by) : bigint [NULL]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Desempeño consolidado de estudiante
+  en materia por período
+  E=Excelente, S=Sobresaliente,
+  A=Aceptable, I=Insuficiente
+  --
+  UNIQUE: (estudiante_id, materia_id, periodo_id)
+  INDEX: (estudiante_id, periodo_id)
+  INDEX: (materia_id, periodo_id)
+  INDEX: (periodo_id, nivel_desempeno)
+  INDEX: (estado)
+  INDEX: (fecha_asignacion)
+}
+
+TABLE(estudiante_logros, "estudiante_logros\n(Logros Específicos por Estudiante)") {
+  PK(id) : bigint
+  --
+  FK(logro_id) : bigint
+  FK(desempeno_materia_id) : bigint
+  alcanzado : boolean [default: true]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Registro granular de logros
+  específicos alcanzados por
+  cada estudiante
+  --
+  INDEX: (desempeno_materia_id, logro_id)
+  INDEX: (logro_id)
+}
+
+' ===============================================
+' SISTEMA DE PERMISOS (SPATIE PERMISSION)
+' ===============================================
+
+TABLE(permissions, "permissions\n(Permisos del Sistema)") {
+  PK(id) : bigint
+  --
+  name : varchar(255)
+  guard_name : varchar(255)
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  UNIQUE: (name, guard_name)
+}
+
+TABLE(roles, "roles\n(Roles de Usuario)") {
+  PK(id) : bigint
+  --
+  name : varchar(255)
+  guard_name : varchar(255)
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  UNIQUE: (name, guard_name)
+  --
+  Roles: admin, profesor, director_grupo
+}
+
+TABLE(model_has_permissions, "model_has_permissions\n(Permisos por Modelo)") {
+  FK(permission_id) : bigint
+  model_type : varchar(255)
+  FK(model_id) : bigint
+  --
+  PRIMARY: (permission_id, model_id, model_type)
+}
+
+TABLE(model_has_roles, "model_has_roles\n(Roles por Modelo)") {
+  FK(role_id) : bigint
+  model_type : varchar(255)
+  FK(model_id) : bigint
+  --
+  PRIMARY: (role_id, model_id, model_type)
+}
+
+TABLE(role_has_permissions, "role_has_permissions\n(Permisos por Rol)") {
+  FK(permission_id) : bigint
+  FK(role_id) : bigint
+  --
+  PRIMARY: (permission_id, role_id)
+}
+
+' ===============================================
+' TABLAS AUXILIARES DE LARAVEL
+' ===============================================
+
+TABLE(sessions, "sessions\n(Sesiones de Usuario)") {
+  PK(id) : varchar(255)
+  --
+  FK(user_id) : bigint [NULL]
+  ip_address : varchar(45) [NULL]
+  user_agent : text [NULL]
+  payload : longtext
+  last_activity : integer
+  --
+  INDEX: (user_id)
+  INDEX: (last_activity)
+}
+
+TABLE(password_reset_tokens, "password_reset_tokens\n(Tokens de Recuperación)") {
+  PK(email) : varchar(255)
+  --
+  token : varchar(255)
+  created_at : timestamp [NULL]
+}
+
+TABLE(cache, "cache\n(Sistema de Caché)") {
+  PK(key) : varchar(255)
+  --
+  value : mediumtext
+  expiration : integer
+}
+
+TABLE(jobs, "jobs\n(Cola de Trabajos)") {
+  PK(id) : bigint
+  --
+  queue : varchar(255)
+  payload : longtext
+  attempts : tinyint
+  reserved_at : integer [NULL]
+  available_at : integer
+  created_at : integer
+  --
+  INDEX: (queue)
+}
+
+' ===============================================
+' RELACIONES ENTRE ENTIDADES
+' ===============================================
+
+' Relaciones de Users
+users ||--o{ materias : "docente_id\n(1:N)\nUn usuario puede ser\ndocente de varias materias"
+users ||--o| grados : "director_grado_id\n(1:1)\nUn usuario puede ser\ndirector de un grado"
+
+' Relaciones de Grados
+grados ||--o{ estudiantes : "grado_id\n(1:N)\nUn grado tiene\nmúltiples estudiantes"
+grados ||--o{ grado_materia : "grado_id\n(1:N)"
+
+' Relaciones de Materias
+materias ||--o{ logros : "materia_id\n(1:N)\nUna materia tiene\nmúltiples logros"
+materias ||--o{ grado_materia : "materia_id\n(1:N)"
+materias ||--o{ desempenos_materia : "materia_id\n(1:N)"
+
+' Relaciones de Estudiantes
+estudiantes ||--o{ desempenos_materia : "estudiante_id\n(1:N)\nUn estudiante tiene\nmúltiples desempeños"
+
+' Relaciones de Períodos
+periodos ||--o{ desempenos_materia : "periodo_id\n(1:N)"
+periodos ||--o{ logro_periodo : "periodo_id\n(1:N)"
+
+' Relaciones de Logros
+logros ||--o{ estudiante_logros : "logro_id\n(1:N)"
+logros ||--o{ logro_periodo : "logro_id\n(1:N)"
+
+' Relaciones de Desempeños
+desempenos_materia ||--o{ estudiante_logros : "desempeno_materia_id\n(1:N)\nUn desempeño puede tener\nmúltiples logros específicos"
+
+' Relaciones del Sistema de Permisos
+permissions ||--o{ model_has_permissions : "permission_id"
+permissions ||--o{ role_has_permissions : "permission_id"
+roles ||--o{ model_has_roles : "role_id"
+roles ||--o{ role_has_permissions : "role_id"
+
+' Relaciones con Users para locks
+users ||--o{ desempenos_materia : "locked_by\n(1:N)\nUsuario que bloquea\nevaluaciones"
+
+' ===============================================
+' NOTAS EXPLICATIVAS
+' ===============================================
+
+note top of grados : Tipos de grado:\n• preescolar\n• primaria\n• secundaria\n• media_academica
+
+note top of desempenos_materia : Niveles de desempeño:\n• E = Excelente (5.0)\n• S = Sobresaliente (4.0)\n• A = Aceptable (3.0)\n• I = Insuficiente (2.0)\n\nEstados:\n• borrador\n• publicado\n• revisado
+
+note top of periodos : Sistema de períodos:\n• 2 períodos por año escolar\n• 2 cortes por período\n• Solo un período puede\n  estar activo
+
+note bottom of estudiante_logros : Evaluación granular:\nPermite registrar logros\nespecíficos alcanzados\ndentro del desempeño\ngeneral de una materia
+
+note bottom of grado_materia : Relación N:N:\n• Un grado tiene múltiples materias\n• Una materia se dicta en múltiples grados\n• Permite flexibilidad curricular
+
+@enduml
