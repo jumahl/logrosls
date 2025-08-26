@@ -77,7 +77,7 @@
         <th colspan="2"></th>
     </tr>
     <tr>
-        <td>{{ $estudiante->directora ?? '' }}</td>
+        <td>{{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
         <td colspan="2">{{ $estudiante->inasistencias ?? '' }}</td>
         <td colspan="2"></td>
     </tr>

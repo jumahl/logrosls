@@ -118,6 +118,9 @@ class BoletinResource extends Resource
                             throw new \Exception('Solo se pueden generar preinformes para períodos del primer corte.');
                         }
 
+                        // Cargar relaciones del estudiante necesarias para el PDF
+                        $record->load(['grado.directorGrupo']);
+
                         // Obtener desempeños del estudiante en el período (primer corte)
                         $desempenosDelPeriodo = $record->desempenosMateria()
                             ->where('periodo_id', $periodo->id)
@@ -169,6 +172,9 @@ class BoletinResource extends Resource
                     ])
                     ->action(function (Estudiante $record, array $data) {
                         $periodo = Periodo::find($data['periodo_id']);
+                        
+                        // Cargar relaciones del estudiante necesarias para el PDF
+                        $record->load(['grado.directorGrupo']);
                         
                         // Determinar si es el último período del año escolar
                         $esUltimoPeriodo = Periodo::where('anio_escolar', $periodo->anio_escolar)
@@ -310,7 +316,9 @@ class BoletinResource extends Resource
                             throw new \Exception('Solo se pueden generar preinformes para períodos del primer corte.');
                         }
                         
-                        $estudiantes = Estudiante::where('grado_id', $grado->id)->get();
+                        $estudiantes = Estudiante::where('grado_id', $grado->id)
+                            ->with(['grado.directorGrupo'])
+                            ->get();
 
                         // Crear un archivo ZIP en memoria
                         $zip = new \ZipArchive();
@@ -402,7 +410,9 @@ class BoletinResource extends Resource
                     ->action(function (array $data) {
                         $grado = Grado::find($data['grado_id']);
                         $periodo = Periodo::find($data['periodo_id']);
-                        $estudiantes = Estudiante::where('grado_id', $grado->id)->get();
+                        $estudiantes = Estudiante::where('grado_id', $grado->id)
+                            ->with(['grado.directorGrupo'])
+                            ->get();
 
                         // Crear un archivo ZIP en memoria
                         $zip = new \ZipArchive();
