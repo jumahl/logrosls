@@ -51,9 +51,16 @@ class LogroResource extends Resource
                     ->preload()
                     ->options(function () use ($user) {
                         if ($user && $user->hasRole('profesor')) {
-                            return $user->materias()->pluck('nombre', 'id');
+                            return $user->materias()
+                                ->get()
+                                ->mapWithKeys(function ($materia) {
+                                    return [$materia->id => "{$materia->codigo} - {$materia->nombre}"];
+                                });
                         }
-                        return \App\Models\Materia::pluck('nombre', 'id');
+                        return \App\Models\Materia::get()
+                            ->mapWithKeys(function ($materia) {
+                                return [$materia->id => "{$materia->codigo} - {$materia->nombre}"];
+                            });
                     })
                     ->createOptionForm($user && $user->hasRole('admin') ? [
                         Forms\Components\TextInput::make('nombre')
@@ -135,9 +142,12 @@ class LogroResource extends Resource
                     ->sortable()
                     ->formatStateUsing(fn($state, $record) => $state ?: \Illuminate\Support\Str::limit($record->desempeno, 40)),
                 Tables\Columns\TextColumn::make('materia.nombre')
-                    ->searchable()
+                    ->searchable(['materias.nombre', 'materias.codigo'])
                     ->sortable()
-                    ->label('Materia'),
+                    ->label('Materia')
+                    ->formatStateUsing(fn($state, $record) => 
+                        "{$record->materia->codigo} - {$record->materia->nombre}"
+                    ),
                 Tables\Columns\TextColumn::make('desempeno')
                     ->searchable()
                     ->limit(60)
@@ -164,7 +174,13 @@ class LogroResource extends Resource
                     ->relationship('materia', 'nombre')
                     ->searchable()
                     ->preload()
-                    ->label('Materia'),
+                    ->label('Materia')
+                    ->options(function () {
+                        return \App\Models\Materia::get()
+                            ->mapWithKeys(function ($materia) {
+                                return [$materia->id => "{$materia->codigo} - {$materia->nombre}"];
+                            });
+                    }),
                 // Filtros de nivel y tipo removidos en el nuevo esquema
                 Tables\Filters\TernaryFilter::make('activo')
                     ->label('Estado'),

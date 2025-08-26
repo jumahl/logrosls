@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use App\Rules\FechaNoPosterior;
 
 class NotaResource extends Resource
@@ -337,7 +338,7 @@ class NotaResource extends Resource
                     })
                     ->visible(fn($record) => 
                         $record->locked_at && 
-                        auth()->user()->can('lock', $record)
+                        auth()->user()?->hasRole('admin')
                     )
                     ->requiresConfirmation()
                     ->modalHeading('¿Desbloquear calificación?')
@@ -398,5 +399,16 @@ class NotaResource extends Resource
         }
         
         return $query;
+    }
+
+    public static function resolveRecordRouteBinding(int|string $key): ?Model
+    {
+        // Para resolver un registro específico, no usar JOIN para evitar ambigüedad
+        return static::getModel()::with([
+            'estudiante.grado',
+            'materia.docente',
+            'periodo',
+            'estudianteLogros.logro'
+        ])->find($key);
     }
 } 

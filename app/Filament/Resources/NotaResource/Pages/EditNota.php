@@ -27,13 +27,6 @@ class EditNota extends EditRecord
         return $this->getResource()::getUrl('index');
     }
     
-    protected function getSavedNotification(): ?Notification
-    {
-        return Notification::make()
-            ->success()
-            ->title('Calificación actualizada')
-            ->body('La calificación ha sido actualizada correctamente.');
-    }
     
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
