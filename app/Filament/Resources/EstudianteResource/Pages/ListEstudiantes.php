@@ -12,8 +12,15 @@ class ListEstudiantes extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\CreateAction::make(),
-        ];
+        $user = auth()->user();
+        
+        // Solo admin y directores de grupo pueden crear estudiantes
+        if ($user && ($user->hasRole('admin') || ($user->hasRole('profesor') && $user->isDirectorGrupo()))) {
+            return [
+                Actions\CreateAction::make(),
+            ];
+        }
+        
+        return [];
     }
 }

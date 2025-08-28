@@ -50,24 +50,25 @@ class EstudianteResource extends Resource
                     ->label('Documento de Identidad')
                     ->helperText('Solo números, sin puntos ni espacios'),
                 Forms\Components\Select::make('grado_id')
-                    ->relationship('grado', 'nombre')
+                    ->relationship('grado', 'nombre', function ($query) {
+                        $user = auth()->user();
+                        
+                        // Si es admin, puede ver todos los grados
+                        if ($user && $user->hasRole('admin')) {
+                            return $query;
+                        }
+                        
+                        // Si es director de grupo, solo puede ver su grado asignado
+                        if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                            return $query->where('id', $user->director_grado_id);
+                        }
+                        
+                        // Si es profesor regular, no puede ver ningún grado
+                        return $query->whereRaw('1 = 0');
+                    })
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->createOptionForm([
-                        Forms\Components\TextInput::make('nombre')
-                            ->required()
-                            ->maxLength(255)
-                            ->label('Nombre'),
-                        Forms\Components\Select::make('tipo')
-                            ->options([
-                                'preescolar' => 'Preescolar',
-                                'primaria' => 'Primaria',
-                                'secundaria' => 'Secundaria',
-                            ])
-                            ->required()
-                            ->label('Tipo'),
-                    ])
                     ->label('Grado'),
                 Forms\Components\DatePicker::make('fecha_nacimiento')
                     ->required()

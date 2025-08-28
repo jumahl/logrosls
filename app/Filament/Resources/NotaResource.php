@@ -98,7 +98,9 @@ class NotaResource extends Resource
                     ->disabled(fn ($get) => !$get('grado_id')),
                     
                 Forms\Components\Select::make('periodo_id')
-                    ->relationship('periodo', 'corte')
+                    ->relationship('periodo', 'corte', function ($query) {
+                        return $query->where('activo', true);
+                    })
                     ->getOptionLabelFromRecordUsing(function ($record) {
                         return $record->periodo_completo;
                     })
