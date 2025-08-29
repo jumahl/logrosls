@@ -5,10 +5,14 @@ namespace Tests\Unit\Models;
 use App\Models\Estudiante;
 use App\Models\Grado;
 use App\Models\EstudianteLogro;
+use App\Models\DesempenoMateria;
+use App\Models\Materia;
+use App\Models\Periodo;
 use App\Models\Logro;
 use Tests\TestCase;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Carbon\Carbon;
 
@@ -57,14 +61,15 @@ class EstudianteTest extends TestCase
     public function it_has_estudiante_logros_relationship()
     {
         $estudiante = Estudiante::factory()->create();
-        $this->assertInstanceOf(HasMany::class, $estudiante->estudianteLogros());
+        $this->assertInstanceOf(HasManyThrough::class, $estudiante->estudianteLogros());
     }
 
     /** @test */
     public function it_has_logros_relationship()
     {
         $estudiante = Estudiante::factory()->create();
-        $this->assertInstanceOf(BelongsToMany::class, $estudiante->logros());
+        // logros() ahora retorna un query builder, no una relación
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Builder::class, $estudiante->logros());
     }
 
     /** @test */
@@ -116,7 +121,17 @@ class EstudianteTest extends TestCase
     public function it_can_have_many_estudiante_logros()
     {
         $estudiante = Estudiante::factory()->create();
-        $logros = EstudianteLogro::factory(3)->create(['estudiante_id' => $estudiante->id]);
+        $materia = Materia::factory()->create();
+        $periodo = Periodo::factory()->create();
+        
+        // Crear desempeño de materia para el estudiante
+        $desempeno = DesempenoMateria::factory()->create([
+            'estudiante_id' => $estudiante->id,
+            'materia_id' => $materia->id,
+            'periodo_id' => $periodo->id,
+        ]);
+        
+        $logros = EstudianteLogro::factory(3)->create(['desempeno_materia_id' => $desempeno->id]);
 
         $this->assertCount(3, $estudiante->estudianteLogros);
         $this->assertTrue($estudiante->estudianteLogros->contains($logros[0]));
@@ -128,9 +143,10 @@ class EstudianteTest extends TestCase
         $setup = $this->createStudentWithLogros();
         $estudiante = $setup['estudiantes']['juan'];
 
-        $this->assertCount(2, $estudiante->logros);
-        $this->assertTrue($estudiante->logros->contains($setup['logros']['matematicas_basico']));
-        $this->assertTrue($estudiante->logros->contains($setup['logros']['lenguaje_lectura']));
+        $logros = $estudiante->logros()->get();
+        $this->assertCount(2, $logros);
+        $this->assertTrue($logros->contains($setup['logros']['matematicas_basico']));
+        $this->assertTrue($logros->contains($setup['logros']['lenguaje_lectura']));
     }
 
     /** @test */
@@ -139,10 +155,10 @@ class EstudianteTest extends TestCase
         $setup = $this->createStudentWithLogros();
         $estudiante = $setup['estudiantes']['juan'];
         
-        $logro = $estudiante->logros->first();
-        $this->assertNotNull($logro->pivot->fecha_asignacion);
-        // El campo observaciones es opcional y está disponible en el pivot
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\Pivot::class, $logro->pivot);
+        $logros = $estudiante->logros()->get();
+        $this->assertCount(2, $logros);
+        $this->assertTrue($logros->contains($setup['logros']['matematicas_basico']));
+        $this->assertTrue($logros->contains($setup['logros']['lenguaje_lectura']));
     }
 
     /** @test */

@@ -39,9 +39,13 @@ class GradoResource extends Resource
                         Forms\Components\TextInput::make('nombre')
                             ->required()
                             ->maxLength(255)
-                            ->unique(ignoreRecord: true)
                             ->label('Nombre del Grado')
-                            ->helperText('Ej: 1°, 2°, Transición, etc.'),
+                            ->helperText('Ej: Primero, Segundo, Transición, etc.'),
+                        Forms\Components\TextInput::make('grupo')
+                            ->maxLength(10)
+                            ->label('Grupo')
+                            ->helperText('Ej: A, B, C, etc. (Opcional)')
+                            ->placeholder('A'),
                         Forms\Components\Select::make('tipo')
                             ->required()
                             ->options([
@@ -77,10 +81,22 @@ class GradoResource extends Resource
         $user = auth()->user();
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('nombre_completo')
+                    ->searchable(['nombre', 'grupo'])
+                    ->sortable(['nombre', 'grupo'])
+                    ->label('Grado'),
                 Tables\Columns\TextColumn::make('nombre')
                     ->searchable()
                     ->sortable()
-                    ->label('Nombre'),
+                    ->label('Nombre')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('grupo')
+                    ->searchable()
+                    ->sortable()
+                    ->label('Grupo')
+                    ->placeholder('Sin grupo')
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('tipo')
                     ->searchable()
                     ->sortable()

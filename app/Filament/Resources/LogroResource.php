@@ -72,7 +72,12 @@ class LogroResource extends Resource
                             ->maxLength(20)
                             ->label('Código'),
                         Forms\Components\Select::make('grados')
-                            ->relationship('grados', 'nombre')
+                            ->relationship(
+                                'grados', 
+                                'nombre',
+                                modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                            )
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                             ->multiple()
                             ->required()
                             ->searchable()

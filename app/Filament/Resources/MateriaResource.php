@@ -46,7 +46,12 @@ class MateriaResource extends Resource
                     ->label('Código')
                     ->helperText('Solo letras mayúsculas, números y guiones. Ej: MAT-001'),
                 Forms\Components\Select::make('grados')
-                    ->relationship('grados', 'nombre')
+                    ->relationship(
+                        'grados', 
+                        'nombre',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->multiple()
                     ->required()
                     ->searchable()
@@ -56,6 +61,10 @@ class MateriaResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->label('Nombre'),
+                        Forms\Components\TextInput::make('grupo')
+                            ->maxLength(10)
+                            ->label('Grupo')
+                            ->helperText('Opcional. Ej: A, B, C'),
                         Forms\Components\Select::make('tipo')
                             ->options([
                                 'preescolar' => 'Preescolar',
@@ -98,7 +107,7 @@ class MateriaResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Código'),
-                Tables\Columns\TextColumn::make('grados.nombre')
+                Tables\Columns\TextColumn::make('grados.nombre_completo')
                     ->badge()
                     ->separator(',')
                     ->searchable()
@@ -123,7 +132,12 @@ class MateriaResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('grados')
-                    ->relationship('grados', 'nombre')
+                    ->relationship(
+                        'grados', 
+                        'nombre',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->multiple()
                     ->label('Grados'),
                 Tables\Filters\SelectFilter::make('docente_id')

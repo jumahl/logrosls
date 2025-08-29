@@ -15,6 +15,7 @@ class Grado extends Model
 
     protected $fillable = [
         'nombre',
+        'grupo',
         'tipo',
         'activo'
     ];
@@ -22,6 +23,16 @@ class Grado extends Model
     protected $casts = [
         'activo' => 'boolean'
     ];
+
+    protected $appends = ['nombre_completo'];
+
+    /**
+     * Obtener el nombre completo del grado incluyendo grupo.
+     */
+    public function getNombreCompletoAttribute()
+    {
+        return $this->grupo ? "{$this->nombre} {$this->grupo}" : $this->nombre;
+    }
 
     /**
      * Obtener los estudiantes de este grado.

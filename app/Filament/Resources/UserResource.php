@@ -99,7 +99,7 @@ class UserResource extends Resource
                         
                                 $query->whereNotIn('id', $gradosConDirector);
                                 
-                                return $query->pluck('nombre', 'id');
+                                return $query->pluck('nombre_completo', 'id');
                             })
                             ->placeholder('Seleccionar grado (opcional)')
                             ->helperText('Asignar como director de grupo de un grado específico.')
@@ -125,6 +125,7 @@ class UserResource extends Resource
                     ->sortable()
                     ->label('Correo Electrónico'),
                 Tables\Columns\TextColumn::make('directorGrado.nombre')
+                    ->formatStateUsing(fn ($record) => $record->directorGrado?->nombre_completo)
                     ->label('Director de Grupo')
                     ->placeholder('No es director')
                     ->badge()

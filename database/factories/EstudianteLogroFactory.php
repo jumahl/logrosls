@@ -3,9 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\EstudianteLogro;
-use App\Models\Estudiante;
+use App\Models\DesempenoMateria;
 use App\Models\Logro;
-use App\Models\Periodo;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,25 +21,20 @@ class EstudianteLogroFactory extends Factory
      */
     public function definition(): array
     {
-        $nivelesDesempeno = ['E', 'S', 'A', 'I']; // Excelente, Sobresaliente, Aceptable, Insuficiente
-
         return [
-            'estudiante_id' => Estudiante::factory(),
+            'desempeno_materia_id' => DesempenoMateria::factory(),
             'logro_id' => Logro::factory(),
-            'periodo_id' => Periodo::factory(),
-            'nivel_desempeno' => $this->faker->randomElement($nivelesDesempeno),
-            'observaciones' => $this->faker->optional(0.6)->paragraph(2), // 60% tienen observaciones
-            'fecha_asignacion' => $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
+            'alcanzado' => $this->faker->boolean(80), // 80% alcanzados
         ];
     }
 
     /**
-     * Set a specific estudiante for the logro.
+     * Set a specific desempeno_materia for the logro.
      */
-    public function withEstudiante(Estudiante $estudiante): static
+    public function withDesempenoMateria(DesempenoMateria $desempeno): static
     {
         return $this->state(fn (array $attributes) => [
-            'estudiante_id' => $estudiante->id,
+            'desempeno_materia_id' => $desempeno->id,
         ]);
     }
 
@@ -55,148 +49,22 @@ class EstudianteLogroFactory extends Factory
     }
 
     /**
-     * Set a specific periodo for the record.
+     * Create a logro alcanzado (achieved).
      */
-    public function withPeriodo(Periodo $periodo): static
+    public function alcanzado(): static
     {
         return $this->state(fn (array $attributes) => [
-            'periodo_id' => $periodo->id,
+            'alcanzado' => true,
         ]);
     }
 
     /**
-     * Create an "Excelente" performance record.
+     * Create a logro no alcanzado (not achieved).
      */
-    public function excelente(): static
+    public function noAlcanzado(): static
     {
         return $this->state(fn (array $attributes) => [
-            'nivel_desempeno' => 'E',
-            'observaciones' => 'Demuestra un excelente dominio del logro. ' . $this->faker->sentence(),
-        ]);
-    }
-
-    /**
-     * Create a "Sobresaliente" performance record.
-     */
-    public function sobresaliente(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'nivel_desempeno' => 'S',
-            'observaciones' => 'Logra un desempeño sobresaliente. ' . $this->faker->sentence(),
-        ]);
-    }
-
-    /**
-     * Create an "Aceptable" performance record.
-     */
-    public function aceptable(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'nivel_desempeno' => 'A',
-            'observaciones' => 'Alcanza un nivel aceptable del logro. ' . $this->faker->sentence(),
-        ]);
-    }
-
-    /**
-     * Create an "Insuficiente" performance record.
-     */
-    public function insuficiente(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'nivel_desempeno' => 'I',
-            'observaciones' => 'Requiere apoyo para alcanzar el logro. ' . $this->faker->sentence(),
-        ]);
-    }
-
-    /**
-     * Create a record without observations.
-     */
-    public function withoutObservations(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'observaciones' => null,
-        ]);
-    }
-
-    /**
-     * Create a record with detailed observations.
-     */
-    public function withDetailedObservations(): static
-    {
-        $observaciones = [
-            'El estudiante demuestra un excelente manejo de los conceptos trabajados en clase.',
-            'Se observa progreso significativo en el desarrollo de las competencias esperadas.',
-            'Requiere refuerzo en algunos aspectos específicos para consolidar el aprendizaje.',
-            'Participa activamente en las actividades propuestas y colabora efectivamente.',
-            'Muestra dificultades que requieren estrategias de apoyo adicionales.',
-        ];
-
-        return $this->state(fn (array $attributes) => [
-            'observaciones' => $this->faker->randomElement($observaciones) . ' ' . $this->faker->sentence(),
-        ]);
-    }
-
-    /**
-     * Create a recent assignment.
-     */
-    public function recent(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'fecha_asignacion' => $this->faker->dateTimeBetween('-1 month', 'now')->format('Y-m-d'),
-        ]);
-    }
-
-    /**
-     * Create an old assignment.
-     */
-    public function old(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'fecha_asignacion' => $this->faker->dateTimeBetween('-1 year', '-6 months')->format('Y-m-d'),
-        ]);
-    }
-
-    /**
-     * Create a record for today.
-     */
-    public function today(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'fecha_asignacion' => now()->format('Y-m-d'),
-        ]);
-    }
-
-    /**
-     * Create a pendiente (pending) evaluation.
-     */
-    public function pendiente(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'nivel_desempeno' => 'I', // Insuficiente como pendiente
-            'observaciones' => null, // Sin observaciones = pendiente
-            'fecha_asignacion' => now()->format('Y-m-d'),
-        ]);
-    }
-
-    /**
-     * Create an evaluado (evaluated) record.
-     */
-    public function evaluado(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'nivel_desempeno' => $this->faker->randomElement(['E', 'S', 'A']),
-            'observaciones' => 'Evaluación completada. ' . $this->faker->sentence(),
-        ]);
-    }
-
-    /**
-     * Create a superior performance record.
-     */
-    public function superior(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'nivel_desempeno' => 'S',
-            'observaciones' => 'Desempeño superior demostrado. ' . $this->faker->sentence(),
+            'alcanzado' => false,
         ]);
     }
 }

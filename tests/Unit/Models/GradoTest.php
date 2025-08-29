@@ -17,7 +17,7 @@ class GradoTest extends TestCase
     /** @test */
     public function it_has_correct_fillable_attributes()
     {
-        $expectedFillable = ['nombre', 'tipo', 'activo'];
+        $expectedFillable = ['nombre', 'grupo', 'tipo', 'activo'];
         $grado = new Grado();
         
         $this->assertHasFillable($grado, $expectedFillable);
@@ -33,6 +33,28 @@ class GradoTest extends TestCase
         $grado = new Grado();
         
         $this->assertHasCasts($grado, $expectedCasts);
+    }
+
+    /** @test */
+    public function it_returns_correct_nombre_completo_with_grupo()
+    {
+        $grado = Grado::factory()->create([
+            'nombre' => 'Primero',
+            'grupo' => 'A'
+        ]);
+        
+        $this->assertEquals('Primero A', $grado->nombre_completo);
+    }
+
+    /** @test */
+    public function it_returns_correct_nombre_completo_without_grupo()
+    {
+        $grado = Grado::factory()->create([
+            'nombre' => 'Primero',
+            'grupo' => null
+        ]);
+        
+        $this->assertEquals('Primero', $grado->nombre_completo);
     }
 
     /** @test */

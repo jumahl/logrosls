@@ -50,7 +50,10 @@ class EstudianteResource extends Resource
                     ->label('Documento de Identidad')
                     ->helperText('Solo números, sin puntos ni espacios'),
                 Forms\Components\Select::make('grado_id')
-                    ->relationship('grado', 'nombre', function ($query) {
+                    ->relationship(
+                        'grado', 
+                        'nombre',
+                        function ($query) {
                         $user = auth()->user();
                         
                         // Si es admin, puede ver todos los grados
@@ -66,6 +69,7 @@ class EstudianteResource extends Resource
                         // Si es profesor regular, no puede ver ningún grado
                         return $query->whereRaw('1 = 0');
                     })
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->required()
                     ->searchable()
                     ->preload()
@@ -117,6 +121,7 @@ class EstudianteResource extends Resource
                     ->sortable()
                     ->label('Documento'),
                 Tables\Columns\TextColumn::make('grado.nombre')
+                    ->formatStateUsing(fn ($record) => $record->grado?->nombre_completo)
                     ->searchable()
                     ->sortable()
                     ->label('Grado'),
@@ -158,7 +163,12 @@ class EstudianteResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('grado_id')
-                    ->relationship('grado', 'nombre')
+                    ->relationship(
+                        'grado', 
+                        'nombre',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->label('Grado'),
                 Tables\Filters\SelectFilter::make('activo')
                     ->options([
