@@ -34,7 +34,12 @@ class NotaResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('grado_id')
-                    ->relationship('estudiante.grado', 'nombre')
+                    ->relationship(
+                        'estudiante.grado', 
+                        'nombre',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->required()
                     ->searchable()
                     ->preload()
@@ -279,7 +284,7 @@ class NotaResource extends Resource
                             })->pluck('nombre', 'id');
                             return $gradoIds->toArray();
                         }
-                        return \App\Models\Grado::pluck('nombre', 'id')->toArray();
+                        return \App\Models\Grado::orderBy('nombre')->orderBy('grupo')->get()->pluck('nombre_completo', 'id')->toArray();
                     })
                     ->query(function (Builder $query, array $data) {
                         if (!empty($data['value'])) {

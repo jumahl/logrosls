@@ -69,13 +69,17 @@ class Estudiante extends Model
     }
 
     /**
-     * Obtener los logros asignados al estudiante.
+     * Obtener los logros únicos asignados al estudiante.
+     * Método helper que devuelve una colección, no una relación
      */
-    public function logros(): BelongsToMany
+    public function logros()
     {
-        return $this->belongsToMany(Logro::class, 'estudiante_logros')
-            ->withPivot('fecha_asignacion', 'observaciones')
-            ->withTimestamps();
+        return Logro::whereIn('id', function ($query) {
+            $query->select('logro_id')
+                  ->from('estudiante_logros')
+                  ->join('desempenos_materia', 'desempenos_materia.id', '=', 'estudiante_logros.desempeno_materia_id')
+                  ->where('desempenos_materia.estudiante_id', $this->id);
+        })->distinct()->get();
     }
     
     /**

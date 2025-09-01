@@ -50,7 +50,7 @@ class BoletinResource extends Resource
                             $query->whereIn('id', $gradoIds);
                         }
                         
-                        return $query->pluck('nombre', 'id');
+                        return $query->pluck('nombre_completo', 'id');
                     })
                     ->required()
                     ->searchable()
@@ -83,13 +83,19 @@ class BoletinResource extends Resource
                     ->sortable()
                     ->label('Apellido'),
                 Tables\Columns\TextColumn::make('grado.nombre')
+                    ->formatStateUsing(fn ($record) => $record->grado?->nombre_completo)
                     ->searchable()
                     ->sortable()
                     ->label('Grado'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('grado_id')
-                    ->relationship('grado', 'nombre')
+                    ->relationship(
+                        'grado', 
+                        'nombre',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->label('Grado'),
             ])
             ->actions([

@@ -80,9 +80,11 @@ class EstudiantesRelationManager extends RelationManager
                     ->sortable()
                     ->label('Activo'),
                 Tables\Columns\TextColumn::make('logros_count')
-                    ->counts('logros')
-                    ->label('Logros')
-                    ->sortable(),
+                    ->getStateUsing(function ($record) {
+                        return $record->estudianteLogros()->count();
+                    })
+                    ->label('Logros Asignados')
+                    ->sortable(false),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('activo')

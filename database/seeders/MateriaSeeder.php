@@ -22,20 +22,20 @@ class MateriaSeeder extends Seeder
             return;
         }
 
-        // Obtener grados
-        $gradoPreescolar = Grado::where('nombre', 'Preescolar')->first();
-        $gradoTransicion = Grado::where('nombre', 'Transición')->first();
-        $gradoPrimero = Grado::where('nombre', 'Primero')->first();
-        $gradoSegundo = Grado::where('nombre', 'Segundo')->first();
-        $gradoTercero = Grado::where('nombre', 'Tercero')->first();
-        $gradoCuarto = Grado::where('nombre', 'Cuarto')->first();
-        $gradoQuinto = Grado::where('nombre', 'Quinto')->first();
-        $gradoSexto = Grado::where('nombre', 'Sexto')->first();
-        $gradoSeptimo = Grado::where('nombre', 'Séptimo')->first();
-        $gradoOctavo = Grado::where('nombre', 'Octavo')->first();
-        $gradoNoveno = Grado::where('nombre', 'Noveno')->first();
-        $gradoDecimo = Grado::where('nombre', 'Décimo')->first();
-        $gradoOnce = Grado::where('nombre', 'Once')->first();
+        // Obtener grados (incluyendo todos los grupos A y B)
+        $gradoPreescolar = Grado::where('nombre', 'Preescolar')->get();
+        $gradoTransicion = Grado::where('nombre', 'Transición')->get();
+        $gradoPrimero = Grado::where('nombre', 'Primero')->get();
+        $gradoSegundo = Grado::where('nombre', 'Segundo')->get();
+        $gradoTercero = Grado::where('nombre', 'Tercero')->get();
+        $gradoCuarto = Grado::where('nombre', 'Cuarto')->get();
+        $gradoQuinto = Grado::where('nombre', 'Quinto')->get();
+        $gradoSexto = Grado::where('nombre', 'Sexto')->get();
+        $gradoSeptimo = Grado::where('nombre', 'Séptimo')->get();
+        $gradoOctavo = Grado::where('nombre', 'Octavo')->get();
+        $gradoNoveno = Grado::where('nombre', 'Noveno')->get();
+        $gradoDecimo = Grado::where('nombre', 'Décimo')->get();
+        $gradoOnce = Grado::where('nombre', 'Once')->get();
 
         // Crear materias por área
         $materias = [
@@ -46,7 +46,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Desarrollo del pensamiento lógico-matemático',
                 'docente_id' => $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoPrimero, $gradoSegundo, $gradoTercero, $gradoCuarto, $gradoQuinto]
+                'grados' => $gradoPrimero->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)
             ],
             [
                 'nombre' => 'Álgebra',
@@ -54,7 +54,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Fundamentos algebraicos y ecuaciones',
                 'docente_id' => $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno]
+                'grados' => $gradoSexto->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)
             ],
             [
                 'nombre' => 'Cálculo',
@@ -62,7 +62,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Introducción al cálculo diferencial e integral',
                 'docente_id' => $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoDecimo, $gradoOnce]
+                'grados' => $gradoDecimo->merge($gradoOnce)
             ],
             
             // Lenguaje
@@ -72,7 +72,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Desarrollo de competencias comunicativas',
                 'docente_id' => $profesores->skip(1)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoPreescolar, $gradoTransicion, $gradoPrimero, $gradoSegundo, $gradoTercero]
+                'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)
             ],
             [
                 'nombre' => 'Lengua Castellana',
@@ -80,7 +80,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Literatura y gramática avanzada',
                 'docente_id' => $profesores->skip(1)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoCuarto, $gradoQuinto, $gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno, $gradoDecimo, $gradoOnce]
+                'grados' => $gradoCuarto->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
             // Ciencias Naturales
@@ -90,7 +90,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Exploración del mundo natural',
                 'docente_id' => $profesores->skip(2)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoPreescolar, $gradoTransicion, $gradoPrimero, $gradoSegundo, $gradoTercero, $gradoCuarto, $gradoQuinto]
+                'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)
             ],
             [
                 'nombre' => 'Biología',
@@ -98,7 +98,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Estudio de los seres vivos',
                 'docente_id' => $profesores->skip(2)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno, $gradoDecimo, $gradoOnce]
+                'grados' => $gradoSexto->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             [
                 'nombre' => 'Química',
@@ -106,7 +106,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Fundamentos de la química',
                 'docente_id' => $profesores->skip(2)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoDecimo, $gradoOnce]
+                'grados' => $gradoDecimo->merge($gradoOnce)
             ],
             [
                 'nombre' => 'Física',
@@ -114,7 +114,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Principios físicos fundamentales',
                 'docente_id' => $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoDecimo, $gradoOnce]
+                'grados' => $gradoDecimo->merge($gradoOnce)
             ],
             
             // Ciencias Sociales
@@ -124,7 +124,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Historia, geografía y cívica',
                 'docente_id' => $profesores->skip(3)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoPrimero, $gradoSegundo, $gradoTercero, $gradoCuarto, $gradoQuinto, $gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno, $gradoDecimo, $gradoOnce]
+                'grados' => $gradoPrimero->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
             // Inglés
@@ -134,7 +134,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Idioma extranjero inglés',
                 'docente_id' => $profesores->skip(6)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoTercero, $gradoCuarto, $gradoQuinto, $gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno, $gradoDecimo, $gradoOnce]
+                'grados' => $gradoTercero->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
             // Educación Física
@@ -144,7 +144,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Desarrollo motor y deportivo',
                 'docente_id' => $profesores->skip(5)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoPreescolar, $gradoTransicion, $gradoPrimero, $gradoSegundo, $gradoTercero, $gradoCuarto, $gradoQuinto, $gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno, $gradoDecimo, $gradoOnce]
+                'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
             // Educación Artística
@@ -154,7 +154,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Desarrollo de la creatividad y expresión artística',
                 'docente_id' => $profesores->skip(4)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoPreescolar, $gradoTransicion, $gradoPrimero, $gradoSegundo, $gradoTercero, $gradoCuarto, $gradoQuinto, $gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno]
+                'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)
             ],
             
             // Tecnología e Informática
@@ -164,7 +164,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Competencias tecnológicas y digitales',
                 'docente_id' => $profesores->skip(7)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoCuarto, $gradoQuinto, $gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno, $gradoDecimo, $gradoOnce]
+                'grados' => $gradoCuarto->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
             // Ética y Valores
@@ -174,7 +174,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Formación en valores y convivencia',
                 'docente_id' => $profesores->skip(8)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoPreescolar, $gradoTransicion, $gradoPrimero, $gradoSegundo, $gradoTercero, $gradoCuarto, $gradoQuinto, $gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno, $gradoDecimo, $gradoOnce]
+                'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
             // Religión
@@ -184,7 +184,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Formación espiritual y religiosa',
                 'docente_id' => $profesores->skip(8)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
-                'grados' => [$gradoPreescolar, $gradoTransicion, $gradoPrimero, $gradoSegundo, $gradoTercero, $gradoCuarto, $gradoQuinto, $gradoSexto, $gradoSeptimo, $gradoOctavo, $gradoNoveno, $gradoDecimo, $gradoOnce]
+                'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ]
         ];
 
@@ -198,9 +198,7 @@ class MateriaSeeder extends Seeder
             );
             
             // Asignar los grados a la materia usando la relación muchos a muchos
-            $gradosIds = array_filter(array_map(function($grado) {
-                return $grado ? $grado->id : null;
-            }, $grados));
+            $gradosIds = $grados->pluck('id')->toArray();
             
             if (!empty($gradosIds)) {
                 $materia->grados()->syncWithoutDetaching($gradosIds);

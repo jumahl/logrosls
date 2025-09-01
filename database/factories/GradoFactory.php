@@ -19,6 +19,9 @@ class GradoFactory extends Factory
      */
     public function definition(): array
     {
+        static $counter = 0;
+        $counter++;
+        
         $tipos = ['preescolar', 'primaria', 'secundaria', 'media_academica'];
         $nombres = [
             'preescolar' => ['Prekínder', 'Kínder', 'Transición'],
@@ -27,11 +30,16 @@ class GradoFactory extends Factory
             'media_academica' => ['Décimo', 'Once']
         ];
 
+        $grupos = ['A', 'B', 'C', 'D', 'E', 'F'];
         $tipo = $this->faker->randomElement($tipos);
         $nombre = $this->faker->randomElement($nombres[$tipo]);
+        
+        // Generar grupo único para evitar duplicados en tests
+        $grupo = $grupos[$counter % count($grupos)];
 
         return [
-            'nombre' => $nombre,
+            'nombre' => $nombre . ' ' . $counter, // Agregar counter para unicidad
+            'grupo' => $grupo,
             'tipo' => $tipo,
             'activo' => true, // Activo por defecto
         ];
@@ -98,6 +106,26 @@ class GradoFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'nombre' => $this->faker->randomElement(['Décimo', 'Once']),
             'tipo' => 'media_academica',
+        ]);
+    }
+
+    /**
+     * Set a specific grupo for the grado.
+     */
+    public function withGrupo(string $grupo): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'grupo' => $grupo,
+        ]);
+    }
+
+    /**
+     * Create a grado without grupo.
+     */
+    public function withoutGrupo(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'grupo' => null,
         ]);
     }
 }
