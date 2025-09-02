@@ -5,7 +5,7 @@
 !define FK(x) <i>x</i>
 !define UK(x) <color:green>x</color>
 
-title Sistema de Logros Académicos - Diagrama de Base de Datos
+title Sistema de Logros Académicos con Historiales - Diagrama de Base de Datos
 
 ' ===============================================
 ' ENTIDADES PRINCIPALES DEL SISTEMA ACADÉMICO
@@ -288,6 +288,104 @@ TABLE(jobs, "jobs\n(Cola de Trabajos)") {
 }
 
 ' ===============================================
+' SISTEMA DE HISTORIALES Y TRANSICIÓN ANUAL
+' ===============================================
+
+TABLE(anios_escolares, "anios_escolares\n(Años Escolares)") {
+  PK(id) : bigint
+  --
+  UK(anio) : year
+  activo : boolean [default: false]
+  finalizado : boolean [default: false]
+  fecha_inicio : date
+  fecha_fin : date
+  observaciones : text [NULL]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Gestión de años académicos
+  para el sistema educativo
+  --
+  INDEX: (activo)
+}
+
+TABLE(historico_estudiantes, "historico_estudiantes\n(Historial Estudiantes)") {
+  PK(id) : bigint
+  --
+  FK(estudiante_id) : bigint
+  FK(grado_id) : bigint
+  anio_escolar : year
+  estudiante_nombre : varchar(255)
+  estudiante_apellido : varchar(255)
+  estudiante_documento : varchar(255)
+  grado_nombre : varchar(255)
+  grado_grupo : varchar(255) [NULL]
+  resultado_final : enum('promovido', 'reprobado', 'graduado', 'retirado') [NULL]
+  promedio_anual : decimal(4,2) [NULL]
+  observaciones_anuales : text [NULL]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Preserva información histórica
+  de estudiantes por año escolar
+  --
+  UNIQUE: (estudiante_id, anio_escolar)
+  INDEX: (anio_escolar, grado_id)
+}
+
+TABLE(historico_desempenos, "historico_desempenos\n(Historial Desempeños)") {
+  PK(id) : bigint
+  --
+  FK(estudiante_id) : bigint
+  FK(materia_id) : bigint
+  FK(periodo_id) : bigint
+  anio_escolar : year
+  estudiante_nombre : varchar(255)
+  estudiante_apellido : varchar(255)
+  estudiante_documento : varchar(255)
+  materia_nombre : varchar(255)
+  materia_codigo : varchar(255)
+  periodo_nombre : varchar(255)
+  periodo_corte : enum('Primer Corte', 'Segundo Corte')
+  periodo_numero : integer
+  nivel_desempeno : enum('E', 'S', 'A', 'I')
+  observaciones_finales : text [NULL]
+  docente_nombre : varchar(255) [NULL]
+  director_grupo : varchar(255) [NULL]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Preserva evaluaciones históricas
+  para generación de boletines
+  --
+  INDEX: (estudiante_id, anio_escolar)
+  INDEX: (anio_escolar, materia_id)
+  INDEX: (anio_escolar, periodo_id)
+}
+
+TABLE(historico_logros, "historico_logros\n(Historial Logros)") {
+  PK(id) : bigint
+  --
+  FK(historico_desempeno_id) : bigint
+  FK(logro_id) : bigint
+  anio_escolar : year
+  estudiante_nombre : varchar(255)
+  estudiante_apellido : varchar(255)
+  estudiante_documento : varchar(255)
+  logro_descripcion : varchar(255)
+  materia_nombre : varchar(255)
+  alcanzado : boolean [default: true]
+  created_at : timestamp
+  updated_at : timestamp
+  --
+  Preserva logros específicos
+  alcanzados por estudiantes
+  --
+  INDEX: (historico_desempeno_id, logro_id)
+  INDEX: (anio_escolar)
+}
+
+' ===============================================
 ' RELACIONES ENTRE ENTIDADES
 ' ===============================================
 
@@ -328,6 +426,24 @@ roles ||--o{ role_has_permissions : "role_id"
 users ||--o{ desempenos_materia : "locked_by\n(1:N)\nUsuario que bloquea\nevaluaciones"
 
 ' ===============================================
+' RELACIONES DEL SISTEMA HISTÓRICO
+' ===============================================
+
+' Relaciones de Años Escolares - entidad independiente para gestión temporal
+
+' Relaciones de Históricos con entidades originales
+estudiantes ||--o{ historico_estudiantes : "estudiante_id\n(1:N)\nUn estudiante puede tener\nregistros en múltiples años"
+grados ||--o{ historico_estudiantes : "grado_id\n(1:N)\nUn grado puede tener\nestudiantes históricos"
+
+estudiantes ||--o{ historico_desempenos : "estudiante_id\n(1:N)\nUn estudiante puede tener\ndesempeños históricos"
+materias ||--o{ historico_desempenos : "materia_id\n(1:N)\nUna materia puede tener\ndesempeños históricos"
+periodos ||--o{ historico_desempenos : "periodo_id\n(1:N)\nUn período puede tener\ndesempeños históricos"
+
+' Relaciones entre tablas históricas
+historico_desempenos ||--o{ historico_logros : "historico_desempeno_id\n(1:N)\nUn desempeño histórico\npuede tener múltiples logros"
+logros ||--o{ historico_logros : "logro_id\n(1:N)\nUn logro puede estar\nen múltiples historiales"
+
+' ===============================================
 ' NOTAS EXPLICATIVAS
 ' ===============================================
 
@@ -340,5 +456,13 @@ note top of periodos : Sistema de períodos:\n• 2 períodos por año escolar\n
 note bottom of estudiante_logros : Evaluación granular:\nPermite registrar logros\nespecíficos alcanzados\ndentro del desempeño\ngeneral de una materia
 
 note bottom of grado_materia : Relación N:N:\n• Un grado tiene múltiples materias\n• Una materia se dicta en múltiples grados\n• Permite flexibilidad curricular
+
+note top of anios_escolares : Sistema de Años Escolares:\n• Solo un año puede estar activo\n• Control de transiciones anuales\n• Fechas de inicio y fin\n• Estado finalizado para cierre
+
+note right of historico_estudiantes : Preservación Histórica:\n• Datos del estudiante congelados\n• Información del grado cursado\n• Resultado final del año\n• Promedio anual calculado
+
+note bottom of historico_desempenos : Evaluaciones Históricas:\n• Preserva datos completos\n• Información de docentes\n• Estado al momento del cierre\n• Base para boletines históricos
+
+note left of historico_logros : Logros Detallados:\n• Granularidad de evaluación\n• Preserva descripción original\n• Vinculado a desempeño histórico\n• Permite reconstruir boletines
 
 @enduml
