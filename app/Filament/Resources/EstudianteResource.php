@@ -131,13 +131,25 @@ class EstudianteResource extends Resource
                     ->label('Fecha de Nacimiento'),
                 Tables\Columns\TextColumn::make('activo')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn ($state): string => match ($state) {
+                        1 => 'success',
+                        true => 'success',
                         '1' => 'success',
+                        0 => 'danger',
+                        false => 'danger',
                         '0' => 'danger',
+                        null => 'gray',
+                        default => 'gray'
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn ($state): string => match ($state) {
+                        1 => 'Activo',
+                        true => 'Activo',
                         '1' => 'Activo',
+                        0 => 'Inactivo',
+                        false => 'Inactivo',
                         '0' => 'Inactivo',
+                        null => 'No definido',
+                        default => 'No definido'
                     })
                     ->label('Estado'),
                 Tables\Columns\TextColumn::make('es_mi_grupo')

@@ -11,6 +11,93 @@ use Illuminate\Support\Collection;
 class BoletinHistoricoService
 {
     /**
+     * Generar boletín histórico específicamente del segundo periodo
+     */
+    public function generarBoletinHistoricoSegundoPeriodo($estudianteId, $anioEscolar)
+    {
+        // Obtener datos históricos del estudiante
+        $historicoEstudiante = HistoricoEstudiante::where('estudiante_id', $estudianteId)
+            ->where('anio_escolar', $anioEscolar)
+            ->first();
+            
+        if (!$historicoEstudiante) {
+            throw new \Exception("No se encontraron datos históricos del estudiante para el año {$anioEscolar}");
+        }
+        
+        // Obtener desempeños históricos solo del segundo periodo
+        $desempenosHistoricos = HistoricoDesempeno::where('estudiante_id', $estudianteId)
+            ->where('anio_escolar', $anioEscolar)
+            ->where(function ($query) {
+                $query->where('periodo_corte', 2)
+                      ->orWhere('periodo_numero', 2)
+                      ->orWhere('periodo_nombre', 'like', '%segundo%')
+                      ->orWhere('periodo_nombre', 'like', '%2%');
+            })
+            ->get();
+            
+        if ($desempenosHistoricos->isEmpty()) {
+            throw new \Exception("No se encontraron desempeños del segundo periodo para el año {$anioEscolar}");
+        }
+        
+        // Obtener logros históricos usando el nombre del estudiante y año
+        $logrosHistoricos = HistoricoLogro::where('estudiante_nombre', $historicoEstudiante->estudiante_nombre)
+            ->where('estudiante_apellido', $historicoEstudiante->estudiante_apellido)
+            ->where('estudiante_documento', $historicoEstudiante->estudiante_documento)
+            ->where('anio_escolar', $anioEscolar)
+            ->where('alcanzado', true)
+            ->get();
+        
+        // Agrupar desempeños por materia
+        $desempenosPorMateria = $desempenosHistoricos->groupBy('materia_nombre');
+        
+        // Calcular promedios por materia
+        $promediosPorMateria = [];
+        foreach ($desempenosPorMateria as $materia => $desempenos) {
+            $promedio = $desempenos->avg(function ($desempeno) {
+                return $this->convertirDesempenoANumero($desempeno->nivel_desempeno);
+            });
+            $promediosPorMateria[$materia] = round($promedio, 2);
+        }
+        
+        // Generar PDF
+        $pdf = Pdf::loadView('boletines.historico_segundo_periodo', [
+            'historicoEstudiante' => $historicoEstudiante,
+            'anioEscolar' => $anioEscolar,
+            'periodo' => 'Segundo Periodo',
+            'desempenosPorMateria' => $desempenosPorMateria,
+            'logrosHistoricos' => $logrosHistoricos,
+            'promediosPorMateria' => $promediosPorMateria,
+        ]);
+        
+        return $pdf;
+    }
+    
+    /**
+     * Generar múltiples boletines del segundo periodo en un ZIP
+     */
+    public function generarBoletinesSegundoPeriodoMasivo(Collection $registros)
+    {
+        $zip = new \ZipArchive();
+        $zipPath = tempnam(sys_get_temp_dir(), 'boletines_segundo_periodo');
+        
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            foreach ($registros as $registro) {
+                try {
+                    $pdf = $this->generarBoletinHistoricoSegundoPeriodo($registro->estudiante_id, $registro->anio_escolar);
+                    $filename = "boletin_2do_periodo_{$registro->estudiante_apellido}_{$registro->estudiante_nombre}_{$registro->anio_escolar}.pdf";
+                    $zip->addFromString($filename, $pdf->output());
+                } catch (\Exception $e) {
+                    // Continuar con el siguiente si hay error
+                    continue;
+                }
+            }
+            $zip->close();
+        }
+        
+        return $zipPath;
+    }
+    
+    /**
      * Generar boletín histórico para un estudiante y año específico
      */
     public function generarBoletinHistorico($estudianteId, $anioEscolar)
@@ -29,8 +116,10 @@ class BoletinHistoricoService
             ->where('anio_escolar', $anioEscolar)
             ->get();
             
-        // Obtener logros históricos
-        $logrosHistoricos = HistoricoLogro::where('estudiante_id', $estudianteId)
+        // Obtener logros históricos usando el nombre del estudiante y año
+        $logrosHistoricos = HistoricoLogro::where('estudiante_nombre', $historicoEstudiante->estudiante_nombre)
+            ->where('estudiante_apellido', $historicoEstudiante->estudiante_apellido)
+            ->where('estudiante_documento', $historicoEstudiante->estudiante_documento)
             ->where('anio_escolar', $anioEscolar)
             ->get();
         

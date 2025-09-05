@@ -45,9 +45,17 @@ class AnioEscolar extends Model
     }
     
     /**
+     * Períodos académicos de este año escolar
+     */
+    public function periodos(): HasMany
+    {
+        return $this->hasMany(Periodo::class, 'anio_escolar', 'anio');
+    }
+    
+    /**
      * Estudiantes históricos de este año
      */
-    public function estudiantes(): HasMany
+    public function estudiantesHistoricos(): HasMany
     {
         return $this->hasMany(HistoricoEstudiante::class, 'anio_escolar', 'anio');
     }
@@ -55,8 +63,67 @@ class AnioEscolar extends Model
     /**
      * Desempeños históricos de este año
      */
-    public function desempenos(): HasMany
+    public function desempenosHistoricos(): HasMany
     {
         return $this->hasMany(HistoricoDesempeno::class, 'anio_escolar', 'anio');
+    }
+    
+    /**
+     * Logros históricos de este año
+     */
+    public function logrosHistoricos(): HasMany
+    {
+        return $this->hasMany(HistoricoEstudianteLogro::class, 'anio_escolar', 'anio');
+    }
+    
+    /**
+     * Verificar si este año puede ser activado
+     */
+    public function puedeActivarse(): bool
+    {
+        return !$this->finalizado && !$this->activo;
+    }
+    
+    /**
+     * Verificar si este año puede finalizarse
+     */
+    public function puedeFinalizarse(): bool
+    {
+        return $this->activo && !$this->finalizado;
+    }
+    
+    /**
+     * Finalizar este año escolar
+     */
+    public function finalizar()
+    {
+        $this->update([
+            'activo' => false,
+            'finalizado' => true
+        ]);
+    }
+    
+    /**
+     * Scope para años activos
+     */
+    public function scopeActivo($query)
+    {
+        return $query->where('activo', true);
+    }
+    
+    /**
+     * Scope para años finalizados
+     */
+    public function scopeFinalizados($query)
+    {
+        return $query->where('finalizado', true);
+    }
+    
+    /**
+     * Scope para años disponibles para transición
+     */
+    public function scopeDisponiblesParaTransicion($query)
+    {
+        return $query->where('activo', false)->where('finalizado', false);
     }
 }

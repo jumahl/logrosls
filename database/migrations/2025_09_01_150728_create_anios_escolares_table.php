@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('anios_escolares', function (Blueprint $table) {
             $table->id();
-            $table->year('anio')->unique(); // 2025, 2026, etc.
+            $table->integer('anio')->unique(); // 2025, 2026, etc.
             $table->boolean('activo')->default(false);
             $table->boolean('finalizado')->default(false);
             $table->date('fecha_inicio');
@@ -22,6 +22,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index('activo');
+            $table->index('anio'); // Agregar índice para FK
         });
     }
 

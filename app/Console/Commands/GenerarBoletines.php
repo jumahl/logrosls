@@ -43,21 +43,39 @@ class GenerarBoletines extends Command
 
         // Si no se especifica estudiante, generar para todos los estudiantes del período
         if (!$estudianteId) {
-            $estudiantes = Estudiante::whereHas('estudianteLogros', function ($query) use ($periodoId) {
-                $query->where('periodo_id', $periodoId);
-            })->get();
+            // Optimización: usar eager loading y chunking para manejar grandes volúmenes
+            $estudiantesQuery = Estudiante::select(['id', 'nombre', 'apellido', 'documento', 'grado_id'])
+                ->with(['grado:id,nombre,grupo'])
+                ->whereHas('estudianteLogros', function ($query) use ($periodoId) {
+                    $query->select('estudiante_id')->where('periodo_id', $periodoId);
+                });
 
-            if ($estudiantes->isEmpty()) {
+            $totalEstudiantes = $estudiantesQuery->count();
+            
+            if ($totalEstudiantes === 0) {
                 $this->error('No hay estudiantes con logros en este período.');
                 return 1;
             }
 
-            $this->info("Generando boletines para {$estudiantes->count()} estudiantes...");
+            $this->info("Generando boletines para {$totalEstudiantes} estudiantes...");
             
-            foreach ($estudiantes as $estudiante) {
-                $this->generarBoletinEstudiante($estudiante, $periodo);
-            }
-
+            $bar = $this->output->createProgressBar($totalEstudiantes);
+            $bar->start();
+            
+            // Procesar en chunks de 50 estudiantes para optimizar memoria
+            $estudiantesQuery->chunk(50, function ($estudiantes) use ($periodo, $bar) {
+                foreach ($estudiantes as $estudiante) {
+                    try {
+                        $this->generarBoletinEstudiante($estudiante, $periodo);
+                        $bar->advance();
+                    } catch (\Exception $e) {
+                        $this->error("\nError generando boletín para {$estudiante->nombre}: {$e->getMessage()}");
+                    }
+                }
+            });
+            
+            $bar->finish();
+            $this->newLine();
             $this->info('Boletines generados exitosamente.');
             return 0;
         }
@@ -76,28 +94,30 @@ class GenerarBoletines extends Command
 
     private function generarBoletinEstudiante(Estudiante $estudiante, Periodo $periodo)
     {
-        // Obtener el período anterior (primer corte del mismo período)
+        // Obtener el período anterior (primer corte del mismo período) una sola vez
         $periodoAnterior = $periodo->periodo_anterior;
         
-        // Obtener logros del primer corte
-        $logrosPrimerCorte = collect();
-        if ($periodoAnterior) {
-            $logrosPrimerCorte = $estudiante->estudianteLogros()
-                ->where('periodo_id', $periodoAnterior->id)
-                ->with(['logro.materia.docente', 'logro.materia.grados'])
-                ->get();
-        }
-
-        // Obtener logros del segundo corte
-        $logrosSegundoCorte = $estudiante->estudianteLogros()
-            ->where('periodo_id', $periodo->id)
-            ->with(['logro.materia.docente', 'logro.materia.grados'])
-            ->get();
-
-        // Combinar logros de ambos cortes
-        $todosLosLogros = $logrosPrimerCorte->concat($logrosSegundoCorte);
+        // Optimización: cargar todos los logros necesarios en una sola consulta
+        $logrosQuery = $estudiante->estudianteLogros()
+            ->select(['id', 'desempeno_materia_id', 'logro_id', 'alcanzado'])
+            ->with([
+                'logro:id,codigo,titulo,desempeno,materia_id',
+                'logro.materia:id,nombre,codigo,docente_id',
+                'logro.materia.docente:id,name'
+            ]);
         
-        // Agrupar por materia
+        // Obtener logros de ambos períodos en una consulta
+        $periodosIds = array_filter([$periodoAnterior?->id, $periodo->id]);
+        $todosLosLogros = $logrosQuery->whereIn('periodo_id', $periodosIds)->get();
+        
+        // Separar por período después de cargar
+        $logrosPrimerCorte = $periodoAnterior 
+            ? $todosLosLogros->where('periodo_id', $periodoAnterior->id)
+            : collect();
+            
+        $logrosSegundoCorte = $todosLosLogros->where('periodo_id', $periodo->id);
+
+        // Agrupar por materia usando la relación ya cargada
         $logrosPorMateria = $todosLosLogros->groupBy(function ($logro) {
             return $logro->logro->materia->nombre;
         });
@@ -107,30 +127,37 @@ class GenerarBoletines extends Command
             return;
         }
 
-        // Calcular promedios por materia
-        $promediosPorMateria = [];
-        foreach ($logrosPorMateria as $materia => $logros) {
-            $promedio = $logros->avg('valor_numerico');
-            $promediosPorMateria[$materia] = $promedio;
+        // Calcular promedios por materia de forma eficiente
+        $promediosPorMateria = $logrosPorMateria->map(function ($logros) {
+            return $logros->filter(function($logro) {
+                return $logro->valor_numerico > 0;
+            })->avg('valor_numerico') ?? 0;
+        })->toArray();
+
+        try {
+            // Generar PDF con timeout aumentado para documentos grandes
+            ini_set('max_execution_time', 120);
+            
+            $pdf = Pdf::loadView('boletines.academico', [
+                'estudiante' => $estudiante,
+                'periodo' => $periodo,
+                'periodoAnterior' => $periodoAnterior,
+                'logrosPrimerCorte' => $logrosPrimerCorte,
+                'logrosSegundoCorte' => $logrosSegundoCorte,
+                'logrosPorMateria' => $logrosPorMateria,
+                'promediosPorMateria' => $promediosPorMateria,
+            ]);
+
+            // Guardar archivo con nombre único
+            $fecha = now()->format('Y-m-d');
+            $filename = "boletin_{$estudiante->id}_{$periodo->id}_{$fecha}.pdf";
+            $path = "boletines/boletines/{$filename}";
+            
+            Storage::put($path, $pdf->output());
+
+        } catch (\Exception $e) {
+            $this->error("Error generando PDF para estudiante {$estudiante->id}: {$e->getMessage()}");
+            throw $e;
         }
-
-        // Generar PDF
-        $pdf = Pdf::loadView('boletines.academico', [
-            'estudiante' => $estudiante,
-            'periodo' => $periodo,
-            'periodoAnterior' => $periodoAnterior,
-            'logrosPrimerCorte' => $logrosPrimerCorte,
-            'logrosSegundoCorte' => $logrosSegundoCorte,
-            'logrosPorMateria' => $logrosPorMateria,
-            'promediosPorMateria' => $promediosPorMateria,
-        ]);
-
-        // Guardar archivo
-        $filename = "boletin_{$estudiante->id}_{$periodo->id}.pdf";
-        $path = "boletines/boletines/{$filename}";
-        
-        Storage::put($path, $pdf->output());
-
-        $this->line("Boletín generado: {$path}");
     }
 } 

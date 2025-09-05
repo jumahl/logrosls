@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 
 class HistoricoDesempenoResource extends Resource
 {
@@ -27,7 +28,7 @@ class HistoricoDesempenoResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Histórico de Desempeños';
     
-    protected static ?string $navigationGroup = 'Reportes';
+    protected static ?string $navigationGroup = 'Históricos';
 
     public static function canAccess(): bool
     {
@@ -102,45 +103,27 @@ class HistoricoDesempenoResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('anio_escolar')
-                    ->label('Año')
+                    ->label('Año Escolar')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('estudiante_nombre')
+                Tables\Columns\TextColumn::make('estudiante_nombre_completo')
                     ->label('Estudiante')
-                    ->formatStateUsing(fn ($record) => $record->estudiante_nombre . ' ' . $record->estudiante_apellido)
-                    ->searchable(['estudiante_nombre', 'estudiante_apellido'])
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('materia_nombre')
-                    ->label('Materia')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('periodo_nombre')
-                    ->label('Período')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('nivel_desempeno')
-                    ->label('Desempeño')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'E' => 'success',
-                        'S' => 'warning', 
-                        'A' => 'primary',
-                        'I' => 'danger',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'E' => 'Excelente',
-                        'S' => 'Sobresaliente',
-                        'A' => 'Aceptable',
-                        'I' => 'Insuficiente',
-                        default => $state,
-                    }),
-                Tables\Columns\TextColumn::make('observaciones_finales')
-                    ->label('Observaciones')
-                    ->limit(50),
+                    ->getStateUsing(fn ($record) => $record->estudiante_nombre . ' ' . $record->estudiante_apellido . ' - ' . $record->estudiante_documento)
+                    ->searchable(['estudiante_nombre', 'estudiante_apellido', 'estudiante_documento'])
+                    ->sortable(['estudiante_apellido', 'estudiante_nombre']),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de Archivo')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
+                Tables\Columns\IconColumn::make('activo')
+                    ->label('Estado')
+                    ->getStateUsing(function ($record) {
+                        // Verificar si el estudiante está actualmente activo
+                        $estudiante = \App\Models\Estudiante::find($record->estudiante_id);
+                        return $estudiante ? $estudiante->activo : false;
+                    })
+                    ->boolean()
+                    ->sortable(false),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('anio_escolar')
@@ -151,35 +134,35 @@ class HistoricoDesempenoResource extends Resource
                             ->orderBy('anio_escolar', 'desc')
                             ->pluck('anio_escolar', 'anio_escolar');
                     }),
-                Tables\Filters\SelectFilter::make('materia_nombre')
-                    ->label('Materia')
-                    ->options(function () {
-                        return \App\Models\HistoricoDesempeno::select('materia_nombre')
-                            ->distinct()
-                            ->orderBy('materia_nombre')
-                            ->pluck('materia_nombre', 'materia_nombre');
+                Tables\Filters\Filter::make('estudiante')
+                    ->form([
+                        Forms\Components\TextInput::make('estudiante_buscar')
+                            ->label('Buscar estudiante')
+                            ->placeholder('Nombre, apellido o documento')
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['estudiante_buscar'],
+                                fn (Builder $query, $search): Builder => $query->where(function ($query) use ($search) {
+                                    $query->where('estudiante_nombre', 'like', "%{$search}%")
+                                          ->orWhere('estudiante_apellido', 'like', "%{$search}%")
+                                          ->orWhere('estudiante_documento', 'like', "%{$search}%");
+                                })
+                            );
                     }),
-                Tables\Filters\SelectFilter::make('nivel_desempeno')
-                    ->label('Desempeño')
-                    ->options([
-                        'E' => 'Excelente',
-                        'S' => 'Sobresaliente',
-                        'A' => 'Aceptable',
-                        'I' => 'Insuficiente',
-                    ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\Action::make('descargar_boletin')
-                    ->label('Descargar Boletín')
+                Tables\Actions\Action::make('descargar_boletin_segundo_periodo')
+                    ->label('Boletín')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
                     ->action(function ($record) {
                         try {
                             $service = new BoletinHistoricoService();
-                            $pdf = $service->generarBoletinHistorico($record->estudiante_id, $record->anio_escolar);
+                            $pdf = $service->generarBoletinHistoricoSegundoPeriodo($record->estudiante_id, $record->anio_escolar);
                             
-                            $filename = "boletin_historico_{$record->estudiante_nombre}_{$record->estudiante_apellido}_{$record->anio_escolar}.pdf";
+                            $filename = "boletin_2do_periodo_{$record->estudiante_apellido}_{$record->estudiante_nombre}_{$record->anio_escolar}.pdf";
                             
                             return response()->streamDownload(function () use ($pdf) {
                                 echo $pdf->output();
@@ -194,21 +177,21 @@ class HistoricoDesempenoResource extends Resource
                         }
                     })
                     ->requiresConfirmation()
-                    ->modalHeading('Descargar Boletín Histórico')
+                    ->modalHeading('Descargar Boletín')
                     ->modalDescription(fn ($record) => "¿Descargar el boletín de {$record->estudiante_nombre} {$record->estudiante_apellido} del año {$record->anio_escolar}?"),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('descargar_boletines_masivo')
-                        ->label('Descargar Boletines')
+                    Tables\Actions\BulkAction::make('descargar_boletines')
+                        ->label('Boletines')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('success')
                         ->action(function ($records) {
                             try {
                                 $service = new BoletinHistoricoService();
-                                $zipPath = $service->generarBoletinesHistoricosMasivo($records);
+                                $zipPath = $service->generarBoletinesSegundoPeriodoMasivo($records);
                                 
-                                $zipName = "boletines_historicos_" . now()->format('Y-m-d_H-i-s') . ".zip";
+                                $zipName = "boletines_2do_periodo_" . now()->format('Y-m-d_H-i-s') . ".zip";
                                 
                                 return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
                                 
@@ -221,11 +204,19 @@ class HistoricoDesempenoResource extends Resource
                             }
                         })
                         ->requiresConfirmation()
-                        ->modalHeading('Descargar Boletines Históricos')
-                        ->modalDescription('¿Descargar boletines de los registros seleccionados?'),
-                    // No permitir eliminaciones masivas de datos históricos
+                        ->modalHeading('Descargar Boletines')
+                        ->modalDescription('¿Descargar boletines de los estudiantes seleccionados?'),
                 ]),
-            ]);
+            ])
+            ->defaultSort('anio_escolar', 'desc');
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->orderBy('anio_escolar', 'desc')
+            ->orderBy('estudiante_apellido')
+            ->orderBy('estudiante_nombre');
     }
 
     public static function getRelations(): array
@@ -239,7 +230,6 @@ class HistoricoDesempenoResource extends Resource
     {
         return [
             'index' => Pages\ListHistoricoDesempenos::route('/'),
-            'view' => Pages\ViewHistoricoDesempeno::route('/{record}'),
             // No permitir crear o editar datos históricos
         ];
     }

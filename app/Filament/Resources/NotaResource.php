@@ -390,19 +390,37 @@ class NotaResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
+        
+        // Query base optimizada sin JOIN innecesario
         $query = parent::getEloquentQuery()
-            ->select('desempenos_materia.*')
-            ->join('estudiantes', 'desempenos_materia.estudiante_id', '=', 'estudiantes.id')
+            ->select([
+                'desempenos_materia.*'
+            ])
             ->with([
-                'estudiante.grado',
-                'materia.docente',
-                'periodo',
-                'estudianteLogros.logro'
+                'estudiante:id,nombre,apellido,documento,grado_id',
+                'estudiante.grado:id,nombre,grupo',
+                'materia:id,nombre,docente_id',
+                'materia.docente:id,name',
+                'periodo:id,corte,numero_periodo,anio_escolar',
+                'estudianteLogros:id,desempeno_materia_id,logro_id,alcanzado',
+                'estudianteLogros.logro:id,codigo,titulo,materia_id'
             ]);
         
+        // Filtrar por rol de profesor sin subquery innecesaria
         if ($user && $user->hasRole('profesor')) {
-            $materiaIds = $user->materias()->pluck('id');
-            $query->whereIn('desempenos_materia.materia_id', $materiaIds);
+            // Optimización: cache de materias del profesor
+            $materiaIds = cache()->remember(
+                "profesor_materias_ids_{$user->id}",
+                300, // 5 minutos
+                fn() => $user->materias()->pluck('id')->toArray()
+            );
+            
+            if (!empty($materiaIds)) {
+                $query->whereIn('desempenos_materia.materia_id', $materiaIds);
+            } else {
+                // Si no tiene materias, no mostrar registros
+                $query->whereRaw('1 = 0');
+            }
         }
         
         return $query;

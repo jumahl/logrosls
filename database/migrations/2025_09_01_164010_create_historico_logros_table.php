@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('historico_desempeno_id')->constrained('historico_desempenos')->onDelete('cascade');
             $table->foreignId('logro_id')->constrained('logros');
-            $table->year('anio_escolar');
+            $table->integer('anio_escolar'); // Cambiar de year a integer para consistencia
             
             // Conservar datos del estudiante
             $table->string('estudiante_nombre');

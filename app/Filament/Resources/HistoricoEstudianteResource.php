@@ -25,7 +25,7 @@ class HistoricoEstudianteResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Histórico de Estudiantes';
     
-    protected static ?string $navigationGroup = 'Reportes';
+    protected static ?string $navigationGroup = 'Históricos';
 
     public static function canAccess(): bool
     {

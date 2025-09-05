@@ -85,7 +85,7 @@ trait OptimizedQueries
                 'calificaciones_por_materia' => $calificacionesPorMateria,
                 'resumen_general' => [
                     'total_materias' => $calificacionesPorMateria->count(),
-                    'promedio_general' => $calificacionesPorMateria->avg('valor_numerico'),
+                    'promedio_general' => $calificacionesPorMateria->pluck('valor_numerico')->avg(),
                     'materias_excelentes' => $calificacionesPorMateria->where('calificacion.nivel_desempeno', 'E')->count(),
                     'materias_insuficientes' => $calificacionesPorMateria->where('calificacion.nivel_desempeno', 'I')->count(),
                 ]

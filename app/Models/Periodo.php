@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -35,6 +36,14 @@ class Periodo extends Model
     public function getNombreAttribute()
     {
         return "Período {$this->numero_periodo}";
+    }
+
+    /**
+     * Relación con el año escolar
+     */
+    public function anioEscolar(): BelongsTo
+    {
+        return $this->belongsTo(AnioEscolar::class, 'anio_escolar', 'anio');
     }
 
     /**

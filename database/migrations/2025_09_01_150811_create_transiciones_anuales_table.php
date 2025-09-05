@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('estudiante_id')->constrained('estudiantes');
             $table->foreignId('materia_id')->constrained('materias');
             $table->foreignId('periodo_id')->constrained('periodos');
-            $table->year('anio_escolar'); // Para facilitar consultas
+            $table->integer('anio_escolar'); // Para facilitar consultas
             
             // Conservar datos del estudiante
             $table->string('estudiante_nombre');
@@ -45,6 +45,8 @@ return new class extends Migration
             $table->index(['estudiante_id', 'anio_escolar']);
             $table->index(['anio_escolar', 'materia_id']);
             $table->index(['anio_escolar', 'periodo_id']);
+            
+            // Clave foránea hacia anios_escolares (se agregará después)
         });
     }
 

@@ -23,23 +23,22 @@ class LogrosExport implements FromCollection, WithHeadings, WithStyles, WithMapp
 
     public function collection()
     {
-        $query = Logro::with(['materia', 'materia.docente'])->where('activo', true);
+        $user = auth()->user();
+        
+        // Base query usando traits optimizados
+        $query = Logro::conDatosCompletos()->activos();
 
         // Si se especifica una materia, filtrar por esa materia
         if ($this->materiaId) {
             $query->where('materia_id', $this->materiaId);
         }
 
-        // Si es profesor, solo puede ver logros de materias que enseña
-        $user = auth()->user();
-        if ($user && !$user->hasRole('admin')) {
-            if ($user->hasRole('profesor')) {
-                $materiasDelProfesor = Materia::where('docente_id', $user->id)->pluck('id');
-                $query->whereIn('materia_id', $materiasDelProfesor);
-            }
+        // Si es profesor, usar scope optimizado
+        if ($user && !$user->hasRole('admin') && $user->hasRole('profesor')) {
+            $query->deProfesor($user->id);
         }
 
-        return $query->orderBy('materia_id')->orderBy('orden')->orderBy('codigo')->get();
+        return $query->ordenadosPorMateria()->get();
     }
 
     public function map($logro): array

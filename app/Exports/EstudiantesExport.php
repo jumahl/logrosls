@@ -23,27 +23,22 @@ class EstudiantesExport implements FromCollection, WithHeadings, WithStyles, Wit
 
     public function collection()
     {
-        $query = Estudiante::with('grado')->where('activo', true);
+        $user = auth()->user();
+        
+        // Base query usando traits optimizados
+        $query = Estudiante::conDatosCompletos()->activos();
 
         // Si se especifica un grado, filtrar por ese grado
         if ($this->gradoId) {
             $query->where('grado_id', $this->gradoId);
         }
 
-        // Si es profesor, solo puede ver estudiantes de grados donde enseña
-        $user = auth()->user();
-        if ($user && !$user->hasRole('admin')) {
-            if ($user->hasRole('profesor')) {
-                // Obtener grados donde el usuario es docente de alguna materia
-                $gradosDelProfesor = Grado::whereHas('materias', function($q) use ($user) {
-                    $q->where('docente_id', $user->id);
-                })->pluck('id');
-
-                $query->whereIn('grado_id', $gradosDelProfesor);
-            }
+        // Si es profesor, usar scope optimizado
+        if ($user && !$user->hasRole('admin') && $user->hasRole('profesor')) {
+            $query->deProfesor($user->id);
         }
 
-        return $query->orderBy('grado_id')->orderBy('apellido')->orderBy('nombre')->get();
+        return $query->ordenadosPorNombre()->get();
     }
 
     public function map($estudiante): array

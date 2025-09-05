@@ -50,6 +50,7 @@ class LiceoPanelProvider extends PanelProvider
                 'Gestión Académica',
                 'Gestión de Estudiantes',
                 'Reportes',
+                'Históricos',
                 'Administración',
             ])
             ->middleware([

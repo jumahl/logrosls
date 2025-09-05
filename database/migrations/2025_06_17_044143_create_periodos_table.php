@@ -24,6 +24,8 @@ return new class extends Migration
             // Índices para mejorar rendimiento
             $table->index(['anio_escolar', 'numero_periodo', 'corte']);
             $table->index(['activo']);
+            
+            // Clave foránea hacia anios_escolares (se creará después)
         });
     }
 

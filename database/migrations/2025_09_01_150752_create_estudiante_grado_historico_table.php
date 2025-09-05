@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('estudiante_id')->constrained('estudiantes');
             $table->foreignId('grado_id')->constrained('grados');
-            $table->year('anio_escolar'); // 2025, 2026, etc.
+            $table->integer('anio_escolar'); // 2025, 2026, etc.
             $table->string('estudiante_nombre'); // Conservar nombre
             $table->string('estudiante_apellido'); // Conservar apellido
             $table->string('estudiante_documento'); // Conservar documento
@@ -29,6 +29,8 @@ return new class extends Migration
             // Un estudiante solo puede estar en un grado por año
             $table->unique(['estudiante_id', 'anio_escolar']);
             $table->index(['anio_escolar', 'grado_id']);
+            
+            // Clave foránea hacia anios_escolares (se agregará después)
         });
     }
 

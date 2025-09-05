@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\AnioEscolar;
 use App\Models\Estudiante;
+use App\Models\Materia;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
@@ -11,6 +12,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Actions\Action;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class TransicionAnual extends Page
 {
@@ -39,20 +41,30 @@ class TransicionAnual extends Page
     
     public function form(Form $form): Form
     {
+        $anioActual = AnioEscolar::where('activo', true)->first();
+        
         return $form
             ->schema([
                 Select::make('anio_origen')
                     ->label('Año Escolar Actual')
-                    ->options(AnioEscolar::where('activo', true)->pluck('anio', 'anio'))
-                    ->default(AnioEscolar::where('activo', true)->first()?->anio)
+                    ->options(function () {
+                        $anioActivo = AnioEscolar::where('activo', true)->first();
+                        return $anioActivo ? [$anioActivo->anio => $anioActivo->anio] : [];
+                    })
+                    ->default(function () {
+                        $anioActivo = AnioEscolar::where('activo', true)->first();
+                        return $anioActivo?->anio;
+                    })
                     ->disabled()
-                    ->required(),
+                    ->required()
+                    ->helperText($anioActual ? "Año actualmente en curso" : "⚠️ No hay año escolar activo configurado"),
                     
                 Select::make('anio_destino')
                     ->label('Año Escolar Destino')
-                    ->options(AnioEscolar::where('activo', false)->where('finalizado', false)->pluck('anio', 'anio'))
+                    ->options(AnioEscolar::disponiblesParaTransicion()->pluck('anio', 'anio'))
                     ->required()
-                    ->helperText('Selecciona el año al que se promoverán los estudiantes'),
+                    ->helperText('Selecciona el año al que se promoverán los estudiantes')
+                    ->searchable(),
                     
                 Textarea::make('observaciones')
                     ->label('Observaciones de la Transición')
@@ -118,7 +130,8 @@ class TransicionAnual extends Page
             $exitCode = \Illuminate\Support\Facades\Artisan::call('transicion:anual', [
                 'anio_finalizar' => $anioActual->anio,
                 'anio_nuevo' => $data['anio_destino'],
-                '--simular' => true
+                '--simular' => true,
+                '--force' => true  // Agregar --force para evitar problemas con STDIN
             ]);
             
             $output = \Illuminate\Support\Facades\Artisan::output();
@@ -177,7 +190,8 @@ class TransicionAnual extends Page
             // Ejecutar transición real
             $exitCode = \Illuminate\Support\Facades\Artisan::call('transicion:anual', [
                 'anio_finalizar' => $anioActual->anio,
-                'anio_nuevo' => $data['anio_destino']
+                'anio_nuevo' => $data['anio_destino'],
+                '--force' => true  // Agregar --force para evitar problemas con STDIN en web
             ]);
             
             $output = \Illuminate\Support\Facades\Artisan::output();
@@ -211,13 +225,26 @@ class TransicionAnual extends Page
     
     public function getEstadisticas()
     {
-        $anioActivo = AnioEscolar::where('activo', true)->first();
-        
-        return [
-            'estudiantes_activos' => Estudiante::where('activo', true)->count(),
-            'grados_con_estudiantes' => Estudiante::where('activo', true)->distinct('grado_id')->count(),
-            'total_materias' => \App\Models\Materia::where('activa', true)->count(),
-            'anio_actual' => $anioActivo?->anio ?? 'N/A'
-        ];
+        try {
+            $anioActivo = AnioEscolar::where('activo', true)->first();
+            
+            return [
+                'estudiantes_activos' => Estudiante::where('activo', true)->count() ?? 0,
+                'grados_con_estudiantes' => Estudiante::where('activo', true)->distinct('grado_id')->count('grado_id') ?? 0,
+                'total_materias' => Materia::where('activa', true)->count() ?? 0,
+                'anio_actual' => $anioActivo?->anio ?? 'No Configurado'
+            ];
+        } catch (\Exception $e) {
+            // Log del error para debugging
+            \Log::error('Error en getEstadisticas TransicionAnual: ' . $e->getMessage());
+            
+            // Retornar valores por defecto en caso de error
+            return [
+                'estudiantes_activos' => 0,
+                'grados_con_estudiantes' => 0,
+                'total_materias' => 0,
+                'anio_actual' => 'Error'
+            ];
+        }
     }
 }

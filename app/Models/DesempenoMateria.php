@@ -144,6 +144,8 @@ class DesempenoMateria extends Model
             'S' => 4.0, // Sobresaliente
             'A' => 3.0, // Aceptable
             'I' => 2.0, // Insuficiente
+            null => 0.0,
+            '' => 0.0,
             default => 0.0
         };
     }
@@ -158,6 +160,8 @@ class DesempenoMateria extends Model
             'S' => 'info',    // Sobresaliente - azul
             'A' => 'warning', // Aceptable - amarillo
             'I' => 'danger',  // Insuficiente - rojo
+            null => 'gray',
+            '' => 'gray',
             default => 'gray'
         };
     }
@@ -172,6 +176,8 @@ class DesempenoMateria extends Model
             'S' => 'Sobresaliente',
             'A' => 'Aceptable',
             'I' => 'Insuficiente',
+            null => 'No asignado',
+            '' => 'No asignado',
             default => 'No definido'
         };
     }

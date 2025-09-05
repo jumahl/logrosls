@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             
             // 2. Crear estructura académica básica
             GradoSeeder::class,
+            AnioEscolarSeeder::class,  // Crear años escolares ANTES de períodos
             PeriodoSeeder::class,
             
             // 3. Crear materias (requiere usuarios/profesores)
