@@ -91,7 +91,15 @@ class LogroResource extends Resource
                     ->label('Desempeño')
                     ->helperText('Descripción del desempeño esperado'),
                 Forms\Components\Select::make('periodos')
-                    ->relationship('periodos', 'corte')
+                    ->relationship('periodos', 'corte', function ($query) use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            return $query->where('activo', true);
+                        }
+                        return $query;
+                    })
+                    ->getOptionLabelFromRecordUsing(function ($record) {
+                        return $record->periodo_completo;
+                    })
                     ->multiple()
                     ->preload()
                     ->searchable()

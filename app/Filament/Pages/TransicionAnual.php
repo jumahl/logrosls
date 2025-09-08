@@ -5,8 +5,10 @@ namespace App\Filament\Pages;
 use App\Models\AnioEscolar;
 use App\Models\Estudiante;
 use App\Models\Materia;
-use Filament\Forms\Components\Select;
+use Filament\Forms;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -45,28 +47,26 @@ class TransicionAnual extends Page
         
         return $form
             ->schema([
-                Select::make('anio_origen')
+                Forms\Components\TextInput::make('anio_origen')
                     ->label('Año Escolar Actual')
-                    ->options(function () {
-                        $anioActivo = AnioEscolar::where('activo', true)->first();
-                        return $anioActivo ? [$anioActivo->anio => $anioActivo->anio] : [];
-                    })
-                    ->default(function () {
-                        $anioActivo = AnioEscolar::where('activo', true)->first();
-                        return $anioActivo?->anio;
-                    })
+                    ->default($anioActual?->anio ?? 'No configurado')
                     ->disabled()
                     ->required()
                     ->helperText($anioActual ? "Año actualmente en curso" : "⚠️ No hay año escolar activo configurado"),
                     
-                Select::make('anio_destino')
+                Forms\Components\TextInput::make('anio_destino')
                     ->label('Año Escolar Destino')
-                    ->options(AnioEscolar::disponiblesParaTransicion()->pluck('anio', 'anio'))
                     ->required()
-                    ->helperText('Selecciona el año al que se promoverán los estudiantes')
-                    ->searchable(),
+                    ->numeric()
+                    ->minValue(function () {
+                        $anioActual = AnioEscolar::where('activo', true)->first();
+                        return $anioActual ? $anioActual->anio + 1 : date('Y') + 1;
+                    })
+                    ->maxValue(2100)
+                    ->helperText('Ingresa el año al que se promoverán los estudiantes. Debe ser mayor al año actual.'),
+
                     
-                Textarea::make('observaciones')
+                Forms\Components\Textarea::make('observaciones')
                     ->label('Observaciones de la Transición')
                     ->placeholder('Notas adicionales sobre el proceso de transición...')
                     ->rows(3)
@@ -109,7 +109,7 @@ class TransicionAnual extends Page
             if (!$data['anio_destino']) {
                 Notification::make()
                     ->title('Error')
-                    ->body('Debes seleccionar un año destino')
+                    ->body('Debes ingresar un año destino')
                     ->danger()
                     ->send();
                 return;
@@ -124,6 +124,16 @@ class TransicionAnual extends Page
                     ->danger()
                     ->send();
                 return;
+            }
+            
+            // Verificar si el año destino existe, si no, informar que se creará
+            $anioDestino = AnioEscolar::where('anio', $data['anio_destino'])->first();
+            if (!$anioDestino) {
+                Notification::make()
+                    ->title('Información')
+                    ->body("El año escolar {$data['anio_destino']} no existe y se creará automáticamente al ejecutar la transición")
+                    ->info()
+                    ->send();
             }
             
             // Ejecutar simulación usando el comando
@@ -170,7 +180,7 @@ class TransicionAnual extends Page
             if (!$data['anio_destino']) {
                 Notification::make()
                     ->title('Error')
-                    ->body('Debes seleccionar un año destino')
+                    ->body('Debes ingresar un año destino')
                     ->danger()
                     ->send();
                 return;
@@ -185,6 +195,29 @@ class TransicionAnual extends Page
                     ->danger()
                     ->send();
                 return;
+            }
+            
+            // Verificar si el año destino existe, si no, crearlo automáticamente
+            $anioDestino = AnioEscolar::where('anio', $data['anio_destino'])->first();
+            if (!$anioDestino) {
+                // Crear el año escolar destino automáticamente
+                $fechaInicio = $anioActual->fecha_inicio->copy()->addYear();
+                $fechaFin = $anioActual->fecha_fin->copy()->addYear();
+                
+                $anioDestino = AnioEscolar::create([
+                    'anio' => $data['anio_destino'],
+                    'activo' => false,
+                    'finalizado' => false,
+                    'fecha_inicio' => $fechaInicio,
+                    'fecha_fin' => $fechaFin,
+                    'observaciones' => "Año creado automáticamente durante transición desde {$anioActual->anio}"
+                ]);
+                
+                Notification::make()
+                    ->title('Año escolar creado')
+                    ->body("Se creó automáticamente el año escolar {$data['anio_destino']}")
+                    ->info()
+                    ->send();
             }
             
             // Ejecutar transición real
