@@ -73,14 +73,6 @@ class CreateNota extends CreateRecord
             }
         }
 
-        if ($logrosCreados > 0) {
-            Notification::make()
-                ->success()
-                ->title('Calificación creada')
-                ->body("Se creó la calificación con {$logrosCreados} logro(s) asociado(s).")
-                ->send();
-        }
-
         return $desempeno;
     }
 } 

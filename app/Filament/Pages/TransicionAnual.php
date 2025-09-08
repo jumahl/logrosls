@@ -44,26 +44,44 @@ class TransicionAnual extends Page
     public function form(Form $form): Form
     {
         $anioActual = AnioEscolar::where('activo', true)->first();
+        $ultimoAnio = AnioEscolar::orderBy('anio', 'desc')->first();
         
         return $form
             ->schema([
                 Forms\Components\TextInput::make('anio_origen')
                     ->label('Año Escolar Actual')
-                    ->default($anioActual?->anio ?? 'No configurado')
+                    ->default($anioActual?->anio ?? ($ultimoAnio?->anio ?? 'No configurado'))
                     ->disabled()
                     ->required()
-                    ->helperText($anioActual ? "Año actualmente en curso" : "⚠️ No hay año escolar activo configurado"),
+                    ->helperText($anioActual 
+                        ? "Año actualmente en curso" 
+                        : ($ultimoAnio 
+                            ? "⚠️ No hay año activo. Último año en BD: {$ultimoAnio->anio} (inactivo)"
+                            : "⚠️ No hay años escolares configurados"
+                        )
+                    ),
                     
                 Forms\Components\TextInput::make('anio_destino')
                     ->label('Año Escolar Destino')
                     ->required()
                     ->numeric()
-                    ->minValue(function () {
-                        $anioActual = AnioEscolar::where('activo', true)->first();
-                        return $anioActual ? $anioActual->anio + 1 : date('Y') + 1;
+                    ->minValue(function () use ($anioActual, $ultimoAnio) {
+                        if ($anioActual) {
+                            return $anioActual->anio + 1;
+                        } elseif ($ultimoAnio) {
+                            return $ultimoAnio->anio + 1;
+                        }
+                        return date('Y') + 1;
                     })
                     ->maxValue(2100)
-                    ->helperText('Ingresa el año al que se promoverán los estudiantes. Debe ser mayor al año actual.'),
+                    ->helperText(function () use ($anioActual, $ultimoAnio) {
+                        if ($anioActual) {
+                            return 'Ingresa el año al que se promoverán los estudiantes. Debe ser mayor al año actual.';
+                        } elseif ($ultimoAnio) {
+                            return "⚠️ No hay año activo. Se sugiere {$ultimoAnio->anio} como año a finalizar y " . ($ultimoAnio->anio + 1) . " como destino.";
+                        }
+                        return 'No hay años configurados. Primero crea períodos académicos.';
+                    }),
 
                     
                 Forms\Components\Textarea::make('observaciones')
@@ -77,10 +95,44 @@ class TransicionAnual extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('activar_ultimo_anio')
+                ->label('Activar Último Año')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->visible(function () {
+                    // Solo mostrar si no hay año activo pero sí hay años en la BD
+                    $hayActivo = AnioEscolar::where('activo', true)->exists();
+                    $hayAnios = AnioEscolar::exists();
+                    return !$hayActivo && $hayAnios;
+                })
+                ->requiresConfirmation()
+                ->modalHeading('Activar Último Año Escolar')
+                ->modalDescription(function () {
+                    $ultimoAnio = AnioEscolar::orderBy('anio', 'desc')->first();
+                    return "¿Activar el año {$ultimoAnio?->anio} como año escolar activo? Esto permitirá realizar transiciones.";
+                })
+                ->action(function () {
+                    $ultimoAnio = AnioEscolar::orderBy('anio', 'desc')->first();
+                    if ($ultimoAnio) {
+                        $ultimoAnio->update(['activo' => true]);
+                        
+                        Notification::make()
+                            ->title('Año activado')
+                            ->body("El año {$ultimoAnio->anio} ahora está activo")
+                            ->success()
+                            ->send();
+                            
+                        $this->redirect(static::getUrl());
+                    }
+                }),
+                
             Action::make('simular')
                 ->label('Simular Transición')
                 ->icon('heroicon-o-eye')
                 ->color('warning')
+                ->disabled(function () {
+                    return !AnioEscolar::where('activo', true)->exists();
+                })
                 ->requiresConfirmation()
                 ->modalHeading('Simular Transición de Año Escolar')
                 ->modalDescription('Esta simulación te mostrará qué pasaría con cada estudiante sin hacer cambios reales.')
@@ -92,6 +144,9 @@ class TransicionAnual extends Page
                 ->label('Ejecutar Transición')
                 ->icon('heroicon-o-arrow-path')
                 ->color('danger')
+                ->disabled(function () {
+                    return !AnioEscolar::where('activo', true)->exists();
+                })
                 ->requiresConfirmation()
                 ->modalHeading('¿Ejecutar Transición de Año Escolar?')
                 ->modalDescription('Esta acción promoverá a todos los estudiantes al siguiente año. NO se puede deshacer.')

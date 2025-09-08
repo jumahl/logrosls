@@ -59,10 +59,10 @@ class PeriodoResource extends Resource
                     ->required()
                     ->numeric()
                     ->minValue(date('Y') - 1)
-                    ->maxValue(date('Y') + 2)
+                    ->maxValue(date('Y') + 10)
                     ->default(date('Y'))
                     ->label('Año Escolar')
-                    ->helperText('Año escolar al que pertenece este período')
+                    ->helperText('Año escolar al que pertenece este período. Se creará automáticamente si no existe.')
                     ->live()
                     ->rules([
                         function ($get, $record) {
