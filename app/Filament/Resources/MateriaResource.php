@@ -83,6 +83,11 @@ class MateriaResource extends Resource
                     ->preload()
                     ->label('Docente')
                     ->helperText('Solo usuarios con rol de profesor'),
+                Forms\Components\Select::make('area')
+                    ->options(Materia::getAreas())
+                    ->required()
+                    ->searchable()
+                    ->label('Área Académica'),
                 Forms\Components\Textarea::make('descripcion')
                     ->maxLength(65535)
                     ->columnSpanFull()
@@ -117,6 +122,12 @@ class MateriaResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Docente'),
+                Tables\Columns\TextColumn::make('area')
+                    ->formatStateUsing(fn (string $state): string => Materia::getAreas()[$state] ?? $state)
+                    ->badge()
+                    ->searchable()
+                    ->sortable()
+                    ->label('Área'),
                 Tables\Columns\IconColumn::make('activa')
                     ->boolean()
                     ->sortable()
@@ -143,6 +154,9 @@ class MateriaResource extends Resource
                 Tables\Filters\SelectFilter::make('docente_id')
                     ->relationship('docente', 'name')
                     ->label('Docente'),
+                Tables\Filters\SelectFilter::make('area')
+                    ->options(Materia::getAreas())
+                    ->label('Área'),
                 Tables\Filters\SelectFilter::make('activa')
                     ->options([
                         '1' => 'Activa',

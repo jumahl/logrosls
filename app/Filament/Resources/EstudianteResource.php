@@ -184,9 +184,11 @@ class EstudianteResource extends Resource
                     ->label('Grado'),
                 Tables\Filters\SelectFilter::make('activo')
                     ->options([
-                        '1' => 'Activo',
+                        '' => 'Todos',
+                        '1' => 'Activo', 
                         '0' => 'Inactivo',
                     ])
+                    ->default('1')
                     ->label('Estado'),
                 Tables\Filters\Filter::make('mi_grupo')
                     ->label('Solo mi grupo')

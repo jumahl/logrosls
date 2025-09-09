@@ -46,6 +46,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Desarrollo del pensamiento lógico-matemático',
                 'docente_id' => $profesores->first()->id,
                 'activa' => true,
+                'area' => 'matematicas',
                 'grados' => $gradoPrimero->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)
             ],
             [
@@ -54,6 +55,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Fundamentos algebraicos y ecuaciones',
                 'docente_id' => $profesores->first()->id,
                 'activa' => true,
+                'area' => 'matematicas',
                 'grados' => $gradoSexto->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)
             ],
             [
@@ -62,16 +64,18 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Introducción al cálculo diferencial e integral',
                 'docente_id' => $profesores->first()->id,
                 'activa' => true,
+                'area' => 'matematicas',
                 'grados' => $gradoDecimo->merge($gradoOnce)
             ],
             
-            // Lenguaje
+            // Lenguaje - Humanidades
             [
                 'nombre' => 'Lenguaje',
                 'codigo' => 'LEN001',
                 'descripcion' => 'Desarrollo de competencias comunicativas',
                 'docente_id' => $profesores->skip(1)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'humanidades',
                 'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)
             ],
             [
@@ -80,6 +84,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Literatura y gramática avanzada',
                 'docente_id' => $profesores->skip(1)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'humanidades',
                 'grados' => $gradoCuarto->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
@@ -90,6 +95,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Exploración del mundo natural',
                 'docente_id' => $profesores->skip(2)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'ciencias_naturales_y_educacion_ambiental',
                 'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)
             ],
             [
@@ -98,6 +104,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Estudio de los seres vivos',
                 'docente_id' => $profesores->skip(2)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'ciencias_naturales_y_educacion_ambiental',
                 'grados' => $gradoSexto->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             [
@@ -106,6 +113,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Fundamentos de la química',
                 'docente_id' => $profesores->skip(2)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'ciencias_naturales_y_educacion_ambiental',
                 'grados' => $gradoDecimo->merge($gradoOnce)
             ],
             [
@@ -114,6 +122,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Principios físicos fundamentales',
                 'docente_id' => $profesores->first()->id,
                 'activa' => true,
+                'area' => 'ciencias_naturales_y_educacion_ambiental',
                 'grados' => $gradoDecimo->merge($gradoOnce)
             ],
             
@@ -124,16 +133,18 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Historia, geografía y cívica',
                 'docente_id' => $profesores->skip(3)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'ciencias_sociales',
                 'grados' => $gradoPrimero->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
-            // Inglés
+            // Inglés - Humanidades
             [
                 'nombre' => 'Inglés',
                 'codigo' => 'ING001',
                 'descripcion' => 'Idioma extranjero inglés',
                 'docente_id' => $profesores->skip(6)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'humanidades',
                 'grados' => $gradoTercero->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
@@ -144,6 +155,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Desarrollo motor y deportivo',
                 'docente_id' => $profesores->skip(5)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'educacion_fisica_recreacion_y_deporte',
                 'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
@@ -154,6 +166,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Desarrollo de la creatividad y expresión artística',
                 'docente_id' => $profesores->skip(4)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'educacion_artistica',
                 'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)
             ],
             
@@ -164,6 +177,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Competencias tecnológicas y digitales',
                 'docente_id' => $profesores->skip(7)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'tecnologia_e_informatica',
                 'grados' => $gradoCuarto->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
@@ -174,6 +188,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Formación en valores y convivencia',
                 'docente_id' => $profesores->skip(8)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'educacion_etica_y_valores_humanos',
                 'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ],
             
@@ -184,6 +199,7 @@ class MateriaSeeder extends Seeder
                 'descripcion' => 'Formación espiritual y religiosa',
                 'docente_id' => $profesores->skip(8)->first()?->id ?? $profesores->first()->id,
                 'activa' => true,
+                'area' => 'educacion_religiosa',
                 'grados' => $gradoPreescolar->merge($gradoTransicion)->merge($gradoPrimero)->merge($gradoSegundo)->merge($gradoTercero)->merge($gradoCuarto)->merge($gradoQuinto)->merge($gradoSexto)->merge($gradoSeptimo)->merge($gradoOctavo)->merge($gradoNoveno)->merge($gradoDecimo)->merge($gradoOnce)
             ]
         ];

@@ -97,6 +97,14 @@ class BoletinResource extends Resource
                     )
                     ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->label('Grado'),
+                Tables\Filters\SelectFilter::make('activo')
+                    ->options([
+                        '' => 'Todos',
+                        '1' => 'Activo',
+                        '0' => 'Inactivo',
+                    ])
+                    ->default('1')
+                    ->label('Estado'),
             ])
             ->actions([
                 Tables\Actions\Action::make('descargarPreinforme')
