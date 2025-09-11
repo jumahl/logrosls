@@ -19,11 +19,11 @@ class NotaResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
     
-    protected static ?string $navigationLabel = 'Calificaciones';
+    protected static ?string $navigationLabel = 'Registro de Calificaciones';
     
-    protected static ?string $modelLabel = 'Calificación';
+    protected static ?string $modelLabel = 'Registro de Calificación';
     
-    protected static ?string $pluralModelLabel = 'Calificaciones';
+    protected static ?string $pluralModelLabel = 'Registro de Calificaciones';
     
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationGroup = 'Reportes';

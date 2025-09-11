@@ -20,11 +20,11 @@ class BoletinResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     
-    protected static ?string $navigationLabel = 'Boletines Académicos';
+    protected static ?string $navigationLabel = 'Reportes Académicos';
 
-    protected static ?string $modelLabel = 'Boletín Académico';
+    protected static ?string $modelLabel = 'Reporte Académicos';
 
-    protected static ?string $pluralModelLabel = 'Boletines Académicos';
+    protected static ?string $pluralModelLabel = 'Reportes Académicos';
 
     protected static ?int $navigationSort = 2;
     
