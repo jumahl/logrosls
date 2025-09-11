@@ -4,25 +4,178 @@
     <meta charset="UTF-8">
     <title>Preinforme Académico</title>
     <style>
-        body { font-family: Arial, sans-serif; color: #000; margin: 20px; }
-        .header-table, .student-table, .area-table, .sign-table { width: 100%; border-collapse: collapse; }
-        .header-table td { font-size: 12px; }
-        .logo { width: 90px; }
-        .center { text-align: center; }
-        .bold { font-weight: bold; }
-        .student-table td, .student-table th { border: 1px solid #333; font-size: 12px; padding: 3px 6px; }
-        .student-table th { background: #e0e0e0; }
-        .area-table th, .area-table td { border: 1px solid #333; font-size: 12px; padding: 3px 6px; }
-        .area-table th { background: #f5f5f5; }
-        .asignatura-row { background: #f9f9f9; font-weight: bold; }
-        .logros-list { margin: 0 0 8px 0; padding-left: 18px; font-size: 12px; }
-        .logros-list li { margin-bottom: 2px; }
-        .section-title { text-align: center; font-weight: bold; font-size: 15px; margin: 10px 0 4px 0; }
-        .subtitle { text-align: center; font-size: 13px; margin-bottom: 8px; }
-        .observaciones { margin-top: 18px; font-size: 12px; }
-        .sign-table td { padding: 30px 10px 0 10px; text-align: center; font-size: 12px; }
-        .firma-line { border-top: 1px solid #333; width: 80%; margin: 0 auto 2px auto; }
-        .foto { width: 90px; height: 110px; object-fit: cover; border: 1px solid #aaa; }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
+            margin: 0;
+            font-size: 10pt;
+        }
+        @page {
+            size: letter;
+            margin: 1.5cm 2cm;
+        }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .header-table td {
+            padding: 2px 5px;
+            vertical-align: middle;
+            font-size: 9pt;
+        }
+        .institucion-titulo {
+            font-size: 13pt !important;
+            font-weight: bold;
+            text-align: center;
+            font-style: italic;
+        }
+        .institucion-info {
+            font-size: 9pt;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .logo {
+            width: 70px;
+            height: auto;
+        }
+        .foto {
+            width: 80px;
+            height: 100px;
+            object-fit: cover;
+            border: 1px solid #000;
+        }
+        .student-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        .student-table td, .student-table th {
+            border: 1px solid #000;
+
+            padding: 4px 8px;
+        }
+        .student-table th {
+            background: #fff;
+            font-weight: bold;
+            text-align: left;
+        }
+        .section-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 10pt;
+            margin: 15px 0 8px 0;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 9pt;
+            margin-bottom: 5px;
+        }
+        .asignatura-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            table-layout: fixed;
+        }
+        .asignatura-table td {
+            border: 1px solid #000;
+            padding: 3px 8px;
+            font-size: 9pt;
+        }
+
+        .asignatura-table th {
+            font-size: 8pt;
+        }
+        
+        .area-titulo-custom {
+            font-weight: bold;
+            padding: 4px 8px;
+            margin-top: 10px;
+            font-size: 7pt;
+        }
+        
+        .asignatura-nombre {
+            font-weight: bold;
+            width: 40%;
+        }
+        
+        .escala-col {
+            width: 15%;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .nivel-col {
+            width: 20%;
+            text-align: center;
+        }
+        
+        .docente-col {
+            width: 25%;
+        }
+        
+        /* Logros */
+        .logros-cell {
+            padding: 5px 10px !important;
+            font-size: 8pt;
+            line-height: 1.4;
+            border-top: 1px solid #000 !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: none !important;
+        }
+        
+        .logros-list {
+            margin: 0;
+            padding-left: 15px;
+        }
+        
+        .logros-list li {
+            margin-bottom: 3px;
+        }
+        
+        /* Observaciones */
+        .observaciones-section {
+            margin-top: 15px;
+            font-size: 9pt;
+        }
+        
+        .observaciones-titulo {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .observaciones-texto {
+            min-height: 40px;
+            border: 1px solid #ccc;
+            padding: 5px;
+            font-size: 9pt;
+        }
+        .observaciones {
+            margin-top: 18px;
+            font-size: 9pt;
+        }
+        .sign-table {
+            width: 100%;
+            margin-top: 40px;
+        }
+        .sign-table td {
+            padding: 30px 20px 5px 20px;
+            text-align: center;
+            font-size: 9pt;
+            font-weight: bold;
+            width: 50%;
+        }
+        .firma-line {
+            border-top: 1px solid #000;
+            width: 70%;
+            margin: 0 auto 5px auto;
+        }
+        @media print {
+            body {
+                font-size: 10pt;
+            }
+        }
     </style>
 </head>
 <body>
@@ -30,10 +183,13 @@
 <!-- Encabezado institucional -->
 <table class="header-table">
     <tr>
-        <td rowspan="4" class="center"><img src="{{ public_path('liceo.png') }}" class="logo"></td>
-        <td class="center bold" colspan="2" style="font-size:16px;">INSTITUCION EDUCATIVA “LICEO DEL SABER”</td>
-        <td rowspan="4" class="center">
-            {{-- Foto del estudiante si existe --}}
+        <td rowspan="4" style="width: 10%; text-align: center;">
+            <img src="{{ public_path('liceo.png') }}" class="logo">
+        </td>
+        <td colspan="2" class="institucion-titulo">
+            INSTITUCIÓN EDUCATIVA "LICEO DEL SABER"
+        </td>
+        <td rowspan="4" style="width: 15%; text-align: center;">
             @if(isset($estudiante->foto))
                 <img src="{{ public_path('fotos/'.$estudiante->foto) }}" class="foto">
             @else
@@ -42,109 +198,145 @@
         </td>
     </tr>
     <tr>
-        <td class="center" colspan="2" style="font-size:12px;">
+        <td colspan="2" class="institucion-info">
             Aprobado según resolución No. 01199 del 03 de Abril de 2018<br>
             Preescolar, Básica Primaria, Secundaria y Media Académica
         </td>
     </tr>
     <tr>
-        <td class="center" colspan="2" style="font-size:11px;">
+        <td colspan="2" class="institucion-info">
             Transversal 6 diagonal 3 esquina No. 7 - 05 B/ Los Lagos III etapa Zarzal - Valle del Cauca<br>
-            Tel. 6022208019 – 3168207306 – E-mail: ieliceodelsaber@hotmail.com
+            Tel. 2208019 – 3168207306 E-mail: ieliceodelsaber@hotmail.com
         </td>
     </tr>
 </table>
 
 <!-- Datos del estudiante -->
-<table class="student-table" style="margin-top:10px;">
+<table class="student-table">
     <tr>
-        <th>APELLIDOS Y NOMBRES DEL ESTUDIANTE</th>
-        <th>NIVEL</th>
-        <th>GRADO</th>
-        <th>PERIODO</th>
-        <th>AÑO</th>
+        <th style="width: 40%; border-right: 1px solid #000;font-size: 8pt;">APELLIDOS Y NOMBRES DEL ESTUDIANTE</th>
+        <th style="width: 20%; border-right: 1px solid #000;font-size: 8pt;">GRADO</th>
+        <th style="width: 20%; border-right: 1px solid #000;font-size: 8pt;">PERIODO</th>
+        <th style="width: 20%; border-right: 1px solid #000;font-size: 8pt;">AÑO</th>
     </tr>
     <tr>
-        <td class="bold">{{ strtoupper(($estudiante->apellido ?? '') . ' ' . ($estudiante->nombre ?? '')) }}</td>
-        <td>{{ strtoupper($estudiante->grado->tipo ?? '') }}</td>
-        <td>{{ $estudiante->grado->nombre ?? '' }}</td>
-        <td>{{ $periodo->numero_periodo ?? '' }}</td>
-    <td>{{ $periodo->anio_escolar ?? now()->year }}</td>
+        <td style="font-weight: bold; border-right: 1px solid #000; font-size: 11pt;">
+            @php
+                $nombreCompleto = ucwords(strtolower(($estudiante->apellido ?? '') . ' ' . ($estudiante->nombre ?? '')));
+            @endphp
+            {{ $nombreCompleto }}
+        </td>
+        <td style="text-align: center; border-right: 1px solid #000; font-size: 11pt;">
+            @php
+                $gradoNombre = $estudiante->grado->nombre ?? '';
+                $grupo = $estudiante->grado->grupo ?? '';
+                $gradoGrupo = $gradoNombre;
+                if ($grupo) {
+                    $gradoGrupo .= ' ' . strtoupper($grupo);
+                }
+            @endphp
+            {{ $gradoGrupo }}
+        </td>
+        <td style="text-align: center; border-right: 1px solid #000; font-size: 11pt;">
+            {{ ($periodo->corte ?? '') . ' - ' . ($periodo->numero_periodo ?? 'I') }}
+        </td>
+        <td style="text-align: center; border-right: 1px solid #000; font-size: 11pt;">
+            {{ $periodo->anio_escolar ?? now()->year }}
+        </td>
     </tr>
     <tr>
-        <th>DIRECTORA DE GRUPO</th>
-        <th colspan="2">INASISTENCIA</th>
-        <th colspan="2"></th>
-    </tr>
-    <tr>
-        <td>{{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
-        <td colspan="2">{{ $estudiante->inasistencias ?? '' }}</td>
-        <td colspan="2"></td>
+        <td colspan="2" style="font-weight: bold; font-size: 8pt;">DIRECTOR DE GRUPO: {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
+        <td colspan="2" style="font-weight: bold; font-size: 8pt;">INASISTENCIA: {{ $estudiante->inasistencias ?? '' }}</td>
     </tr>
 </table>
 
-<!-- Título del preinforme -->
+<!-- Título principal -->
 <div class="section-title">PRE-INFORME ACADÉMICO Y DISCIPLINARIO</div>
-<div class="subtitle">DEL PRIMER CORTE DEL PERÍODO No. {{ $periodo->numero_periodo ?? '' }}</div>
+<div class="section-title">INFORME {{ $periodo->numero_periodo == 1 ? 'PRIMER' : 'SEGUNDO' }} PERIODO</div>
 <div class="subtitle">Comprendido entre: el {{ $periodo->fecha_inicio->format('d/m/Y') }} y el {{ $periodo->fecha_fin->format('d/m/Y') }}</div>
 
-<!-- Materias y logros -->
-<table class="area-table" style="margin-top:10px;">
-    <tr>
-        <th>ASIGNATURA</th>
-        <th>Escala Valoración</th>
-        <th>Nivel de Desempeño</th>
-        <th>Docente</th>
-    </tr>
-    @foreach($desempenosPorMateria as $materia => $desempenos)
-        @if($desempenos->isNotEmpty())
-        <tr class="asignatura-row">
-            <td>{{ $materia }}</td>
-            <td class="center">{{ $desempenos->first()->nivel_desempeno ?? 'N/A' }}</td>
-            <td class="center">{{ 
-                $desempenos->first()->nivel_desempeno == 'E' ? 'Excelente' :
-                ($desempenos->first()->nivel_desempeno == 'S' ? 'Sobresaliente' :
-                ($desempenos->first()->nivel_desempeno == 'A' ? 'Aceptable' :
-                ($desempenos->first()->nivel_desempeno == 'I' ? 'Insuficiente' : 'N/A')))
-            }}</td>
-            <td>{{ $desempenos->first()->materia->docente->name ?? 'N/A' }}</td>
-        </tr>
-        <tr>
-            <td colspan="4">
-                <ul class="logros-list">
-                    @foreach($desempenos as $desempeno)
-                        @foreach($desempeno->estudianteLogros as $estudianteLogro)
-                            <li>
-                                @php
-                                    $titulo = $estudianteLogro->logro->titulo;
-                                    $texto = $titulo ? $titulo . ' - ' . ($estudianteLogro->logro->desempeno ?? '') : ($estudianteLogro->logro->desempeno ?? '');
-                                @endphp
-                                {{ trim($texto, ' -') }}
-                            </li>
-                        @endforeach
-                    @endforeach
-                </ul>
-            </td>
-        </tr>
+<!-- Áreas y asignaturas -->
+@php $areaAnterior = null; @endphp
+@foreach($desempenosPorMateria as $materia => $desempenos)
+    @php
+        $desempenoActual = $desempenos->sortByDesc(function($d) {
+            return $d->periodo->numero_periodo . '_' . $d->periodo->corte;
+        })->first();
+        $areaActual = $desempenoActual ? ($desempenoActual->materia->area ?? 'SIN ÁREA') : null;
+        $areaFormateada = $areaActual ? strtoupper(str_replace('_', ' ', $areaActual)) : '';
+    @endphp
+    @if($desempenoActual)
+        @if($areaActual !== $areaAnterior)
+            <div class="area-titulo-custom">ÁREA: {{ $areaFormateada }}</div>
+            @php $areaAnterior = $areaActual; @endphp
         @endif
-    @endforeach
-</table>
+        <table class="asignatura-table" style="margin-bottom: 18px;">
+            <tr>
+                <th style="width:30%"></th>
+                <th style="width:20%">Escala Valoración</th>
+                <th style="width:20%">Nivel de Desempeño</th>
+                <th style="width:30%">Docente</th>
+            </tr>
+            <tr>
+                <td class="asignatura-nombre">ASIGNATURA: {{ $materia }}</td>
+                <td class="escala-col">{{ $desempenoActual->nivel_desempeno ?? 'N/A' }}</td>
+                <td class="nivel-col">
+                    {{ 
+                        $desempenoActual->nivel_desempeno == 'E' ? 'Excelente' :
+                        ($desempenoActual->nivel_desempeno == 'S' ? 'Sobresaliente' :
+                        ($desempenoActual->nivel_desempeno == 'A' ? 'Aceptable' :
+                        ($desempenoActual->nivel_desempeno == 'I' ? 'Insuficiente' : 'N/A')))
+                    }}
+                </td>
+                <td class="docente-col">{{ $desempenoActual->materia->docente->name ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="logros-cell">
+                    @if($desempenoActual->estudianteLogros->count() > 0)
+                        @foreach($desempenoActual->estudianteLogros as $estudianteLogro)
+                            @php
+                                $titulo = $estudianteLogro->logro->titulo;
+                                $desempeno = $estudianteLogro->logro->desempeno ?? '';
+                            @endphp
+                            <div style="margin-bottom: 4px;">
+                                @if($titulo)
+                                    <span style="font-weight: bold;">{{ $titulo }}</span>
+                                @endif
+                                @if($titulo && $desempeno)
+                                    <br>
+                                @endif
+                                @if($desempeno)
+                                    {{ $desempeno }}
+                                @endif
+                            </div>
+                        @endforeach
+                    @endif
+                </td>
+            </tr>
+        </table>
+    @endif
+@endforeach
 
-<!-- Observaciones disciplina -->
-@if(isset($estudiante->observaciones_disciplina))
-    <div class="area-title">ÁREA: DISCIPLINA Y CONVIVENCIA ESCOLAR</div>
-    <div class="observaciones">
-        <b>Observaciones y/o Recomendaciones:</b><br>
-        {{ $estudiante->observaciones_disciplina }}
-    </div>
-@endif
+<!-- Observaciones -->
+<div class="observaciones-section">
+    <div class="observaciones-titulo">Observaciones y/o Recomendaciones:</div>
+    @if(isset($estudiante->observaciones_disciplina))
+        <div class="observaciones-texto">
+            {{ $estudiante->observaciones_disciplina }}
+        </div>
+    @else
+        <div class="observaciones-texto" style="min-height: 60px;">
+            <!-- Espacio para observaciones -->
+        </div>
+    @endif
+</div>
 
 <!-- Firmas -->
-<table class="sign-table" style="margin-top:30px;">
+<table class="sign-table">
     <tr>
         <td>
             <div class="firma-line"></div>
-            DIRECTORA DE GRUPO
+            DIRECTOR DE GRUPO
         </td>
         <td>
             <div class="firma-line"></div>
