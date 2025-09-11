@@ -14,88 +14,88 @@
             size: letter;
             margin: 1.5cm 2cm;
         }
-        
-        body { 
-            font-family: 'Times New Roman', Times, serif; /* Cambio a Times New Roman como el Word */
-            color: #000; 
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
             margin: 0;
-            font-size: 10pt; /* Tamaño base similar al Word */
+            font-size: 10pt;
         }
-        
+
         /* Encabezado institucional */
-        .header-table { 
-            width: 100%; 
+        .header-table {
+            width: 100%;
             border-collapse: collapse;
             margin-bottom: 15px;
         }
-        
-        .header-table td { 
+
+        .header-table td {
             padding: 2px 5px;
             vertical-align: middle;
         }
-        
+
         .institucion-titulo {
             font-size: 13pt;
             font-weight: bold;
             text-align: center;
             font-style: italic; /* Cursiva como en el Word */
         }
-        
+
         .institucion-info {
             font-size: 9pt;
             text-align: center;
             line-height: 1.3;
         }
-        
-        .logo { 
-            width: 70px; 
+
+        .logo {
+            width: 70px;
             height: auto;
         }
-        
-        .foto { 
-            width: 80px; 
-            height: 100px; 
-            object-fit: cover; 
+
+        .foto {
+            width: 80px;
+            height: 100px;
+            object-fit: cover;
             border: 1px solid #000;
         }
-        
+
         /* Tabla de datos del estudiante */
-        .student-table { 
-            width: 100%; 
+        .student-table {
+            width: 100%;
             border-collapse: collapse;
             margin-bottom: 10px;
         }
-        
-        .student-table td, .student-table th { 
-            border: 1px solid #000; 
+
+        .student-table td, .student-table th {
+            border: 1px solid #000;
             font-size: 10pt;
             padding: 4px 8px;
         }
-        
+
         .student-table th {
             font-size: 8pt !important;
         }
-        
-        .student-table th { 
+
+        .student-table th {
             background: #fff;
             font-weight: bold;
             text-align: left;
         }
-        
+
         /* Títulos de secciones */
-        .section-title { 
-            text-align: center; 
-            font-weight: bold; 
-            font-size: 10pt;
+        .section-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 11pt;
             margin: 15px 0 8px 0;
         }
-        
-        .subtitle { 
-            text-align: center; 
-            font-size: 9pt;
+
+        .subtitle {
+            text-align: center;
+            font-size: 10pt;
             margin-bottom: 5px;
         }
-        
+
         /* Tabla de áreas y asignaturas */
         .area-header {
             font-weight: bold;
@@ -103,96 +103,98 @@
             margin-top: 12px;
             margin-bottom: 3px;
         }
-        
+
         .asignatura-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 8px;
         }
-        
+
         .asignatura-table td {
             border: 1px solid #000;
             padding: 3px 8px;
-            font-size: 9pt;
+            font-size: 10pt;
         }
 
         .asignatura-table th {
-            font-size: 8pt;
+            font-size: 9pt;
         }
-        
+
         .asignatura-nombre {
             font-weight: bold;
             width: 40%;
         }
-        
+
         .escala-col {
             width: 15%;
             text-align: center;
             font-weight: bold;
-            
+
         }
-        
+
         .nivel-col {
             width: 20%;
             text-align: center;
 
         }
-        
+
         .docente-col {
             width: 25%;
+            text-align: center;
         }
-        
+
         /* Logros */
         .logros-cell {
             padding: 5px 10px !important;
-            font-size: 8pt;
+            font-size: 9pt;
             line-height: 1.4;
             border-top: 1px solid #000 !important;
             border-left: none !important;
             border-right: none !important;
             border-bottom: none !important;
         }
-        
+
         .logros-list {
             margin: 0;
             padding-left: 15px;
         }
-        
+
         .logros-list li {
             margin-bottom: 3px;
         }
-        
+
         /* Tabla consolidado */
         .consolidado-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 8pt;
+            font-size: 9pt;
         }
-        
+
         .consolidado-table th, .consolidado-table td {
             border: 1px solid #000;
             padding: 3px 5px;
             text-align: center;
         }
-        
+
         .consolidado-table th {
             background: #f0f0f0;
             font-weight: bold;
-            font-size: 8pt;
+            font-size: 9pt;
         }
-        
+
         .consolidado-area {
             text-align: left !important;
-            font-weight: bold;
+            font-weight: lighter;
         }
-        
+
         .consolidado-asignatura {
             text-align: left !important;
             padding-left: 10px !important;
-            font-size: 10pt;
+            font-size: 9pt;
+            font-weight: bold;
         }
-        
+
         /* Cuadro de valores */
         .valores-table {
             width: 100%;
@@ -200,72 +202,72 @@
             margin-top: 20px;
             font-size: 8pt;
         }
-        
+
         .valores-table td {
             border: 1px solid #000;
             padding: 4px 8px;
         }
-        
+
         .valores-table .titulo-celda {
             background: #f5f5f5;
             font-weight: bold;
             text-align: center;
             font-size: 9pt;
         }
-        
+
         .valor-descripcion {
             width: 45%;
             font-size: 9pt;
         }
-        
+
         .valor-espacio {
             width: 10%;
         }
-        
+
         /* Observaciones */
         .observaciones-section {
             margin-top: 15px;
             font-size: 9pt;
         }
-        
+
         .observaciones-titulo {
             font-weight: bold;
             margin-bottom: 5px;
         }
-        
+
         .observaciones-texto {
             min-height: 40px;
             border: 1px solid #ccc;
             padding: 5px;
             font-size: 9pt;
         }
-        
+
         /* Firmas */
-        .sign-table { 
+        .sign-table {
             width: 100%;
             margin-top: 40px;
         }
-        
-        .sign-table td { 
-            padding: 30px 20px 5px 20px; 
-            text-align: center; 
+
+        .sign-table td {
+            padding: 30px 20px 5px 20px;
+            text-align: center;
             font-size: 9pt;
             font-weight: bold;
             width: 50%;
         }
-        
-        .firma-line { 
-            border-top: 1px solid #000; 
-            width: 70%; 
+
+        .firma-line {
+            border-top: 1px solid #000;
+            width: 70%;
             margin: 0 auto 5px auto;
         }
-        
+
         /* Ajustes para impresión */
         @media print {
             body {
                 font-size: 10pt;
             }
-            
+
             .page-break {
                 page-break-after: always;
             }
@@ -339,8 +341,8 @@
         </td>
     </tr>
     <tr>
-    <td colspan="2" style="font-weight: bold; font-size: 8pt;">DIRECTOR DE GRUPO: {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
-    <td colspan="2" style="font-weight: bold; font-size: 8pt;">INASISTENCIA: {{ $estudiante->inasistencias ?? '' }}</td>
+    <td colspan="2" style="font-weight: bold; font-size: 9pt;">Director de grupo: {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
+    <td colspan="2" style="font-weight: bold; font-size: 9pt;">Inasistencia: {{ $estudiante->inasistencias ?? '' }}</td>
     </tr>
 
 </table>
@@ -378,11 +380,11 @@
                 <td class="asignatura-nombre">ASIGNATURA: {{ $materia }}</td>
                 <td class="escala-col">{{ $desempenoActual->nivel_desempeno ?? 'N/A' }}</td>
                 <td class="nivel-col">
-                    {{ 
-                        $desempenoActual->nivel_desempeno == 'E' ? 'Excelente' :
-                        ($desempenoActual->nivel_desempeno == 'S' ? 'Sobresaliente' :
-                        ($desempenoActual->nivel_desempeno == 'A' ? 'Aceptable' :
-                        ($desempenoActual->nivel_desempeno == 'I' ? 'Insuficiente' : 'N/A')))
+                    {{
+                        $desempenoActual->nivel_desempeno == 'E' ? 'Superior' :
+                        ($desempenoActual->nivel_desempeno == 'S' ? 'Alto' :
+                        ($desempenoActual->nivel_desempeno == 'A' ? 'Básico' :
+                        ($desempenoActual->nivel_desempeno == 'I' ? 'Bajo' : 'N/A')))
                     }}
                 </td>
                 <td class="docente-col">{{ $desempenoActual->materia->docente->name ?? 'N/A' }}</td>
@@ -410,7 +412,7 @@
                     @endif
                 </td>
             </tr>
-            
+
         </table>
     @endif
 @endforeach
@@ -421,7 +423,7 @@
 <div class="section-title" style="margin-top: 30px;">CONSOLIDADO DE VALORACIONES DEL PROCESO FORMATIVO INTEGRAL</div>
 <div class="subtitle">Que corresponde a la evaluación por procesos y no por promedios</div>
 <div class="subtitle">
-    <strong>ESCALA CONCEPTUAL E.C:</strong> 
+    <strong>ESCALA CONCEPTUAL E.C:</strong>
     <strong>E: Excelente (Desempeño Superior) = 5</strong> &nbsp;&nbsp;
     <strong>S: Sobresaliente (Desempeño Alto) = 4</strong> &nbsp;&nbsp;
     <strong>A: Aceptable (Desempeño Básico) = 3</strong> &nbsp;&nbsp;
@@ -431,7 +433,7 @@
 @php
     $esOnce = false;
     $gradoNombre = strtolower($estudiante->grado->nombre ?? '');
-    if (strpos($gradoNombre, 'once') !== false || strpos($gradoNombre, '11') !== false) {
+    if (strpos($gradoNombre, 'once') !== false || strpos($gradoNombre, '11') !== false || strpos($gradoNombre, 'undécimo') !== false) {
         $esOnce = true;
     }
 @endphp
@@ -474,16 +476,16 @@
                 }
             }
         @endphp
-        
+
         @foreach($areasConsolidado as $area => $materias)
-            @php 
+            @php
                 $isFirstRow = true;
                 $areaFormateada = $area ? ucwords(str_replace('_', ' ', strtolower($area))) : '';
             @endphp
             @foreach($materias as $materia => $desempenos)
                 <tr>
                     @if($isFirstRow)
-                        <td rowspan="{{ count($materias) }}" class="consolidado-area" style="font-size:7pt;">{{ $areaFormateada }}</td>
+                        <td rowspan="{{ count($materias) }}" class="consolidado-area" style="font-size:8pt;">{{ $areaFormateada }}</td>
                         @php $isFirstRow = false; @endphp
                     @endif
                     <td class="consolidado-asignatura">{{ $materia }}</td>
@@ -583,7 +585,7 @@
         <td>
             <div class="firma-line"></div>
             {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}
-            <br> 
+            <br>
             DIRECTOR DE GRUPO
         </td>
         <td>
@@ -591,7 +593,7 @@
             MELBA ARCO RUIZ
             <br>
             RECTORA
-           
+
         </td>
     </tr>
 </table>

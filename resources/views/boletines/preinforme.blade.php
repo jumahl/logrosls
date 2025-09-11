@@ -63,12 +63,12 @@
         .section-title {
             text-align: center;
             font-weight: bold;
-            font-size: 10pt;
+            font-size: 11pt;
             margin: 15px 0 8px 0;
         }
         .subtitle {
             text-align: center;
-            font-size: 9pt;
+            font-size: 10pt;
             margin-bottom: 5px;
         }
         .asignatura-table {
@@ -80,71 +80,72 @@
         .asignatura-table td {
             border: 1px solid #000;
             padding: 3px 8px;
-            font-size: 9pt;
+            font-size: 10pt;
         }
 
         .asignatura-table th {
-            font-size: 8pt;
+            font-size: 9pt;
         }
-        
+
         .area-titulo-custom {
             font-weight: bold;
             padding: 4px 8px;
             margin-top: 10px;
-            font-size: 7pt;
+            font-size: 8pt;
         }
-        
+
         .asignatura-nombre {
             font-weight: bold;
             width: 40%;
         }
-        
+
         .escala-col {
             width: 15%;
             text-align: center;
             font-weight: bold;
         }
-        
+
         .nivel-col {
             width: 20%;
             text-align: center;
         }
-        
+
         .docente-col {
             width: 25%;
+            text-align: center;
         }
-        
+
         /* Logros */
         .logros-cell {
             padding: 5px 10px !important;
-            font-size: 8pt;
+            font-size: 9pt;
             line-height: 1.4;
             border-top: 1px solid #000 !important;
             border-left: none !important;
             border-right: none !important;
             border-bottom: none !important;
         }
-        
+
         .logros-list {
             margin: 0;
             padding-left: 15px;
         }
-        
+
         .logros-list li {
             margin-bottom: 3px;
         }
-        
+
         /* Observaciones */
         .observaciones-section {
             margin-top: 15px;
             font-size: 9pt;
         }
-        
+
         .observaciones-titulo {
             font-weight: bold;
             margin-bottom: 5px;
         }
-        
+
         .observaciones-texto {
             min-height: 40px;
             border: 1px solid #ccc;
@@ -245,8 +246,8 @@
         </td>
     </tr>
     <tr>
-        <td colspan="2" style="font-weight: bold; font-size: 8pt;">DIRECTOR DE GRUPO: {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
-        <td colspan="2" style="font-weight: bold; font-size: 8pt;">INASISTENCIA: {{ $estudiante->inasistencias ?? '' }}</td>
+        <td colspan="2" style="font-weight: bold; font-size: 9pt;">Director de grupo: {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
+        <td colspan="2" style="font-weight: bold; font-size: 9pt;">Inasistencia: {{ $estudiante->inasistencias ?? '' }}</td>
     </tr>
 </table>
 
@@ -278,14 +279,14 @@
                 <th style="width:30%">Docente</th>
             </tr>
             <tr>
-                <td class="asignatura-nombre">ASIGNATURA: {{ $materia }}</td>
+                <td class="asignatura-nombre">Asignatura: {{ $materia }}</td>
                 <td class="escala-col">{{ $desempenoActual->nivel_desempeno ?? 'N/A' }}</td>
                 <td class="nivel-col">
-                    {{ 
-                        $desempenoActual->nivel_desempeno == 'E' ? 'Excelente' :
-                        ($desempenoActual->nivel_desempeno == 'S' ? 'Sobresaliente' :
-                        ($desempenoActual->nivel_desempeno == 'A' ? 'Aceptable' :
-                        ($desempenoActual->nivel_desempeno == 'I' ? 'Insuficiente' : 'N/A')))
+                    {{
+                        $desempenoActual->nivel_desempeno == 'E' ? 'Superior' :
+                        ($desempenoActual->nivel_desempeno == 'S' ? 'Alto' :
+                        ($desempenoActual->nivel_desempeno == 'A' ? 'Básico' :
+                        ($desempenoActual->nivel_desempeno == 'I' ? 'Bajo' : 'N/A')))
                     }}
                 </td>
                 <td class="docente-col">{{ $desempenoActual->materia->docente->name ?? 'N/A' }}</td>
@@ -336,14 +337,19 @@
     <tr>
         <td>
             <div class="firma-line"></div>
+            {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}
+            <br>
             DIRECTOR DE GRUPO
         </td>
         <td>
             <div class="firma-line"></div>
+            MELBA ARCO RUIZ
+            <br>
             RECTORA
+
         </td>
     </tr>
 </table>
 
 </body>
-</html> 
+</html>

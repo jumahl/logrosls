@@ -42,8 +42,22 @@ class LogroResource extends Resource
                     ->helperText('Código único del logro'),
                 Forms\Components\TextInput::make('titulo')
                     ->maxLength(255)
-                    ->label('Identificador / Subrama (opcional)')
-                    ->helperText('Identificador para diferenciar subramas dentro de la materia (opcional)'),
+                    ->label('Identificador')
+                    ->helperText('Solo Para Lectores Competentes y Técnicas Lingüísticas')
+                    ->visible(function () use ($user) {
+                        if ($user && $user->hasRole('admin')) {
+                            return true;
+                        }
+                        
+                        if ($user && $user->hasRole('profesor')) {
+                            return $user->materias()
+                                ->where('nombre', 'LIKE', '%Lenguaje%')
+                                ->orWhere('nombre', 'LIKE', '%Lengua Castellana%')
+                                ->exists();
+                        }
+                        
+                        return false;
+                    }),
                 Forms\Components\Select::make('materia_id')
                     ->relationship('materia', 'nombre')
                     ->required()
@@ -153,7 +167,22 @@ class LogroResource extends Resource
                 Tables\Columns\TextColumn::make('titulo')
                     ->label('Título')
                     ->sortable()
-                    ->formatStateUsing(fn($state, $record) => $state ?: \Illuminate\Support\Str::limit($record->desempeno, 40)),
+                    ->formatStateUsing(fn($state, $record) => $state ?: \Illuminate\Support\Str::limit($record->desempeno, 40))
+                    ->visible(function () use ($user) {
+
+                        if ($user && $user->hasRole('admin')) {
+                            return true;
+                        }
+                        
+                        if ($user && $user->hasRole('profesor')) {
+                            return $user->materias()
+                                ->where('nombre', 'LIKE', '%Lenguaje%')
+                                ->orWhere('nombre', 'LIKE', '%Lengua Castellana%')
+                                ->exists();
+                        }
+                        
+                        return false;
+                    }),
                 Tables\Columns\TextColumn::make('materia.nombre')
                     ->searchable(['materias.nombre', 'materias.codigo'])
                     ->sortable()

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -23,15 +22,15 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    
+
     protected static ?string $navigationLabel = 'Usuarios';
-    
+
     protected static ?string $modelLabel = 'Usuario';
-    
+
     protected static ?string $pluralModelLabel = 'Usuarios';
-    
+
     protected static ?int $navigationSort = 1;
-    
+
     protected static ?string $navigationGroup = 'Administración';
 
     public static function form(Form $form): Form
@@ -87,19 +86,20 @@ class UserResource extends Resource
                         Select::make('director_grado_id')
                             ->label('Director de Grupo')
                             ->options(function ($record) {
-                                $query = Grado::where('activo', true);
+                                $query = Grado::where('activo', '=', true);
                                 $gradosConDirector = User::whereNotNull('director_grado_id')
                                     ->pluck('director_grado_id')
                                     ->toArray();
-                                
+
                                 if ($record && $record->director_grado_id) {
 
                                     $gradosConDirector = array_diff($gradosConDirector, [$record->director_grado_id]);
                                 }
-                        
+
                                 $query->whereNotIn('id', $gradosConDirector);
-                                
-                                return $query->pluck('nombre_completo', 'id');
+                                return $query->get()->mapWithKeys(function ($grado) {
+                                    return [$grado->id => $grado->nombre_completo];
+                                });
                             })
                             ->placeholder('Seleccionar grado (opcional)')
                             ->helperText('Asignar como director de grupo de un grado específico.')
