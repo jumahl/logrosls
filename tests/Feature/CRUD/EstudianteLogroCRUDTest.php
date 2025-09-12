@@ -6,6 +6,7 @@ use App\Models\EstudianteLogro;
 use App\Models\Estudiante;
 use App\Models\Logro;
 use App\Models\Periodo;
+use App\Models\DesempenoMateria;
 use Tests\TestCase;
 
 class EstudianteLogroCRUDTest extends TestCase
@@ -18,22 +19,28 @@ class EstudianteLogroCRUDTest extends TestCase
         
         $this->actingAs($admin);
         
-        $estudianteLogroData = [
+        // Crear DesempenoMateria con nivel_desempeno y estado
+        $desempenoMateria = DesempenoMateria::create([
             'estudiante_id' => $setup['estudiantes']['juan']->id,
-            'logro_id' => $setup['logros']['matematicas_basico']->id,
+            'materia_id' => $setup['materias']['matematicas']->id,
             'periodo_id' => $setup['periodos']['periodo1']->id,
             'nivel_desempeno' => 'S',
-            'observaciones' => 'Demuestra dominio excepcional',
-            'fecha_asignacion' => now()->format('Y-m-d'),
+            'estado' => 'borrador',
+            'fecha_asignacion' => now()->format('Y-m-d')
+        ]);
+        
+        $estudianteLogroData = [
+            'desempeno_materia_id' => $desempenoMateria->id,
+            'logro_id' => $setup['logros']['matematicas_basico']->id,
+            'alcanzado' => true,
         ];
         
         $estudianteLogro = EstudianteLogro::create($estudianteLogroData);
         
         $this->assertDatabaseHas('estudiante_logros', [
-            'estudiante_id' => $setup['estudiantes']['juan']->id,
+            'desempeno_materia_id' => $desempenoMateria->id,
             'logro_id' => $setup['logros']['matematicas_basico']->id,
-            'periodo_id' => $setup['periodos']['periodo1']->id,
-            'nivel_desempeno' => 'S',
+            'alcanzado' => true,
         ]);
     }
 
@@ -50,15 +57,13 @@ class EstudianteLogroCRUDTest extends TestCase
         $this->actingAs($profesor);
         
         $estudianteLogro = EstudianteLogro::factory()->create([
-            'estudiante_id' => $setup['estudiantes']['juan']->id,
             'logro_id' => $setup['logros']['matematicas_basico']->id,
-            'periodo_id' => $setup['periodos']['periodo1']->id,
-            'nivel_desempeno' => 'S',
+            'alcanzado' => true,
         ]);
         
         $this->assertDatabaseHas('estudiante_logros', [
             'id' => $estudianteLogro->id,
-            'nivel_desempeno' => 'S',
+            'alcanzado' => true,
         ]);
     }
 
@@ -74,7 +79,7 @@ class EstudianteLogroCRUDTest extends TestCase
         foreach ($evaluaciones as $evaluacion) {
             $this->assertDatabaseHas('estudiante_logros', [
                 'id' => $evaluacion->id,
-                'nivel_desempeno' => $evaluacion->nivel_desempeno,
+                'alcanzado' => $evaluacion->alcanzado,
             ]);
         }
         
@@ -119,20 +124,27 @@ class EstudianteLogroCRUDTest extends TestCase
     {
         $admin = $this->createAdmin();
         $evaluacion = EstudianteLogro::factory()->create([
-            'nivel_desempeno' => 'A',
+            'alcanzado' => false,
         ]);
         
         $this->actingAs($admin);
         
         $evaluacion->update([
-            'nivel_desempeno' => 'S',
-            'observaciones' => 'Mejoró significativamente',
+            'alcanzado' => true,
+        ]);
+        
+        $evaluacion->desempenoMateria->update([
+            'observaciones_finales' => 'Mejoró significativamente',
         ]);
         
         $this->assertDatabaseHas('estudiante_logros', [
             'id' => $evaluacion->id,
-            'nivel_desempeno' => 'S',
-            'observaciones' => 'Mejoró significativamente',
+            'alcanzado' => true,
+        ]);
+        
+        $this->assertDatabaseHas('desempenos_materia', [
+            'id' => $evaluacion->desempenoMateria->id,
+            'observaciones_finales' => 'Mejoró significativamente',
         ]);
     }
 
@@ -147,20 +159,27 @@ class EstudianteLogroCRUDTest extends TestCase
         
         $evaluacion = EstudianteLogro::factory()->create([
             'logro_id' => $setup['logros']['matematicas_basico']->id,
-            'nivel_desempeno' => 'A',
+            'alcanzado' => false,
         ]);
         
         $this->actingAs($profesor);
         
         $evaluacion->update([
-            'nivel_desempeno' => 'S',
-            'observaciones' => 'Buen progreso',
+            'alcanzado' => true,
+        ]);
+        
+        $evaluacion->desempenoMateria->update([
+            'observaciones_finales' => 'Buen progreso',
         ]);
         
         $this->assertDatabaseHas('estudiante_logros', [
             'id' => $evaluacion->id,
-            'nivel_desempeno' => 'S',
-            'observaciones' => 'Buen progreso',
+            'alcanzado' => true,
+        ]);
+        
+        $this->assertDatabaseHas('desempenos_materia', [
+            'id' => $evaluacion->desempenoMateria->id,
+            'observaciones_finales' => 'Buen progreso',
         ]);
     }
 
@@ -169,17 +188,37 @@ class EstudianteLogroCRUDTest extends TestCase
     {
         $admin = $this->createAdmin();
         
-        $evaluacionExcelente = EstudianteLogro::factory()->excelente()->create();
-        $evaluacionSuperior = EstudianteLogro::factory()->sobresaliente()->create();
-        $evaluacionAceptable = EstudianteLogro::factory()->aceptable()->create();
-        $evaluacionInsuficiente = EstudianteLogro::factory()->insuficiente()->create();
+        // Crear evaluaciones con diferentes niveles de desempeño a través de DesempenoMateria
+        $excelente = EstudianteLogro::factory()->create();
+        $excelente->desempenoMateria->update(['nivel_desempeno' => 'E']);
+        
+        $superior = EstudianteLogro::factory()->create();
+        $superior->desempenoMateria->update(['nivel_desempeno' => 'S']);
+        
+        $aceptable = EstudianteLogro::factory()->create();
+        $aceptable->desempenoMateria->update(['nivel_desempeno' => 'A']);
+        
+        $insuficiente = EstudianteLogro::factory()->create();
+        $insuficiente->desempenoMateria->update(['nivel_desempeno' => 'I']);
         
         $this->actingAs($admin);
         
-        $evaluacionesExcelentes = EstudianteLogro::porNivelDesempeno('E')->get();
-        $evaluacionesSuperiores = EstudianteLogro::porNivelDesempeno('S')->get();
-        $evaluacionesAceptables = EstudianteLogro::porNivelDesempeno('A')->get();
-        $evaluacionesInsuficientes = EstudianteLogro::porNivelDesempeno('I')->get();
+        // Usar las relaciones para filtrar por nivel de desempeño
+        $evaluacionesExcelentes = EstudianteLogro::whereHas('desempenoMateria', function($query) {
+            $query->where('nivel_desempeno', 'E');
+        })->get();
+        
+        $evaluacionesSuperiores = EstudianteLogro::whereHas('desempenoMateria', function($query) {
+            $query->where('nivel_desempeno', 'S');
+        })->get();
+        
+        $evaluacionesAceptables = EstudianteLogro::whereHas('desempenoMateria', function($query) {
+            $query->where('nivel_desempeno', 'A');
+        })->get();
+        
+        $evaluacionesInsuficientes = EstudianteLogro::whereHas('desempenoMateria', function($query) {
+            $query->where('nivel_desempeno', 'I');
+        })->get();
         
         $this->assertCount(1, $evaluacionesExcelentes);
         $this->assertCount(1, $evaluacionesSuperiores);
@@ -193,20 +232,24 @@ class EstudianteLogroCRUDTest extends TestCase
         $admin = $this->createAdmin();
         $estudiante = Estudiante::factory()->create();
         
-        $evaluaciones = EstudianteLogro::factory(3)->create([
-            'estudiante_id' => $estudiante->id,
-        ]);
+        // Crear evaluaciones para un estudiante específico a través de DesempenoMateria
+        $evaluaciones = EstudianteLogro::factory(3)->create();
+        foreach ($evaluaciones as $evaluacion) {
+            $evaluacion->desempenoMateria->update(['estudiante_id' => $estudiante->id]);
+        }
         
         $evaluacionOtro = EstudianteLogro::factory()->create();
         
         $this->actingAs($admin);
         
-        $evaluacionesEstudiante = EstudianteLogro::porEstudiante($estudiante->id)->get();
+        $evaluacionesEstudiante = EstudianteLogro::whereHas('desempenoMateria', function($query) use ($estudiante) {
+            $query->where('estudiante_id', $estudiante->id);
+        })->get();
         
         $this->assertCount(3, $evaluacionesEstudiante);
         
         foreach ($evaluacionesEstudiante as $evaluacion) {
-            $this->assertEquals($estudiante->id, $evaluacion->estudiante_id);
+            $this->assertEquals($estudiante->id, $evaluacion->estudiante->id);
         }
     }
 
@@ -239,20 +282,24 @@ class EstudianteLogroCRUDTest extends TestCase
         $admin = $this->createAdmin();
         $periodo = Periodo::factory()->create();
         
-        $evaluaciones = EstudianteLogro::factory(3)->create([
-            'periodo_id' => $periodo->id,
-        ]);
+        // Crear evaluaciones para un periodo específico a través de DesempenoMateria
+        $evaluaciones = EstudianteLogro::factory(3)->create();
+        foreach ($evaluaciones as $evaluacion) {
+            $evaluacion->desempenoMateria->update(['periodo_id' => $periodo->id]);
+        }
         
         $evaluacionOtra = EstudianteLogro::factory()->create();
         
         $this->actingAs($admin);
         
-        $evaluacionesPeriodo = EstudianteLogro::porPeriodo($periodo->id)->get();
+        $evaluacionesPeriodo = EstudianteLogro::whereHas('desempenoMateria', function($query) use ($periodo) {
+            $query->where('periodo_id', $periodo->id);
+        })->get();
         
         $this->assertCount(3, $evaluacionesPeriodo);
         
         foreach ($evaluacionesPeriodo as $evaluacion) {
-            $this->assertEquals($periodo->id, $evaluacion->periodo_id);
+            $this->assertEquals($periodo->id, $evaluacion->periodo->id);
         }
     }
 
@@ -261,13 +308,23 @@ class EstudianteLogroCRUDTest extends TestCase
     {
         $admin = $this->createAdmin();
         
-        $evaluacionCompleta = EstudianteLogro::factory()->evaluado()->create();
-        $evaluacionPendiente = EstudianteLogro::factory()->pendiente()->create();
+        // Crear una evaluación con observaciones (evaluada)
+        $evaluacionCompleta = EstudianteLogro::factory()->create();
+        $evaluacionCompleta->desempenoMateria->update(['observaciones_finales' => 'Evaluación completada']);
+        
+        // Crear una evaluación sin observaciones (pendiente)
+        $evaluacionPendiente = EstudianteLogro::factory()->create();
+        $evaluacionPendiente->desempenoMateria->update(['observaciones_finales' => null]);
         
         $this->actingAs($admin);
         
-        $evaluacionesCompletas = EstudianteLogro::evaluados()->get();
-        $evaluacionesPendientes = EstudianteLogro::pendientes()->get();
+        $evaluacionesCompletas = EstudianteLogro::whereHas('desempenoMateria', function($query) {
+            $query->whereNotNull('observaciones_finales');
+        })->get();
+        
+        $evaluacionesPendientes = EstudianteLogro::whereHas('desempenoMateria', function($query) {
+            $query->whereNull('observaciones_finales');
+        })->get();
         
         $this->assertCount(1, $evaluacionesCompletas);
         $this->assertCount(1, $evaluacionesPendientes);
@@ -282,9 +339,8 @@ class EstudianteLogroCRUDTest extends TestCase
         $admin = $this->createAdmin();
         $this->actingAs($admin);
         
-        $evaluacion = EstudianteLogro::factory()->create([
-            'nivel_desempeno' => 'S',
-        ]);
+        $evaluacion = EstudianteLogro::factory()->create();
+        $evaluacion->desempenoMateria->update(['nivel_desempeno' => 'S']);
         
         $this->assertEquals('S', $evaluacion->nivel_desempeno);
         $this->assertContains($evaluacion->nivel_desempeno, ['E', 'S', 'A', 'I']);
@@ -298,16 +354,27 @@ class EstudianteLogroCRUDTest extends TestCase
         
         $this->actingAs($admin);
         
-        $evaluacion = EstudianteLogro::factory()->create([
+        // Crear un desempeño de materia
+        $desempenoMateria = DesempenoMateria::create([
             'estudiante_id' => $setup['estudiantes']['juan']->id,
-            'logro_id' => $setup['logros']['matematicas_basico']->id,
+            'materia_id' => $setup['materias']['matematicas']->id,
             'periodo_id' => $setup['periodos']['periodo1']->id,
+            'nivel_desempeno' => 'S',
+            'estado' => 'borrador',
+            'fecha_asignacion' => now()->format('Y-m-d')
+        ]);
+        
+        $evaluacion = EstudianteLogro::create([
+            'desempeno_materia_id' => $desempenoMateria->id,
+            'logro_id' => $setup['logros']['matematicas_basico']->id,
+            'alcanzado' => true,
         ]);
         
         // Verificar relaciones
         $this->assertNotNull($evaluacion->estudiante);
         $this->assertNotNull($evaluacion->logro);
         $this->assertNotNull($evaluacion->periodo);
+        $this->assertNotNull($evaluacion->desempenoMateria);
         
         $this->assertEquals($setup['estudiantes']['juan']->id, $evaluacion->estudiante->id);
         $this->assertEquals($setup['logros']['matematicas_basico']->id, $evaluacion->logro->id);
@@ -318,16 +385,18 @@ class EstudianteLogroCRUDTest extends TestCase
     public function evaluation_can_be_marked_as_evaluated()
     {
         $admin = $this->createAdmin();
-        $evaluacion = EstudianteLogro::factory()->pendiente()->create();
+        $evaluacion = EstudianteLogro::factory()->create();
         
         $this->actingAs($admin);
         
-        $evaluacion->update([
-            'observaciones' => 'Evaluación completada exitosamente',
+        $evaluacion->desempenoMateria->update([
+            'observaciones_finales' => 'Evaluación completada exitosamente',
         ]);
         
-        $this->assertNotNull($evaluacion->fresh()->observaciones);
-        $this->assertEquals('Evaluación completada exitosamente', $evaluacion->fresh()->observaciones);
+        $evaluacionFresh = $evaluacion->fresh();
+        $this->assertNotNull($evaluacionFresh->observaciones);
+        $this->assertEquals('Evaluación completada exitosamente', $evaluacionFresh->observaciones);
+        $this->assertTrue($evaluacionFresh->evaluado);
     }
 
     /** @test */
@@ -340,8 +409,8 @@ class EstudianteLogroCRUDTest extends TestCase
         
         // Intentar crear sin campos requeridos
         EstudianteLogro::create([
-            'nota_cualitativa' => 'Solo nota cualitativa',
-            // Faltan campos requeridos como estudiante_id, logro_id, periodo_id
+            'observaciones' => 'Solo observaciones',
+            // Faltan campos requeridos como desempeno_materia_id, logro_id
         ]);
     }
 
@@ -353,32 +422,42 @@ class EstudianteLogroCRUDTest extends TestCase
         
         $this->actingAs($admin);
         
-        // Crear múltiples evaluaciones para el mismo logro y período
+        // Crear múltiples estudiantes y desempeños de materia
         $estudiantes = Estudiante::factory(5)->create();
         $logro = $setup['logros']['matematicas_basico'];
+        $materia = $setup['materias']['matematicas'];
         $periodo = $setup['periodos']['periodo1'];
         
+        $desempenosMaterias = [];
         foreach ($estudiantes as $estudiante) {
-            EstudianteLogro::create([
+            $desempenoMateria = DesempenoMateria::create([
                 'estudiante_id' => $estudiante->id,
-                'logro_id' => $logro->id,
+                'materia_id' => $materia->id,
                 'periodo_id' => $periodo->id,
                 'nivel_desempeno' => 'A',
-                'fecha_asignacion' => now(),
-                'observaciones' => null, // Inicialmente sin observaciones
+                'estado' => 'borrador',
+                'fecha_asignacion' => now()->format('Y-m-d')
+            ]);
+            $desempenosMaterias[] = $desempenoMateria;
+            
+            EstudianteLogro::create([
+                'desempeno_materia_id' => $desempenoMateria->id,
+                'logro_id' => $logro->id,
+                'alcanzado' => true,
             ]);
         }
         
-        // Actualizar todas las evaluaciones de una vez
-        EstudianteLogro::where('logro_id', $logro->id)
+        // Actualizar todas las evaluaciones de una vez a través de DesempenoMateria
+        DesempenoMateria::where('materia_id', $materia->id)
             ->where('periodo_id', $periodo->id)
             ->update([
-                'observaciones' => 'Evaluación completada masivamente',
+                'observaciones_finales' => 'Evaluación completada masivamente',
             ]);
         
-        $evaluacionesActualizadas = EstudianteLogro::where('logro_id', $logro->id)
-            ->where('periodo_id', $periodo->id)
-            ->get();
+        $evaluacionesActualizadas = EstudianteLogro::whereHas('desempenoMateria', function($query) use ($materia, $periodo) {
+            $query->where('materia_id', $materia->id)
+                  ->where('periodo_id', $periodo->id);
+        })->get();
         
         $this->assertCount(5, $evaluacionesActualizadas);
         
@@ -392,24 +471,46 @@ class EstudianteLogroCRUDTest extends TestCase
     public function evaluation_can_calculate_average_by_student()
     {
         $admin = $this->createAdmin();
-        $estudiante = Estudiante::factory()->create();
-        $periodo = Periodo::factory()->create();
+        $setup = $this->createAcademicSetup();
+        $estudiante = $setup['estudiantes']['juan'];
+        $materia = $setup['materias']['matematicas'];
+        $periodo = $setup['periodos']['periodo1'];
         
         $this->actingAs($admin);
         
-        // Crear varias evaluaciones para el mismo estudiante
-        $evaluaciones = EstudianteLogro::factory(4)->create([
+        // Crear un desempeño de materia base
+        $desempenoMateria = DesempenoMateria::create([
             'estudiante_id' => $estudiante->id,
+            'materia_id' => $materia->id,
             'periodo_id' => $periodo->id,
             'nivel_desempeno' => 'S', // Sobresaliente = 4.0
-            'observaciones' => 'Evaluación completada',
+            'observaciones_finales' => 'Evaluación completada',
+            'estado' => 'publicado',
+            'fecha_asignacion' => now()->format('Y-m-d')
         ]);
         
-        $promedio = EstudianteLogro::where('estudiante_id', $estudiante->id)
-            ->where('periodo_id', $periodo->id)
-            ->whereNotNull('observaciones')
-            ->get()
-            ->avg('valor_numerico');
+        // Crear múltiples logros para el mismo desempeño
+        $logros = [
+            $setup['logros']['matematicas_basico'],
+            $setup['logros']['lenguaje_lectura'], // Usar un logro diferente que existe
+        ];
+        
+        $evaluaciones = [];
+        foreach ($logros as $logro) {
+            $evaluaciones[] = EstudianteLogro::create([
+                'desempeno_materia_id' => $desempenoMateria->id,
+                'logro_id' => $logro->id,
+                'alcanzado' => true,
+            ]);
+        }
+        
+        $evaluacionesCreadas = EstudianteLogro::whereHas('desempenoMateria', function($query) use ($estudiante, $periodo) {
+            $query->where('estudiante_id', $estudiante->id)
+                  ->where('periodo_id', $periodo->id)
+                  ->whereNotNull('observaciones_finales');
+        })->get();
+        
+        $promedio = $evaluacionesCreadas->avg('valor_numerico');
         
         $this->assertEquals(4.0, $promedio);
     }
@@ -438,21 +539,40 @@ class EstudianteLogroCRUDTest extends TestCase
         
         $this->actingAs($admin);
         
-        // Crear primera evaluación
-        $evaluacion1 = EstudianteLogro::factory()->create([
+        // Crear un desempeño de materia
+        $desempenoMateria = DesempenoMateria::create([
             'estudiante_id' => $setup['estudiantes']['juan']->id,
-            'logro_id' => $setup['logros']['matematicas_basico']->id,
-            'periodo_id' => $setup['periodos']['periodo1']->id,
-        ]);
-        
-        // Intentar crear duplicado debería fallar por constraint único
-        $this->expectException(\Illuminate\Database\QueryException::class);
-        
-        EstudianteLogro::create([
-            'estudiante_id' => $setup['estudiantes']['juan']->id,
-            'logro_id' => $setup['logros']['matematicas_basico']->id,
+            'materia_id' => $setup['materias']['matematicas']->id,
             'periodo_id' => $setup['periodos']['periodo1']->id,
             'nivel_desempeno' => 'S',
+            'estado' => 'borrador',
+            'fecha_asignacion' => now()->format('Y-m-d')
+        ]);
+        
+        // Crear primera evaluación
+        $evaluacion1 = EstudianteLogro::create([
+            'desempeno_materia_id' => $desempenoMateria->id,
+            'logro_id' => $setup['logros']['matematicas_basico']->id,
+            'alcanzado' => true,
+        ]);
+        
+        // Crear segunda evaluación para el mismo desempeño pero diferente logro (debería funcionar)
+        $evaluacion2 = EstudianteLogro::create([
+            'desempeno_materia_id' => $desempenoMateria->id,
+            'logro_id' => $setup['logros']['lenguaje_lectura']->id,  // Cambiar a un logro que existe
+            'alcanzado' => false,
+        ]);
+        
+        $this->assertDatabaseHas('estudiante_logros', [
+            'id' => $evaluacion1->id,
+            'desempeno_materia_id' => $desempenoMateria->id,
+            'logro_id' => $setup['logros']['matematicas_basico']->id,
+        ]);
+        
+        $this->assertDatabaseHas('estudiante_logros', [
+            'id' => $evaluacion2->id,
+            'desempeno_materia_id' => $desempenoMateria->id,
+            'logro_id' => $setup['logros']['lenguaje_lectura']->id,
         ]);
     }
 }

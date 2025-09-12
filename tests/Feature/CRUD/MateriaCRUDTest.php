@@ -179,14 +179,7 @@ class MateriaCRUDTest extends TestCase
         $this->assertFalse($grado1->materias->contains($materia2));
     }
 
-    /** @test */
-    public function materia_can_be_filtered_by_area()
-    {
-        $admin = $this->createAdmin();
-        
-        // Skip this test - area filtering not implemented, using nombre instead
-        $this->markTestSkipped('Area filtering not implemented in current schema, using nombre for filtering');
-    }
+
 
     /** @test */
     public function only_active_materias_are_returned_by_scope()
@@ -297,15 +290,7 @@ class MateriaCRUDTest extends TestCase
         $this->assertFalse($profesor1->materias->fresh()->contains($materia));
     }
 
-    /** @test */
-    public function materia_color_is_stored_correctly()
-    {
-        $admin = $this->createAdmin();
-        $this->actingAs($admin);
-        
-        // Skip this test - color column doesn't exist in current schema
-        $this->markTestSkipped('color column does not exist in current schema');
-    }
+
 
     /** @test */
     public function materia_can_be_filtered_by_docente()
@@ -327,13 +312,5 @@ class MateriaCRUDTest extends TestCase
         }
     }
 
-    /** @test */
-    public function materia_intensidad_horaria_is_positive_integer()
-    {
-        $admin = $this->createAdmin();
-        $this->actingAs($admin);
-        
-        // Skip this test - intensidad_horaria column doesn't exist in current schema
-        $this->markTestSkipped('intensidad_horaria column does not exist in current schema');
-    }
+
 }
