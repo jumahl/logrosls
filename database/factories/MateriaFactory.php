@@ -47,6 +47,7 @@ class MateriaFactory extends Factory
             'descripcion' => $this->faker->sentence(10),
             'docente_id' => User::factory(),
             'activa' => true,
+            'area' => $this->faker->randomElement(array_keys(Materia::getAreas())),
         ];
     }
 

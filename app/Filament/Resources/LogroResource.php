@@ -41,11 +41,23 @@ class LogroResource extends Resource
                     ->label('Código')
                     ->helperText('Código único del logro'),
                 Forms\Components\TextInput::make('titulo')
-                    ->required()
                     ->maxLength(255)
-                    ->minLength(10)
-                    ->label('Título del Logro')
-                    ->helperText('Título descriptivo del logro (mínimo 10 caracteres)'),
+                    ->label('Identificador')
+                    ->helperText('Solo Para Lectores Competentes y Técnicas Lingüísticas')
+                    ->visible(function () use ($user) {
+                        if ($user && $user->hasRole('admin')) {
+                            return true;
+                        }
+                        
+                        if ($user && $user->hasRole('profesor')) {
+                            return $user->materias()
+                                ->where('nombre', 'LIKE', '%Lenguaje%')
+                                ->orWhere('nombre', 'LIKE', '%Lengua Castellana%')
+                                ->exists();
+                        }
+                        
+                        return false;
+                    }),
                 Forms\Components\Select::make('materia_id')
                     ->relationship('materia', 'nombre')
                     ->required()
@@ -53,11 +65,18 @@ class LogroResource extends Resource
                     ->preload()
                     ->options(function () use ($user) {
                         if ($user && $user->hasRole('profesor')) {
-                            return $user->materias()->pluck('nombre', 'id');
+                            return $user->materias()
+                                ->get()
+                                ->mapWithKeys(function ($materia) {
+                                    return [$materia->id => "{$materia->codigo} - {$materia->nombre}"];
+                                });
                         }
-                        return \App\Models\Materia::pluck('nombre', 'id');
+                        return \App\Models\Materia::get()
+                            ->mapWithKeys(function ($materia) {
+                                return [$materia->id => "{$materia->codigo} - {$materia->nombre}"];
+                            });
                     })
-                    ->createOptionForm([
+                    ->createOptionForm($user && $user->hasRole('admin') ? [
                         Forms\Components\TextInput::make('nombre')
                             ->required()
                             ->maxLength(255)
@@ -67,65 +86,40 @@ class LogroResource extends Resource
                             ->maxLength(20)
                             ->label('Código'),
                         Forms\Components\Select::make('grados')
-                            ->relationship('grados', 'nombre')
+                            ->relationship(
+                                'grados', 
+                                'nombre',
+                                modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                            )
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                             ->multiple()
                             ->required()
                             ->searchable()
                             ->preload()
                             ->label('Grados'),
-                    ])
+                    ] : null)
                     ->label('Materia'),
-                Forms\Components\TextInput::make('competencia')
+                Forms\Components\Textarea::make('desempeno')
                     ->required()
-                    ->maxLength(255)
-                    ->minLength(15)
-                    ->label('Competencia')
-                    ->helperText('Competencia que evalúa este logro (mínimo 15 caracteres)'),
-                Forms\Components\TextInput::make('tema')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Tema')
-                    ->helperText('Tema específico del logro'),
-                Forms\Components\TextInput::make('indicador_desempeno')
-                    ->required()
-                    ->maxLength(255)
-                    ->minLength(15)
-                    ->label('Indicador de Desempeño')
-                    ->helperText('Indicador específico que se evalúa (mínimo 15 caracteres)'),
-                Forms\Components\TextInput::make('dimension')
-                    ->maxLength(255)
-                    ->label('Dimensión')
-                    ->helperText('Dimensión del aprendizaje (opcional)'),
-                Forms\Components\Select::make('nivel_dificultad')
-                    ->options([
-                        'bajo' => 'Bajo',
-                        'medio' => 'Medio',
-                        'alto' => 'Alto',
-                    ])
-                    ->required()
-                    ->default('medio')
-                    ->label('Nivel de Dificultad')
-                    ->helperText('Nivel de complejidad del logro'),
-                Forms\Components\Select::make('tipo')
-                    ->options([
-                        'conocimiento' => 'Conocimiento',
-                        'habilidad' => 'Habilidad',
-                        'actitud' => 'Actitud',
-                        'valor' => 'Valor',
-                    ])
-                    ->required()
-                    ->default('conocimiento')
-                    ->label('Tipo de Logro')
-                    ->helperText('Tipo de aprendizaje que evalúa'),
+                    ->maxLength(65535)
+                    ->label('Desempeño')
+                    ->helperText('Descripción del desempeño esperado'),
                 Forms\Components\Select::make('periodos')
-                    ->relationship('periodos', 'corte')
+                    ->relationship('periodos', 'corte', function ($query) use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            return $query->where('activo', true);
+                        }
+                        return $query;
+                    })
+                    ->getOptionLabelFromRecordUsing(function ($record) {
+                        return $record->periodo_completo;
+                    })
                     ->multiple()
                     ->preload()
                     ->searchable()
-                    ->required()
                     ->label('Períodos')
                     ->helperText('Debe seleccionar al menos un período')
-                    ->createOptionForm([
+                    ->createOptionForm($user && $user->hasRole('admin') ? [
                         Forms\Components\Select::make('numero_periodo')
                             ->options([
                                 1 => 'Primer Período',
@@ -140,7 +134,7 @@ class LogroResource extends Resource
                             ])
                             ->required()
                             ->label('Corte'),
-                        Forms\Components\TextInput::make('año_escolar')
+                        Forms\Components\TextInput::make('anio_escolar')
                             ->required()
                             ->numeric()
                             ->default(date('Y'))
@@ -151,13 +145,8 @@ class LogroResource extends Resource
                         Forms\Components\DatePicker::make('fecha_fin')
                             ->required()
                             ->label('Fecha de Fin'),
-                    ])
+                    ] : null)
                     ->label('Períodos'),
-                Forms\Components\Textarea::make('descripcion')
-                    ->maxLength(65535)
-                    ->columnSpanFull()
-                    ->label('Descripción General')
-                    ->helperText('Descripción adicional del logro'),
                 Forms\Components\Toggle::make('activo')
                     ->required()
                     ->default(true)
@@ -176,48 +165,43 @@ class LogroResource extends Resource
                     ->sortable()
                     ->label('Código'),
                 Tables\Columns\TextColumn::make('titulo')
-                    ->searchable()
+                    ->label('Título')
                     ->sortable()
-                    ->label('Título'),
+                    ->formatStateUsing(fn($state, $record) => $state ?: \Illuminate\Support\Str::limit($record->desempeno, 40))
+                    ->visible(function () use ($user) {
+
+                        if ($user && $user->hasRole('admin')) {
+                            return true;
+                        }
+                        
+                        if ($user && $user->hasRole('profesor')) {
+                            return $user->materias()
+                                ->where('nombre', 'LIKE', '%Lenguaje%')
+                                ->orWhere('nombre', 'LIKE', '%Lengua Castellana%')
+                                ->exists();
+                        }
+                        
+                        return false;
+                    }),
                 Tables\Columns\TextColumn::make('materia.nombre')
-                    ->searchable()
+                    ->searchable(['materias.nombre', 'materias.codigo'])
                     ->sortable()
-                    ->label('Materia'),
-                Tables\Columns\TextColumn::make('competencia')
+                    ->label('Materia')
+                    ->formatStateUsing(fn($state, $record) => 
+                        "{$record->materia->codigo} - {$record->materia->nombre}"
+                    ),
+                Tables\Columns\TextColumn::make('desempeno')
                     ->searchable()
-                    ->sortable()
-                    ->limit(50)
-                    ->label('Competencia'),
-                Tables\Columns\TextColumn::make('tema')
-                    ->searchable()
-                    ->sortable()
-                    ->limit(30)
-                    ->label('Tema'),
-                Tables\Columns\TextColumn::make('nivel_dificultad')
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'bajo' => 'gray',
-                        'medio' => 'warning',
-                        'alto' => 'danger',
-                    })
-                    ->label('Nivel'),
-                Tables\Columns\TextColumn::make('tipo')
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'conocimiento' => 'info',
-                        'habilidad' => 'success',
-                        'actitud' => 'warning',
-                        'valor' => 'danger',
-                    })
-                    ->label('Tipo'),
+                    ->limit(60)
+                    ->label('Desempeño'),
                 Tables\Columns\IconColumn::make('activo')
                     ->boolean()
                     ->sortable()
                     ->label('Activo'),
+                Tables\Columns\TextColumn::make('orden')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Orden'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
@@ -232,22 +216,14 @@ class LogroResource extends Resource
                     ->relationship('materia', 'nombre')
                     ->searchable()
                     ->preload()
-                    ->label('Materia'),
-                Tables\Filters\SelectFilter::make('nivel_dificultad')
-                    ->options([
-                        'bajo' => 'Bajo',
-                        'medio' => 'Medio',
-                        'alto' => 'Alto',
-                    ])
-                    ->label('Nivel de Dificultad'),
-                Tables\Filters\SelectFilter::make('tipo')
-                    ->options([
-                        'conocimiento' => 'Conocimiento',
-                        'habilidad' => 'Habilidad',
-                        'actitud' => 'Actitud',
-                        'valor' => 'Valor',
-                    ])
-                    ->label('Tipo de Logro'),
+                    ->label('Materia')
+                    ->options(function () {
+                        return \App\Models\Materia::get()
+                            ->mapWithKeys(function ($materia) {
+                                return [$materia->id => "{$materia->codigo} - {$materia->nombre}"];
+                            });
+                    }),
+                // Filtros de nivel y tipo removidos en el nuevo esquema
                 Tables\Filters\TernaryFilter::make('activo')
                     ->label('Estado'),
             ])

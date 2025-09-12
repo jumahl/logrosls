@@ -11,25 +11,14 @@ class EstudianteLogro extends Model
     use HasFactory;
 
     protected $fillable = [
-        'estudiante_id',
         'logro_id',
-        'periodo_id',
-        'nivel_desempeno',
-        'observaciones',
-        'fecha_asignacion'
+        'desempeno_materia_id',
+        'alcanzado'
     ];
 
     protected $casts = [
-        'fecha_asignacion' => 'date'
+        'alcanzado' => 'boolean'
     ];
-
-    /**
-     * Obtener el estudiante al que pertenece este logro.
-     */
-    public function estudiante(): BelongsTo
-    {
-        return $this->belongsTo(Estudiante::class);
-    }
 
     /**
      * Obtener el logro asignado.
@@ -39,17 +28,30 @@ class EstudianteLogro extends Model
         return $this->belongsTo(Logro::class);
     }
 
-    public function periodo(): BelongsTo
+    /**
+     * Obtener el desempeño de materia al que pertenece este logro.
+     */
+    public function desempenoMateria(): BelongsTo
     {
-        return $this->belongsTo(Periodo::class);
+        return $this->belongsTo(DesempenoMateria::class);
     }
 
     /**
-     * Scope para filtrar por estudiante
+     * Accessors que delegan a través de DesempenoMateria
      */
-    public function scopePorEstudiante($query, $estudianteId)
+    public function getEstudianteAttribute()
     {
-        return $query->where('estudiante_id', $estudianteId);
+        return $this->desempenoMateria?->estudiante;
+    }
+
+    public function getPeriodoAttribute()
+    {
+        return $this->desempenoMateria?->periodo;
+    }
+
+    public function getMateriaAttribute()
+    {
+        return $this->desempenoMateria?->materia;
     }
 
     /**
@@ -61,35 +63,51 @@ class EstudianteLogro extends Model
     }
 
     /**
-     * Scope para filtrar por periodo
+     * Scope para filtrar por desempeño de materia
      */
-    public function scopePorPeriodo($query, $periodoId)
+    public function scopePorDesempenoMateria($query, $desempenoMateriaId)
     {
-        return $query->where('periodo_id', $periodoId);
+        return $query->where('desempeno_materia_id', $desempenoMateriaId);
     }
 
     /**
-     * Scope para filtrar por nivel de desempeño
+     * Scope para filtrar logros alcanzados
      */
-    public function scopePorNivelDesempeno($query, $nivel)
+    public function scopeAlcanzados($query)
     {
-        return $query->where('nivel_desempeno', $nivel);
+        return $query->where('alcanzado', true);
     }
 
     /**
-     * Scope para obtener evaluaciones que tienen observaciones (simulando "evaluados")
+     * Scope para filtrar logros no alcanzados
      */
-    public function scopeEvaluados($query)
+    public function scopeNoAlcanzados($query)
     {
-        return $query->whereNotNull('observaciones');
+        return $query->where('alcanzado', false);
     }
 
     /**
-     * Scope para obtener evaluaciones pendientes (sin observaciones)
+     * Obtener el nivel de desempeño desde la relación con DesempenoMateria
      */
-    public function scopePendientes($query)
+    public function getNivelDesempenoAttribute()
     {
-        return $query->whereNull('observaciones');
+        return $this->desempenoMateria?->nivel_desempeno;
+    }
+
+    /**
+     * Obtener las observaciones desde la relación con DesempenoMateria
+     */
+    public function getObservacionesAttribute()
+    {
+        return $this->desempenoMateria?->observaciones_finales;
+    }
+
+    /**
+     * Obtener la fecha de asignación desde la relación con DesempenoMateria
+     */
+    public function getFechaAsignacionAttribute()
+    {
+        return $this->desempenoMateria?->created_at;
     }
 
     /**
@@ -97,7 +115,7 @@ class EstudianteLogro extends Model
      */
     public function getEvaluadoAttribute()
     {
-        return !is_null($this->observaciones);
+        return !is_null($this->desempenoMateria?->observaciones_finales);
     }
 
     /**
@@ -105,7 +123,11 @@ class EstudianteLogro extends Model
      */
     public function getValorNumericoAttribute()
     {
-        return match($this->nivel_desempeno) {
+        if (!$this->desempenoMateria) {
+            return 0.0;
+        }
+
+        return match($this->desempenoMateria->nivel_desempeno) {
             'E' => 5.0, // Excelente
             'S' => 4.0, // Sobresaliente
             'A' => 3.0, // Aceptable
@@ -119,7 +141,11 @@ class EstudianteLogro extends Model
      */
     public function getColorNivelAttribute()
     {
-        return match($this->nivel_desempeno) {
+        if (!$this->desempenoMateria) {
+            return 'gray';
+        }
+
+        return match($this->desempenoMateria->nivel_desempeno) {
             'E' => 'success', // Excelente - verde
             'S' => 'info',    // Sobresaliente - azul
             'A' => 'warning', // Aceptable - amarillo
@@ -133,7 +159,11 @@ class EstudianteLogro extends Model
      */
     public function getNivelDesempenoCompletoAttribute()
     {
-        return match($this->nivel_desempeno) {
+        if (!$this->desempenoMateria) {
+            return 'No definido';
+        }
+
+        return match($this->desempenoMateria->nivel_desempeno) {
             'E' => 'Excelente',
             'S' => 'Sobresaliente',
             'A' => 'Aceptable',

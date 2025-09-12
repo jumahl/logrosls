@@ -3,30 +3,29 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\NotaResource\Pages;
-use App\Models\EstudianteLogro;
+use App\Models\DesempenoMateria;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use App\Rules\FechaNoPosterior;
-use App\Rules\EstudianteLogroUnico;
 
 class NotaResource extends Resource
 {
-    protected static ?string $model = EstudianteLogro::class;
+    protected static ?string $model = DesempenoMateria::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
     
-    protected static ?string $navigationLabel = 'Reporte Materia';
+    protected static ?string $navigationLabel = 'Registro de Calificaciones';
     
-    protected static ?string $modelLabel = 'Reporte Materia';
+    protected static ?string $modelLabel = 'Registro de Calificación';
     
-    protected static ?string $pluralModelLabel = 'Reportes Materia';
+    protected static ?string $pluralModelLabel = 'Registro de Calificaciones';
     
-    protected static ?int $navigationSort = 2;
-    
+    protected static ?int $navigationSort = 1;
     protected static ?string $navigationGroup = 'Reportes';
 
     public static function form(Form $form): Form
@@ -34,33 +33,65 @@ class NotaResource extends Resource
         $user = auth()->user();
         return $form
             ->schema([
-                Forms\Components\Select::make('estudiante_id')
-                    ->relationship('estudiante', 'nombre')
+                Forms\Components\Select::make('grado_id')
+                    ->relationship(
+                        'estudiante.grado', 
+                        'nombre',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->label('Estudiante')
+                    ->label('Grado')
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set) {
-                        // Limpiar materia y logro cuando cambie el estudiante
+                        $set('estudiante_id', null);
                         $set('materia_id', null);
-                        $set('logro_id', null);
                     }),
+                    
+                Forms\Components\Select::make('estudiante_id')
+                    ->options(function ($get) {
+                        $gradoId = $get('grado_id');
+                        
+                        if ($gradoId) {
+                            return \App\Models\Estudiante::where('grado_id', $gradoId)
+                                ->where('activo', true)
+                                ->orderBy('apellido')
+                                ->orderBy('nombre')
+                                ->get()
+                                ->mapWithKeys(function ($estudiante) {
+                                    return [$estudiante->id => $estudiante->nombre_completo];
+                                });
+                        }
+                        return [];
+                    })
+                    ->required()
+                    ->searchable()
+                    ->label('Estudiante')
+                    ->live()
+                    ->disabled(fn ($get) => !$get('grado_id'))
+                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        $set('materia_id', null);
+                    }),
+                    
                 Forms\Components\Select::make('materia_id')
                     ->options(function ($get) use ($user) {
-                        $estudianteId = $get('estudiante_id');
-                        if ($estudianteId) {
-                            $estudiante = \App\Models\Estudiante::find($estudianteId);
-                            if ($estudiante && $estudiante->grado) {
-                                // Obtener materias del grado del estudiante
-                                $materias = $estudiante->grado->materias()->where('activa', true);
+                        $gradoId = $get('grado_id');
+                        
+                        if ($gradoId) {
+                            $grado = \App\Models\Grado::find($gradoId);
+                            if ($grado) {
+                                $materias = $grado->materias()
+                                    ->select('materias.id', 'materias.nombre')
+                                    ->where('materias.activa', true);
                                 
                                 // Si es profesor, filtrar solo sus materias
                                 if ($user && $user->hasRole('profesor')) {
-                                    $materias = $materias->whereIn('id', $user->materias()->pluck('id'));
+                                    $materias = $materias->whereIn('materias.id', $user->materias()->pluck('id'));
                                 }
                                 
-                                return $materias->pluck('nombre', 'id');
+                                return $materias->pluck('materias.nombre', 'materias.id');
                             }
                         }
                         return [];
@@ -69,50 +100,15 @@ class NotaResource extends Resource
                     ->searchable()
                     ->label('Materia')
                     ->live()
-                    ->afterStateUpdated(function ($state, Forms\Set $set) {
-                        // Limpiar el logro seleccionado cuando cambie la materia
-                        $set('logro_id', null);
-                    })
-                    ->disabled(fn ($get) => !$get('estudiante_id')),
-                Forms\Components\Select::make(request()->routeIs('filament.resources.nota-resource.create') ? 'logros' : 'logro_id')
-                    ->options(function ($get) use ($user) {
-                        $materiaId = $get('materia_id');
-                        $estudianteId = $get('estudiante_id');
-                        
-                        if ($materiaId && $estudianteId) {
-                            $estudiante = \App\Models\Estudiante::find($estudianteId);
-                            if ($estudiante && $estudiante->grado) {
-                                // Obtener logros de la materia que pertenecen al grado del estudiante
-                                $query = \App\Models\Logro::where('materia_id', $materiaId)
-                                    ->where('activo', true)
-                                    ->whereHas('materia.grados', function ($q) use ($estudiante) {
-                                        $q->where('grado_id', $estudiante->grado_id);
-                                    });
-                                
-                                // Si es profesor, verificar que la materia le pertenezca
-                                if ($user && $user->hasRole('profesor')) {
-                                    $materiaIds = $user->materias()->pluck('id');
-                                    if (!$materiaIds->contains($materiaId)) {
-                                        return [];
-                                    }
-                                }
-                                
-                                return $query->orderBy('titulo')->pluck('titulo', 'id')->map(function ($titulo, $id) {
-                                    $logro = \App\Models\Logro::find($id);
-                                    return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
-                                });
-                            }
-                        }
-                        return [];
-                    })
-                    ->when(request()->routeIs('filament.resources.nota-resource.create'), fn ($field) => $field->multiple())
-                    ->required()
-                    ->searchable()
-                    ->label('Logros')
-                    ->helperText('Seleccione los logros que desea asignar al estudiante. Puede seleccionar múltiples logros de la materia seleccionada.')
-                    ->disabled(fn ($get) => !$get('materia_id') || !$get('estudiante_id')),
+                    ->disabled(fn ($get) => !$get('grado_id')),
+                    
                 Forms\Components\Select::make('periodo_id')
-                    ->relationship('periodo', 'corte')
+                    ->relationship('periodo', 'corte', function ($query) use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            return $query->where('activo', true);
+                        }
+                        return $query;
+                    })
                     ->getOptionLabelFromRecordUsing(function ($record) {
                         return $record->periodo_completo;
                     })
@@ -120,6 +116,7 @@ class NotaResource extends Resource
                     ->searchable()
                     ->preload()
                     ->label('Período'),
+                    
                 Forms\Components\Select::make('nivel_desempeno')
                     ->options([
                         'E' => 'E - Excelente',
@@ -129,18 +126,74 @@ class NotaResource extends Resource
                     ])
                     ->required()
                     ->label('Nivel de Desempeño')
-                    ->helperText('Seleccione el nivel de desempeño alcanzado por el estudiante en este logro'),
-                Forms\Components\Textarea::make('observaciones')
+                    ->helperText('Calificación consolidada para la materia'),
+                    
+                Forms\Components\Select::make('logros')
+                    ->multiple()
+                    ->options(function ($get) use ($user) {
+                        $materiaId = $get('materia_id');
+                        $gradoId = $get('grado_id');
+                        
+                        if ($materiaId && $gradoId) {
+                            $query = \App\Models\Logro::where('materia_id', $materiaId)
+                                ->where('activo', true)
+                                ->whereHas('materia.grados', function ($q) use ($gradoId) {
+                                    $q->where('grado_id', $gradoId);
+                                })
+                                ->orderBy('orden')
+                                ->orderBy('titulo');
+                            
+                            // Si es profesor, verificar que la materia le pertenezca
+                            if ($user && $user->hasRole('profesor')) {
+                                $materiaIds = $user->materias()->pluck('id');
+                                if (!$materiaIds->contains($materiaId)) {
+                                    return [];
+                                }
+                            }
+                            
+                            return $query->get()->mapWithKeys(function ($logro) {
+                                $codigo = $logro->codigo ? "[{$logro->codigo}] " : "";
+                                $titulo = $logro->titulo ? "{$logro->titulo}" : "";
+                                $desempeno = trim($logro->desempeno ?? '');
+                                
+                                $label = $codigo . $titulo;
+                                if (!empty($desempeno)) {
+                                    $label .= " — {$desempeno}";
+                                }
+                                
+                                return [$logro->id => $label];
+                            });
+                        }
+                        return [];
+                    })
+                    ->searchable()
+                    ->label('Logros Asociados')
+                    ->helperText('Seleccione los logros que evidencian esta calificación')
+                    ->disabled(fn ($get) => !$get('materia_id')),
+                    
+                Forms\Components\Select::make('estado')
+                    ->options([
+                        'borrador' => 'Borrador',
+                        'publicado' => 'Publicado',
+                        'revisado' => 'Revisado',
+                    ])
+                    ->default('borrador')
+                    ->required()
+                    ->label('Estado')
+                    ->helperText('Estado de la calificación'),
+                    
+                Forms\Components\Textarea::make('observaciones_finales')
                     ->maxLength(65535)
                     ->columnSpanFull()
-                    ->label('Observaciones')
-                    ->helperText('Comentarios adicionales sobre el desempeño del estudiante'),
+                    ->label('Observaciones Finales')
+                    ->helperText('Comentarios consolidados sobre el desempeño del estudiante en la materia'),
+                    
                 Forms\Components\DatePicker::make('fecha_asignacion')
                     ->required()
                     ->label('Fecha de Asignación')
                     ->default(now())
                     ->rules([new FechaNoPosterior()])
-                    ->helperText('No puede ser una fecha futura'),
+                    ->helperText('Fecha de la evaluación'),
             ]);
     }
 
@@ -149,23 +202,25 @@ class NotaResource extends Resource
         $user = auth()->user();
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('estudiante.nombre')
+                Tables\Columns\TextColumn::make('estudiante.nombre_completo')
+                    ->label('Estudiante')
+                    ->searchable(['estudiante.nombre', 'estudiante.apellido'])
+                    ->sortable(['estudiantes.apellido', 'estudiantes.nombre'])
+                    ->getStateUsing(function ($record) {
+                        return $record->estudiante->nombre_completo;
+                    }),
+                    
+                Tables\Columns\TextColumn::make('materia.nombre')
                     ->searchable()
                     ->sortable()
-                    ->label('Estudiante'),
-                Tables\Columns\TextColumn::make('logro.materia.nombre')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Materia'),
-                Tables\Columns\TextColumn::make('logro.materia.docente.name')
+                    ->label('Materia')
+                    ->color('primary'),
+                    
+                Tables\Columns\TextColumn::make('materia.docente.name')
                     ->searchable()
                     ->sortable()
                     ->label('Docente'),
-                Tables\Columns\TextColumn::make('logro.titulo')
-                    ->searchable()
-                    ->sortable()
-                    ->label('Título del Logro')
-                    ->limit(40),
+                    
                 Tables\Columns\BadgeColumn::make('nivel_desempeno')
                     ->colors([
                         'success' => 'E',
@@ -185,47 +240,136 @@ class NotaResource extends Resource
                             default => $state
                         };
                     }),
+                    
+                Tables\Columns\BadgeColumn::make('estado')
+                    ->colors([
+                        'warning' => 'borrador',
+                        'success' => 'publicado',
+                        'info' => 'revisado',
+                    ])
+                    ->searchable()
+                    ->sortable()
+                    ->label('Estado'),
+                    
+                Tables\Columns\TextColumn::make('logros_count')
+                    ->label('Logros Asociados')
+                    ->badge()
+                    ->color('success')
+                    ->getStateUsing(function ($record) {
+                        return $record->estudianteLogros()->count();
+                    }),
+                    
                 Tables\Columns\TextColumn::make('periodo.periodo_completo')
                     ->searchable()
                     ->sortable()
                     ->label('Período'),
+                    
                 Tables\Columns\TextColumn::make('fecha_asignacion')
                     ->date()
                     ->sortable()
                     ->label('Fecha de Asignación'),
+                    
+                Tables\Columns\IconColumn::make('locked_at')
+                    ->label('Bloqueado')
+                    ->boolean()
+                    ->getStateUsing(fn ($record) => !is_null($record->locked_at))
+                    ->trueIcon('heroicon-o-lock-closed')
+                    ->falseIcon('heroicon-o-lock-open'),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('grado_id')
+                    ->label('Grado')
+                    ->options(function () use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            $materiaIds = $user->materias()->pluck('id');
+                            $gradoIds = \App\Models\Grado::whereHas('materias', function ($q) use ($materiaIds) {
+                                $q->whereIn('materias.id', $materiaIds);
+                            })->pluck('nombre', 'id');
+                            return $gradoIds->toArray();
+                        }
+                        return \App\Models\Grado::orderBy('nombre')->orderBy('grupo')->get()->pluck('nombre_completo', 'id')->toArray();
+                    })
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['value'])) {
+                            $query->whereHas('estudiante', function ($q) use ($data) {
+                                $q->where('grado_id', $data['value']);
+                            });
+                        }
+                    }),
+                    
                 Tables\Filters\SelectFilter::make('periodo_id')
                     ->relationship('periodo', 'corte')
                     ->label('Período')
                     ->getOptionLabelFromRecordUsing(function ($record) {
                         return $record->periodo_completo;
                     }),
+                    
                 Tables\Filters\SelectFilter::make('materia_id')
-                    ->relationship('logro.materia', 'nombre')
+                    ->relationship('materia', 'nombre')
                     ->label('Materia'),
+                    
+                Tables\Filters\SelectFilter::make('estado')
+                    ->options([
+                        'borrador' => 'Borrador',
+                        'publicado' => 'Publicado',
+                        'revisado' => 'Revisado',
+                    ])
+                    ->label('Estado'),
+                    
                 Tables\Filters\SelectFilter::make('nivel_desempeno')
                     ->options([
-                        'E' => 'E - Excelente',
-                        'S' => 'S - Sobresaliente',
-                        'A' => 'A - Aceptable',
-                        'I' => 'I - Insuficiente',
+                        'E' => 'Excelente',
+                        'S' => 'Sobresaliente',
+                        'A' => 'Aceptable',
+                        'I' => 'Insuficiente',
                     ])
                     ->label('Nivel de Desempeño'),
-                Tables\Filters\SelectFilter::make('estudiante_id')
-                    ->relationship('estudiante', 'nombre')
-                    ->label('Estudiante'),
             ])
             ->actions([
+                Tables\Actions\Action::make('bloquear')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color('warning')
+                    ->action(function ($record) {
+                        $record->bloquear();
+                    })
+                    ->visible(fn($record) => 
+                        !$record->locked_at && 
+                        auth()->user()->can('lock', $record)
+                    )
+                    ->requiresConfirmation()
+                    ->modalHeading('¿Bloquear calificación?')
+                    ->modalDescription('Una vez bloqueada, la calificación no podrá ser editada.'),
+                    
+                Tables\Actions\Action::make('desbloquear')
+                    ->icon('heroicon-o-lock-open')
+                    ->color('success')
+                    ->action(function ($record) {
+                        $record->desbloquear();
+                    })
+                    ->visible(fn($record) => 
+                        $record->locked_at && 
+                        auth()->user()?->hasRole('admin')
+                    )
+                    ->requiresConfirmation()
+                    ->modalHeading('¿Desbloquear calificación?')
+                    ->modalDescription('La calificación podrá ser editada nuevamente.'),
+                    
                 Tables\Actions\EditAction::make()
-                    ->visible(fn() => auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('profesor')),
+                    ->visible(fn($record) => 
+                        !$record->locked_at && 
+                        auth()->user()->can('update', $record)
+                    ),
+                    
                 Tables\Actions\DeleteAction::make()
-                    ->visible(fn() => auth()->user()?->hasRole('admin')),
+                    ->visible(fn($record) => 
+                        !$record->locked_at && 
+                        auth()->user()->can('delete', $record)
+                    ),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->visible(fn() => auth()->user()?->hasRole('admin')),
+                        ->visible(fn() => auth()->user()->can('deleteAny', DesempenoMateria::class)),
                 ]),
             ]);
     }
@@ -249,18 +393,50 @@ class NotaResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->user();
-        $query = parent::getEloquentQuery()->with([
-            'estudiante.grado',
-            'logro.materia.docente',
-            'periodo'
-        ]);
         
+        // Query base optimizada sin JOIN innecesario
+        $query = parent::getEloquentQuery()
+            ->select([
+                'desempenos_materia.*'
+            ])
+            ->with([
+                'estudiante:id,nombre,apellido,documento,grado_id',
+                'estudiante.grado:id,nombre,grupo',
+                'materia:id,nombre,docente_id',
+                'materia.docente:id,name',
+                'periodo:id,corte,numero_periodo,anio_escolar',
+                'estudianteLogros:id,desempeno_materia_id,logro_id,alcanzado',
+                'estudianteLogros.logro:id,codigo,titulo,materia_id'
+            ]);
+        
+        // Filtrar por rol de profesor sin subquery innecesaria
         if ($user && $user->hasRole('profesor')) {
-            $materiaIds = $user->materias()->pluck('id');
-            $query->whereHas('logro', function ($q) use ($materiaIds) {
-                $q->whereIn('materia_id', $materiaIds);
-            });
+            // Optimización: cache de materias del profesor
+            $materiaIds = cache()->remember(
+                "profesor_materias_ids_{$user->id}",
+                300, // 5 minutos
+                fn() => $user->materias()->pluck('id')->toArray()
+            );
+            
+            if (!empty($materiaIds)) {
+                $query->whereIn('desempenos_materia.materia_id', $materiaIds);
+            } else {
+                // Si no tiene materias, no mostrar registros
+                $query->whereRaw('1 = 0');
+            }
         }
+        
         return $query;
+    }
+
+    public static function resolveRecordRouteBinding(int|string $key): ?Model
+    {
+        // Para resolver un registro específico, no usar JOIN para evitar ambigüedad
+        return static::getModel()::with([
+            'estudiante.grado',
+            'materia.docente',
+            'periodo',
+            'estudianteLogros.logro'
+        ])->find($key);
     }
 } 

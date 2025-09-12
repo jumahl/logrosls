@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');
             $table->string('codigo')->unique();
-            $table->foreignId('docente_id')->nullable()->constrained('users');
+            $table->foreignId('docente_id')->nullable()->constrained('users')->onDelete('set null');
             $table->boolean('activa')->default(true);
             $table->text('descripcion')->nullable();
             $table->timestamps();

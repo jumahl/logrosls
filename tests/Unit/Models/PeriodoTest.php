@@ -16,7 +16,7 @@ class PeriodoTest extends TestCase
     public function it_has_correct_fillable_attributes()
     {
         $expectedFillable = [
-            'corte', 'año_escolar', 'numero_periodo', 'fecha_inicio', 'fecha_fin', 'activo'
+            'corte', 'anio_escolar', 'numero_periodo', 'fecha_inicio', 'fecha_fin', 'activo'
         ];
         $periodo = new Periodo();
         
@@ -30,7 +30,7 @@ class PeriodoTest extends TestCase
             'fecha_inicio' => 'date',
             'fecha_fin' => 'date',
             'activo' => 'boolean',
-            'año_escolar' => 'integer',
+            'anio_escolar' => 'integer',
             'numero_periodo' => 'integer',
             'id' => 'int',
         ];
@@ -58,13 +58,13 @@ class PeriodoTest extends TestCase
     {
         $periodo = Periodo::factory()->create([
             'corte' => 'Primer Corte',
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'numero_periodo' => 1,
             'activo' => true,
         ]);
 
         $this->assertEquals('Primer Corte', $periodo->corte);
-        $this->assertEquals(2024, $periodo->año_escolar);
+    $this->assertEquals(2024, $periodo->anio_escolar);
         $this->assertEquals(1, $periodo->numero_periodo);
         $this->assertTrue($periodo->activo);
     }
@@ -83,7 +83,7 @@ class PeriodoTest extends TestCase
         $periodo = Periodo::factory()->create([
             'numero_periodo' => 1,
             'corte' => 'Primer Corte',
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
         ]);
         
         $expected = 'Período 1 - Primer Corte 2024';
@@ -251,26 +251,26 @@ class PeriodoTest extends TestCase
     {
         $periodo = Periodo::factory()->forYear(2025)->create();
         
-        $this->assertEquals(2025, $periodo->año_escolar);
+    $this->assertEquals(2025, $periodo->anio_escolar);
     }
 
     /** @test */
     public function periodo_anterior_returns_correct_period()
     {
         $primerPeriodoPrimerCorte = Periodo::factory()->create([
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'numero_periodo' => 1,
             'corte' => 'Primer Corte',
         ]);
         
         $primerPeriodoSegundoCorte = Periodo::factory()->create([
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'numero_periodo' => 1,
             'corte' => 'Segundo Corte',
         ]);
         
         $segundoPeriodoPrimerCorte = Periodo::factory()->create([
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'numero_periodo' => 2,
             'corte' => 'Primer Corte',
         ]);
@@ -304,7 +304,7 @@ class PeriodoTest extends TestCase
         $this->expectException(\Illuminate\Database\QueryException::class);
         
         Periodo::create([
-            'año_escolar' => 2024,
+            'anio_escolar' => 2024,
             'numero_periodo' => 1,
         ]);
     }

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('direccion')->nullable();
             $table->string('telefono')->nullable();
             $table->string('email')->nullable();
-            $table->foreignId('grado_id')->constrained('grados');
+            $table->foreignId('grado_id')->constrained('grados')->onDelete('cascade');
             $table->boolean('activo')->default(true);
             $table->timestamps();
         });

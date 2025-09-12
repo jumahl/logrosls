@@ -70,20 +70,95 @@ class ShieldPermissionSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'admin@admin.com'],
             [
-                'name' => 'Administrador',
+                'name' => 'Administrador del Sistema',
                 'password' => bcrypt('Password'),
             ]
         );
         $admin->assignRole('admin');
 
-        // Crear usuario profesor por defecto si no existe
-        $profesor = User::firstOrCreate(
+        // Crear profesores de ejemplo con diferentes perfiles
+        $profesores = [
+            [
+                'name' => 'María Elena Rodríguez',
+                'email' => 'maria.rodriguez@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Matemáticas y Física',
+            ],
+            [
+                'name' => 'Carlos Alberto Pérez',
+                'email' => 'carlos.perez@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Lenguaje y Literatura',
+            ],
+            [
+                'name' => 'Ana Sofía Martínez',
+                'email' => 'ana.martinez@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Ciencias Naturales',
+            ],
+            [
+                'name' => 'Luis Fernando González',
+                'email' => 'luis.gonzalez@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Ciencias Sociales',
+            ],
+            [
+                'name' => 'Patricia Isabel López',
+                'email' => 'patricia.lopez@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Educación Artística',
+            ],
+            [
+                'name' => 'Roberto David Silva',
+                'email' => 'roberto.silva@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Educación Física',
+            ],
+            [
+                'name' => 'Carmen Rosa Jiménez',
+                'email' => 'carmen.jimenez@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Inglés',
+            ],
+            [
+                'name' => 'Miguel Ángel Torres',
+                'email' => 'miguel.torres@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Tecnología e Informática',
+            ],
+            [
+                'name' => 'Laura Beatriz Morales',
+                'email' => 'laura.morales@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Ética y Valores',
+            ],
+            [
+                'name' => 'Jorge Andrés Vargas',
+                'email' => 'jorge.vargas@liceo.edu.co',
+                'password' => bcrypt('Password'),
+                'especialidad' => 'Coordinador Académico',
+            ]
+        ];
+
+        foreach ($profesores as $profesorData) {
+            $profesor = User::firstOrCreate(
+                ['email' => $profesorData['email']],
+                [
+                    'name' => $profesorData['name'],
+                    'password' => $profesorData['password'],
+                ]
+            );
+            $profesor->assignRole('profesor');
+        }
+
+        // Crear un profesor básico adicional (mantener compatibilidad)
+        $profesorBasico = User::firstOrCreate(
             ['email' => 'profesor@profesor.com'],
             [
-                'name' => 'Profesor',
+                'name' => 'Profesor General',
                 'password' => bcrypt('Password'),
             ]
         );
-        $profesor->assignRole('profesor');
+        $profesorBasico->assignRole('profesor');
     }
 }

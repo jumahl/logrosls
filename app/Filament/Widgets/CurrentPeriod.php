@@ -24,7 +24,7 @@ class CurrentPeriod extends BaseWidget
         $diasRestantes = now()->diffInDays($periodoActivo->fecha_fin, false);
         $diasRestantes = round($diasRestantes);
         $porcentajeCompletado = $this->calcularPorcentajeCompletado($periodoActivo);
-        $periodoCompleto = $periodoActivo->nombre . ' - ' . $periodoActivo->corte . ' ' . $periodoActivo->año_escolar;
+    $periodoCompleto = $periodoActivo->nombre . ' - ' . $periodoActivo->corte . ' ' . $periodoActivo->anio_escolar;
 
         return [
             Stat::make('Período Activo', $periodoCompleto)

@@ -14,10 +14,14 @@ return new class extends Migration
         Schema::create('grados', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
+            $table->string('grupo')->nullable(); // A, B, C, etc. 
             $table->enum('tipo', ['preescolar', 'primaria', 'secundaria', 'media_academica']);
             $table->boolean('activo')->default(true);
             $table->decimal('media_academica', 3, 2)->nullable();
             $table->timestamps();
+            
+            // Índice único compuesto para evitar duplicados de nombre+grupo
+            $table->unique(['nombre', 'grupo']);
         });
     }
 

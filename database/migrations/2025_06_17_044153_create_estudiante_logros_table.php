@@ -13,20 +13,14 @@ return new class extends Migration
     {
         Schema::create('estudiante_logros', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('estudiante_id')->constrained('estudiantes');
-            $table->foreignId('logro_id')->constrained('logros');
-            $table->foreignId('periodo_id')->constrained('periodos');
-            $table->enum('nivel_desempeno', ['E', 'S', 'A', 'I']);
-            $table->text('observaciones')->nullable();
-            $table->date('fecha_asignacion');
+            $table->foreignId('logro_id')->constrained('logros')->onDelete('cascade');
+            $table->foreignId('desempeno_materia_id')->constrained('desempenos_materia')->onDelete('cascade');
+            $table->boolean('alcanzado')->default(true);
             $table->timestamps();
 
-            // Asegurar que un estudiante no tenga el mismo logro en el mismo periodo
-            $table->unique(['estudiante_id', 'logro_id', 'periodo_id']);
-            
             // Índices para mejorar rendimiento
-            $table->index(['estudiante_id', 'periodo_id']);
-            $table->index(['logro_id', 'periodo_id']);
+            $table->index(['desempeno_materia_id', 'logro_id']);
+            $table->index(['logro_id']);
         });
     }
 

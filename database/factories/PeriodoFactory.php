@@ -21,18 +21,18 @@ class PeriodoFactory extends Factory
     {
         $cortes = ['Primer Corte', 'Segundo Corte'];
         $periodos = [1, 2]; // Solo 1 o 2 según la migración
-        $añoEscolar = $this->faker->numberBetween(2020, 2025);
+    $anioEscolar = $this->faker->numberBetween(2020, 2025);
         
         // Generar fechas coherentes
         $numeroCorte = $this->faker->randomElement([1, 2]);
         $numeroPeriodo = $this->faker->randomElement($periodos);
         
-        $fechaInicio = $this->generateFechaInicio($añoEscolar, $numeroPeriodo, $numeroCorte);
+    $fechaInicio = $this->generateFechaInicio($anioEscolar, $numeroPeriodo, $numeroCorte);
         $fechaFin = $this->generateFechaFin($fechaInicio, $numeroCorte);
 
         return [
             'corte' => $this->faker->randomElement($cortes),
-            'año_escolar' => $añoEscolar,
+            'anio_escolar' => $anioEscolar,
             'numero_periodo' => $numeroPeriodo,
             'fecha_inicio' => $fechaInicio,
             'fecha_fin' => $fechaFin,
@@ -43,7 +43,7 @@ class PeriodoFactory extends Factory
     /**
      * Generate start date based on school year, period and cut.
      */
-    private function generateFechaInicio(int $año, int $periodo, int $corte): string
+    private function generateFechaInicio(int $anio, int $periodo, int $corte): string
     {
         $mesInicio = match([$periodo, $corte]) {
             [1, 1] => 2,  // Febrero
@@ -54,8 +54,8 @@ class PeriodoFactory extends Factory
         };
 
         return $this->faker->dateTimeBetween(
-            "{$año}-{$mesInicio}-01",
-            "{$año}-{$mesInicio}-15"
+            "{$anio}-{$mesInicio}-01",
+            "{$anio}-{$mesInicio}-15"
         )->format('Y-m-d');
     }
 
@@ -157,10 +157,10 @@ class PeriodoFactory extends Factory
     /**
      * Create a period for a specific school year.
      */
-    public function forYear(int $año): static
+    public function forYear(int $anio): static
     {
         return $this->state(fn (array $attributes) => [
-            'año_escolar' => $año,
+            'anio_escolar' => $anio,
         ]);
     }
 

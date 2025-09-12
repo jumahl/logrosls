@@ -50,24 +50,29 @@ class EstudianteResource extends Resource
                     ->label('Documento de Identidad')
                     ->helperText('Solo números, sin puntos ni espacios'),
                 Forms\Components\Select::make('grado_id')
-                    ->relationship('grado', 'nombre')
+                    ->relationship(
+                        'grado', 
+                        'nombre',
+                        function ($query) {
+                        $user = auth()->user();
+                        
+                        // Si es admin, puede ver todos los grados
+                        if ($user && $user->hasRole('admin')) {
+                            return $query;
+                        }
+                        
+                        // Si es director de grupo, solo puede ver su grado asignado
+                        if ($user && $user->hasRole('profesor') && $user->isDirectorGrupo()) {
+                            return $query->where('id', $user->director_grado_id);
+                        }
+                        
+                        // Si es profesor regular, no puede ver ningún grado
+                        return $query->whereRaw('1 = 0');
+                    })
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->createOptionForm([
-                        Forms\Components\TextInput::make('nombre')
-                            ->required()
-                            ->maxLength(255)
-                            ->label('Nombre'),
-                        Forms\Components\Select::make('tipo')
-                            ->options([
-                                'preescolar' => 'Preescolar',
-                                'primaria' => 'Primaria',
-                                'secundaria' => 'Secundaria',
-                            ])
-                            ->required()
-                            ->label('Tipo'),
-                    ])
                     ->label('Grado'),
                 Forms\Components\DatePicker::make('fecha_nacimiento')
                     ->required()
@@ -116,6 +121,7 @@ class EstudianteResource extends Resource
                     ->sortable()
                     ->label('Documento'),
                 Tables\Columns\TextColumn::make('grado.nombre')
+                    ->formatStateUsing(fn ($record) => $record->grado?->nombre_completo)
                     ->searchable()
                     ->sortable()
                     ->label('Grado'),
@@ -125,13 +131,25 @@ class EstudianteResource extends Resource
                     ->label('Fecha de Nacimiento'),
                 Tables\Columns\TextColumn::make('activo')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn ($state): string => match ($state) {
+                        1 => 'success',
+                        true => 'success',
                         '1' => 'success',
+                        0 => 'danger',
+                        false => 'danger',
                         '0' => 'danger',
+                        null => 'gray',
+                        default => 'gray'
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn ($state): string => match ($state) {
+                        1 => 'Activo',
+                        true => 'Activo',
                         '1' => 'Activo',
+                        0 => 'Inactivo',
+                        false => 'Inactivo',
                         '0' => 'Inactivo',
+                        null => 'No definido',
+                        default => 'No definido'
                     })
                     ->label('Estado'),
                 Tables\Columns\TextColumn::make('es_mi_grupo')
@@ -157,13 +175,20 @@ class EstudianteResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('grado_id')
-                    ->relationship('grado', 'nombre')
+                    ->relationship(
+                        'grado', 
+                        'nombre',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->label('Grado'),
                 Tables\Filters\SelectFilter::make('activo')
                     ->options([
-                        '1' => 'Activo',
+                        '' => 'Todos',
+                        '1' => 'Activo', 
                         '0' => 'Inactivo',
                     ])
+                    ->default('1')
                     ->label('Estado'),
                 Tables\Filters\Filter::make('mi_grupo')
                     ->label('Solo mi grupo')

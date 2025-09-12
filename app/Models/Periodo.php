@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Periodo extends Model
 {
@@ -13,7 +15,7 @@ class Periodo extends Model
 
     protected $fillable = [
         'corte',
-        'año_escolar',
+    'anio_escolar',
         'numero_periodo',
         'fecha_inicio',
         'fecha_fin',
@@ -24,7 +26,7 @@ class Periodo extends Model
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
         'activo' => 'boolean',
-        'año_escolar' => 'integer',
+    'anio_escolar' => 'integer',
         'numero_periodo' => 'integer'
     ];
 
@@ -37,6 +39,14 @@ class Periodo extends Model
     }
 
     /**
+     * Relación con el año escolar
+     */
+    public function anioEscolar(): BelongsTo
+    {
+        return $this->belongsTo(AnioEscolar::class, 'anio_escolar', 'anio');
+    }
+
+    /**
      * Obtener los logros de este periodo.
      */
     public function logros(): BelongsToMany
@@ -46,11 +56,26 @@ class Periodo extends Model
     }
 
     /**
-     * Obtener los logros de estudiantes de este período.
+     * Obtener los desempeños de materias de este período.
      */
-    public function estudianteLogros(): HasMany
+    public function desempenosMateria(): HasMany
     {
-        return $this->hasMany(EstudianteLogro::class);
+        return $this->hasMany(DesempenoMateria::class);
+    }
+
+    /**
+     * Obtener los logros de estudiantes a través de desempeños de materia.
+     */
+    public function estudianteLogros(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            EstudianteLogro::class,
+            DesempenoMateria::class,
+            'periodo_id',
+            'desempeno_materia_id',
+            'id',
+            'id'
+        );
     }
 
     /**
@@ -66,7 +91,7 @@ class Periodo extends Model
      */
     public function scopePorAñoEscolar($query, $año)
     {
-        return $query->where('año_escolar', $año);
+        return $query->where('anio_escolar', $año);
     }
 
     /**
@@ -90,7 +115,7 @@ class Periodo extends Model
      */
     public function getPeriodoCompletoAttribute()
     {
-        return "{$this->nombre} - {$this->corte} {$this->año_escolar}";
+    return "{$this->nombre} - {$this->corte} {$this->anio_escolar}";
     }
 
     /**
@@ -100,13 +125,13 @@ class Periodo extends Model
     {
         if ($this->corte === 'Segundo Corte' && $this->numero_periodo === 1) {
             // Retornar el primer corte del primer período
-            return static::where('año_escolar', $this->año_escolar)
+            return static::where('anio_escolar', $this->anio_escolar)
                 ->where('numero_periodo', 1)
                 ->where('corte', 'Primer Corte')
                 ->first();
         } elseif ($this->corte === 'Primer Corte' && $this->numero_periodo === 2) {
             // Retornar el segundo corte del primer período
-            return static::where('año_escolar', $this->año_escolar)
+            return static::where('anio_escolar', $this->anio_escolar)
                 ->where('numero_periodo', 1)
                 ->where('corte', 'Segundo Corte')
                 ->first();
@@ -133,6 +158,9 @@ class Periodo extends Model
         static::deleting(function ($periodo) {
             // Desvincular los logros del período
             $periodo->logros()->detach();
+            
+            // Eliminar en cascada los desempeños del período
+            $periodo->desempenosMateria()->delete();
         });
     }
 }

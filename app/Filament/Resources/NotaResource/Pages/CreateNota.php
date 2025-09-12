@@ -5,16 +5,9 @@ namespace App\Filament\Resources\NotaResource\Pages;
 use App\Filament\Resources\NotaResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
-use Filament\Forms;
-use Filament\Forms\Form;
+use App\Models\DesempenoMateria;
 use App\Models\EstudianteLogro;
-use App\Models\Estudiante;
-use App\Models\Periodo;
-use App\Models\Logro;
-use App\Models\Materia;
-use App\Models\Grado;
 use Filament\Notifications\Notification;
-use App\Rules\FechaNoPosterior;
 
 class CreateNota extends CreateRecord
 {
@@ -24,191 +17,62 @@ class CreateNota extends CreateRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
     protected function getCreatedNotification(): ?Notification
     {
         return Notification::make()
             ->success()
-            ->title('Nota creada')
-            ->body('La nota ha sido creada exitosamente.');
-    }
-
-    public function form(Form $form): Form
-    {
-        $user = auth()->user();
-        return $form
-            ->schema([
-                Forms\Components\Select::make('grado_id')
-                    ->options(function () use ($user) {
-                        if ($user && $user->hasRole('profesor')) {
-                            // Solo mostrar grados donde el profesor tiene materias asignadas
-                            $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
-                            return \App\Models\Grado::where('activo', true)->whereIn('id', $gradoIds)->pluck('nombre', 'id');
-                        }
-                        return \App\Models\Grado::where('activo', true)->pluck('nombre', 'id');
-                    })
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->label('Grado')
-                    ->live()
-                    ->dehydrated(false)
-                    ->afterStateUpdated(function ($state, Forms\Set $set) {
-                        // Limpiar el estudiante cuando cambie el grado
-                        $set('estudiante_id', null);
-                    }),
-                Forms\Components\Select::make('estudiante_id')
-                    ->options(function ($get) use ($user) {
-                        $gradoId = $get('grado_id');
-                        if ($gradoId) {
-                            $query = Estudiante::where('grado_id', $gradoId)->where('activo', true);
-                            
-                            if ($user && $user->hasRole('profesor')) {
-                                // Solo mostrar estudiantes de grados donde el profesor tiene materias asignadas
-                                $gradoIds = $user->materias()->with('grados')->get()->pluck('grados')->flatten()->pluck('id')->unique();
-                                if (!$gradoIds->contains($gradoId)) {
-                                    return [];
-                                }
-                            }
-                            
-                            return $query->get()->mapWithKeys(function ($estudiante) {
-                                return [$estudiante->id => $estudiante->nombre_completo];
-                            });
-                        }
-                        return [];
-                    })
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->label('Estudiante')
-                    ->disabled(fn ($get) => !$get('grado_id')),
-                Forms\Components\Select::make('materia_id')
-                    ->options(function () use ($user) {
-                        if ($user && $user->hasRole('profesor')) {
-                            return $user->materias()->where('activa', true)->pluck('nombre', 'id');
-                        }
-                        return Materia::where('activa', true)->pluck('nombre', 'id');
-                    })
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->label('Materia')
-                    ->live()
-                    ->afterStateUpdated(function ($state, Forms\Set $set) {
-                        // Limpiar los logros cuando cambie la materia
-                        $set('logros', []);
-                    }),
-                Forms\Components\Select::make('periodo_id')
-                    ->relationship('periodo', 'corte')
-                    ->getOptionLabelFromRecordUsing(function ($record) {
-                        return $record->nombre . ' - ' . $record->corte . ' ' . $record->año_escolar;
-                    })
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->label('Período'),
-                Forms\Components\Select::make('logros')
-                    ->options(function ($get) use ($user) {
-                        $materiaId = $get('materia_id');
-                        if ($materiaId) {
-                            $query = Logro::where('materia_id', $materiaId)->where('activo', true);
-                            
-                            if ($user && $user->hasRole('profesor')) {
-                                // Solo mostrar logros de materias del profesor
-                                $materiaIds = $user->materias()->pluck('id');
-                                if (!$materiaIds->contains($materiaId)) {
-                                    return [];
-                                }
-                            }
-                            
-                            return $query->orderBy('titulo')->pluck('titulo', 'id')->map(function ($titulo, $id) {
-                                $logro = Logro::find($id);
-                                return $titulo . ' - ' . substr($logro->competencia, 0, 50) . '...';
-                            });
-                        }
-                        return [];
-                    })
-                    ->multiple()
-                    ->required()
-                    ->searchable()
-                    ->label('Logros a Asignar')
-                    ->helperText('Seleccione los logros que desea asignar al estudiante. Puede seleccionar múltiples logros de la materia seleccionada.')
-                    ->disabled(fn ($get) => !$get('materia_id')),
-                Forms\Components\Select::make('nivel_desempeno')
-                    ->options([
-                        'E' => 'E - Excelente',
-                        'S' => 'S - Sobresaliente',
-                        'A' => 'A - Aceptable',
-                        'I' => 'I - Insuficiente',
-                    ])
-                    ->required()
-                    ->label('Nivel de Desempeño')
-                    ->helperText('Seleccione el nivel de desempeño general del estudiante en esta materia'),
-                Forms\Components\Textarea::make('observaciones')
-                    ->maxLength(65535)
-                    ->columnSpanFull()
-                    ->label('Observaciones')
-                    ->helperText('Comentarios adicionales sobre el desempeño general del estudiante en esta materia'),
-                Forms\Components\DatePicker::make('fecha_asignacion')
-                    ->required()
-                    ->label('Fecha de Asignación')
-                    ->default(now())
-                    ->rules([new FechaNoPosterior()])
-                    ->helperText('No puede ser una fecha futura'),
-            ]);
+            ->title('Calificación creada')
+            ->body('La calificación ha sido creada exitosamente.');
     }
 
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
-        $created = null;
-        $createdCount = 0;
-        $skippedCount = 0;
+        // Extraer los logros del array de datos
+        $logrosIds = $data['logros'] ?? [];
+        unset($data['logros']);
         
-        if (isset($data['logros']) && is_array($data['logros'])) {
-            $logros = $data['logros'];
-            unset($data['logros']);
+        // Eliminar grado_id del array ya que no es campo de DesempenoMateria
+        unset($data['grado_id']);
+
+        // Verificar si ya existe una calificación para esta combinación
+        $existeDesempeno = DesempenoMateria::where('estudiante_id', $data['estudiante_id'])
+            ->where('materia_id', $data['materia_id'])
+            ->where('periodo_id', $data['periodo_id'])
+            ->first();
+
+        if ($existeDesempeno) {
+            Notification::make()
+                ->warning()
+                ->title('Calificación existente')
+                ->body('Ya existe una calificación para este estudiante en esta materia y período.')
+                ->send();
             
-            foreach ($logros as $logroId) {
-                $existe = \App\Models\EstudianteLogro::where('estudiante_id', $data['estudiante_id'])
-                    ->where('logro_id', $logroId)
-                    ->where('periodo_id', $data['periodo_id'])
-                    ->exists();
-                    
-                if (!$existe) {
-                    // Validar que el estudiante pertenezca al grado correcto para la materia
-                    $logro = \App\Models\Logro::with('materia.grados')->find($logroId);
-                    $estudiante = \App\Models\Estudiante::find($data['estudiante_id']);
-                    
-                    if ($logro && $estudiante && $logro->materia->grados->contains($estudiante->grado_id)) {
-                        $created = \App\Models\EstudianteLogro::create([
-                            'estudiante_id' => $data['estudiante_id'],
-                            'logro_id' => $logroId,
-                            'periodo_id' => $data['periodo_id'],
-                            'nivel_desempeno' => $data['nivel_desempeno'],
-                            'observaciones' => $data['observaciones'] ?? null,
-                            'fecha_asignacion' => $data['fecha_asignacion'],
-                        ]);
-                        $createdCount++;
-                    }
-                } else {
-                    $skippedCount++;
-                }
-            }
-            
-            // Notificación personalizada
-            if ($createdCount > 0) {
-                $message = "Se crearon {$createdCount} nota(s) exitosamente.";
-                if ($skippedCount > 0) {
-                    $message .= " Se omitieron {$skippedCount} nota(s) que ya existían.";
-                }
-                
-                Notification::make()
-                    ->success()
-                    ->title('Notas procesadas')
-                    ->body($message)
-                    ->send();
+            return $existeDesempeno;
+        }
+
+        // Crear el desempeño de materia
+        $desempeno = DesempenoMateria::create($data);
+
+        // Crear los registros de logros asociados
+        $logrosCreados = 0;
+        foreach ($logrosIds as $logroId) {
+            // Verificar que el logro pertenece a la materia
+            $logro = \App\Models\Logro::where('id', $logroId)
+                ->where('materia_id', $data['materia_id'])
+                ->where('activo', true)
+                ->first();
+
+            if ($logro) {
+                EstudianteLogro::create([
+                    'logro_id' => $logroId,
+                    'desempeno_materia_id' => $desempeno->id,
+                    'alcanzado' => true, // Por defecto los logros seleccionados están alcanzados
+                ]);
+                $logrosCreados++;
             }
         }
-        
-        return $created ?: new \App\Models\EstudianteLogro();
+
+        return $desempeno;
     }
 } 

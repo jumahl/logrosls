@@ -13,9 +13,9 @@ class EstudianteLogroPolicy
         return $user->hasRole('admin') || $user->hasRole('profesor');
     }
 
-    public function view(User $user, EstudianteLogro $nota): bool
+    public function view(User $user, EstudianteLogro $estudianteLogro): bool
     {
-        return $user->hasRole('admin') || ($user->hasRole('profesor') && $user->materias->pluck('id')->contains($nota->logro->materia_id));
+        return $user->hasRole('admin') || ($user->hasRole('profesor') && $user->materias->pluck('id')->contains($estudianteLogro->logro->materia_id));
     }
 
     public function create(User $user): bool
@@ -23,12 +23,12 @@ class EstudianteLogroPolicy
         return $user->hasRole('admin') || $user->hasRole('profesor');
     }
 
-    public function update(User $user, EstudianteLogro $nota): bool
+    public function update(User $user, EstudianteLogro $estudianteLogro): bool
     {
-        return $user->hasRole('admin') || ($user->hasRole('profesor') && $user->materias->pluck('id')->contains($nota->logro->materia_id));
+        return $user->hasRole('admin') || ($user->hasRole('profesor') && $user->materias->pluck('id')->contains($estudianteLogro->logro->materia_id));
     }
 
-    public function delete(User $user, EstudianteLogro $nota): bool
+    public function delete(User $user, EstudianteLogro $estudianteLogro): bool
     {
         return $user->hasRole('admin');
     }

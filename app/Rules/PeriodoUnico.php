@@ -28,7 +28,7 @@ class PeriodoUnico implements ValidationRule
     {
         $query = Periodo::where('numero_periodo', $this->numeroPeríodo)
             ->where('corte', $this->corte)
-            ->where('año_escolar', $this->añoEscolar);
+            ->where('anio_escolar', $this->añoEscolar);
             
         if ($this->ignoreId) {
             $query->where('id', '!=', $this->ignoreId);

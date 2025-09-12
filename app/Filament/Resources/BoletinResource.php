@@ -20,13 +20,13 @@ class BoletinResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     
-    protected static ?string $navigationLabel = 'Boletines';
-    
-    protected static ?string $modelLabel = 'Boletín';
-    
-    protected static ?string $pluralModelLabel = 'Boletines';
-    
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'Reportes Académicos';
+
+    protected static ?string $modelLabel = 'Reporte Académicos';
+
+    protected static ?string $pluralModelLabel = 'Reportes Académicos';
+
+    protected static ?int $navigationSort = 2;
     
     protected static ?string $navigationGroup = 'Reportes';
 
@@ -50,7 +50,7 @@ class BoletinResource extends Resource
                             $query->whereIn('id', $gradoIds);
                         }
                         
-                        return $query->pluck('nombre', 'id');
+                        return $query->pluck('nombre_completo', 'id');
                     })
                     ->required()
                     ->searchable()
@@ -83,14 +83,28 @@ class BoletinResource extends Resource
                     ->sortable()
                     ->label('Apellido'),
                 Tables\Columns\TextColumn::make('grado.nombre')
+                    ->formatStateUsing(fn ($record) => $record->grado?->nombre_completo)
                     ->searchable()
                     ->sortable()
                     ->label('Grado'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('grado_id')
-                    ->relationship('grado', 'nombre')
+                    ->relationship(
+                        'grado', 
+                        'nombre',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->label('Grado'),
+                Tables\Filters\SelectFilter::make('activo')
+                    ->options([
+                        '' => 'Todos',
+                        '1' => 'Activo',
+                        '0' => 'Inactivo',
+                    ])
+                    ->default('1')
+                    ->label('Estado'),
             ])
             ->actions([
                 Tables\Actions\Action::make('descargarPreinforme')
@@ -118,24 +132,33 @@ class BoletinResource extends Resource
                             throw new \Exception('Solo se pueden generar preinformes para períodos del primer corte.');
                         }
 
-                        // Obtener logros del estudiante en el período (primer corte)
-                        $logrosPorMateria = $record->estudianteLogros()
-                            ->where('periodo_id', $periodo->id)
-                            ->with(['logro.materia.docente', 'logro.materia'])
-                            ->get()
-                            ->groupBy(function ($logro) {
-                                return $logro->logro->materia->nombre;
-                            });
+                        // Cargar relaciones del estudiante necesarias para el PDF
+                        $record->load(['grado.directorGrupo']);
 
-                        if ($logrosPorMateria->isEmpty()) {
-                            throw new \Exception("El estudiante {$record->nombre} no tiene logros en el período {$periodo->periodo_completo}.");
+                        // Obtener desempeños del estudiante en el período (primer corte)
+                        $desempenosDelPeriodo = $record->desempenosMateria()
+                            ->where('periodo_id', $periodo->id)
+                            ->with(['materia.docente', 'estudianteLogros.logro'])
+                            ->get();
+
+                        $desempenosPorMateria = collect();
+                        foreach ($desempenosDelPeriodo as $desempeno) {
+                            $materiaKey = $desempeno->materia->nombre;
+                            if (!$desempenosPorMateria->has($materiaKey)) {
+                                $desempenosPorMateria->put($materiaKey, collect());
+                            }
+                            $desempenosPorMateria->get($materiaKey)->push($desempeno);
+                        }
+
+                        if ($desempenosPorMateria->isEmpty()) {
+                            throw new \Exception("El estudiante {$record->nombre} no tiene desempeños en el período {$periodo->periodo_completo}.");
                         }
 
                         // Generar PDF
                         $pdf = Pdf::loadView('boletines.preinforme', [
                             'estudiante' => $record,
                             'periodo' => $periodo,
-                            'logrosPorMateria' => $logrosPorMateria,
+                            'desempenosPorMateria' => $desempenosPorMateria,
                         ]);
 
                         // Generar un nombre para el archivo
@@ -164,50 +187,72 @@ class BoletinResource extends Resource
                     ->action(function (Estudiante $record, array $data) {
                         $periodo = Periodo::find($data['periodo_id']);
                         
-                        // Obtener el período anterior (primer corte del mismo período)
-                        $periodoAnterior = $periodo->periodo_anterior;
+                        // Cargar relaciones del estudiante necesarias para el PDF
+                        $record->load(['grado.directorGrupo']);
                         
-                        // Obtener logros del primer corte
-                        $logrosPrimerCorte = collect();
-                        if ($periodoAnterior) {
-                            $logrosPrimerCorte = $record->estudianteLogros()
-                                ->where('periodo_id', $periodoAnterior->id)
-                                ->with(['logro.materia.docente', 'logro.materia.grados'])
+                        // Determinar si es el último período del año escolar
+                        $esUltimoPeriodo = Periodo::where('anio_escolar', $periodo->anio_escolar)
+                            ->where('numero_periodo', '>', $periodo->numero_periodo)
+                            ->doesntExist();
+                        
+                        if ($esUltimoPeriodo) {
+                            // Para el último período del año, obtener TODOS los desempeños del año escolar
+                            $todosLosDesempenos = $record->desempenosMateria()
+                                ->whereHas('periodo', function($query) use ($periodo) {
+                                    $query->where('anio_escolar', $periodo->anio_escolar);
+                                })
+                                ->with(['materia.docente', 'estudianteLogros.logro', 'periodo'])
+                                ->get();
+                        } else {
+                            // Para períodos anteriores, obtener solo los desempeños hasta ese período
+                            $todosLosDesempenos = $record->desempenosMateria()
+                                ->whereHas('periodo', function($query) use ($periodo) {
+                                    $query->where('anio_escolar', $periodo->anio_escolar)
+                                          ->where(function($q) use ($periodo) {
+                                              $q->where('numero_periodo', '<', $periodo->numero_periodo)
+                                                ->orWhere(function($q2) use ($periodo) {
+                                                    $q2->where('numero_periodo', $periodo->numero_periodo)
+                                                       ->where('id', '<=', $periodo->id);
+                                                });
+                                          });
+                                })
+                                ->with(['materia.docente', 'estudianteLogros.logro', 'periodo'])
                                 ->get();
                         }
-
-                        // Obtener logros del segundo corte
-                        $logrosSegundoCorte = $record->estudianteLogros()
-                            ->where('periodo_id', $periodo->id)
-                            ->with(['logro.materia.docente', 'logro.materia.grados'])
-                            ->get();
-
-                        // Combinar logros de ambos cortes
-                        $todosLosLogros = $logrosPrimerCorte->concat($logrosSegundoCorte);
                         
                         // Agrupar por materia
-                        $logrosPorMateria = $todosLosLogros->groupBy(function ($logro) {
-                            return $logro->logro->materia->nombre;
+                        $desempenosPorMateria = $todosLosDesempenos->groupBy(function ($desempeno) {
+                            return $desempeno->materia->nombre;
                         });
 
                         // Obtener todas las materias del grado del estudiante
                         $materiasDelGrado = $record->grado->materias()->where('activa', true)->get();
                         
-                        // Asegurar que todas las materias aparezcan en el boletín, incluso sin logros
+                        // Asegurar que todas las materias aparezcan en el boletín, incluso sin desempeños
                         foreach ($materiasDelGrado as $materia) {
-                            if (!$logrosPorMateria->has($materia->nombre)) {
-                                $logrosPorMateria->put($materia->nombre, collect());
+                            if (!$desempenosPorMateria->has($materia->nombre)) {
+                                $desempenosPorMateria->put($materia->nombre, collect());
                             }
                         }
 
-                        // Calcular promedios por materia
+                        // Calcular promedios por materia basados en los desempeños obtenidos
                         $promediosPorMateria = [];
-                        foreach ($logrosPorMateria as $materia => $logros) {
-                            if ($logros->isNotEmpty()) {
-                                $promedio = $logros->avg('valor_numerico');
-                                $promediosPorMateria[$materia] = $promedio;
+                            
+                        foreach ($materiasDelGrado as $materia) {
+                            if ($desempenosPorMateria->has($materia->nombre)) {
+                                $desempenosMateria = $desempenosPorMateria->get($materia->nombre);
+                                $promedio = $desempenosMateria->avg(function ($desempeno) {
+                                    return match($desempeno->nivel_desempeno) {
+                                        'E' => 5.0,
+                                        'S' => 4.0,
+                                        'A' => 3.0,
+                                        'I' => 2.0,
+                                        default => 0.0
+                                    };
+                                });
+                                $promediosPorMateria[$materia->nombre] = $promedio;
                             } else {
-                                $promediosPorMateria[$materia] = 0;
+                                $promediosPorMateria[$materia->nombre] = 0;
                             }
                         }
 
@@ -215,11 +260,9 @@ class BoletinResource extends Resource
                         $pdf = PDF::loadView('boletines.academico', [
                             'estudiante' => $record,
                             'periodo' => $periodo,
-                            'periodoAnterior' => $periodoAnterior,
-                            'logrosPrimerCorte' => $logrosPrimerCorte,
-                            'logrosSegundoCorte' => $logrosSegundoCorte,
-                            'logrosPorMateria' => $logrosPorMateria,
+                            'desempenosPorMateria' => $desempenosPorMateria,
                             'promediosPorMateria' => $promediosPorMateria,
+                            'esUltimoPeriodo' => $esUltimoPeriodo,
                         ]);
 
                         // Generar un nombre para el archivo
@@ -287,7 +330,9 @@ class BoletinResource extends Resource
                             throw new \Exception('Solo se pueden generar preinformes para períodos del primer corte.');
                         }
                         
-                        $estudiantes = Estudiante::where('grado_id', $grado->id)->get();
+                        $estudiantes = Estudiante::where('grado_id', $grado->id)
+                            ->with(['grado.directorGrupo'])
+                            ->get();
 
                         // Crear un archivo ZIP en memoria
                         $zip = new \ZipArchive();
@@ -296,20 +341,29 @@ class BoletinResource extends Resource
                         
                         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
                             foreach ($estudiantes as $estudiante) {
-                                // Obtener logros del estudiante en el período
-                                $logros = $estudiante->estudianteLogros()
+                                // Obtener desempeños del estudiante en el período
+                                $desempenosDelPeriodo = $estudiante->desempenosMateria()
                                     ->where('periodo_id', $periodo->id)
-                                    ->with(['logro.materia.docente', 'logro.materia.grados'])
-                                    ->get()
-                                    ->groupBy(function ($logro) {
-                                        return $logro->logro->materia->nombre;
-                                    });
+                                    ->with(['materia.docente', 'estudianteLogros.logro'])
+                                    ->get();
 
-                                if (!$logros->isEmpty()) {
+                                $logrosPorMateria = collect();
+                                foreach ($desempenosDelPeriodo as $desempeno) {
+                                    $materiaKey = $desempeno->materia->nombre;
+                                    if (!$logrosPorMateria->has($materiaKey)) {
+                                        $logrosPorMateria->put($materiaKey, collect());
+                                    }
+                                    
+                                    foreach ($desempeno->estudianteLogros as $estudianteLogro) {
+                                        $logrosPorMateria->get($materiaKey)->push($estudianteLogro);
+                                    }
+                                }
+
+                                if (!$logrosPorMateria->isEmpty()) {
                                     $pdf = Pdf::loadView('boletines.preinforme', [
                                         'estudiante' => $estudiante,
                                         'periodo' => $periodo,
-                                        'logros' => $logros,
+                                        'logrosPorMateria' => $logrosPorMateria,
                                     ]);
 
                                     $filename = "preinforme_{$estudiante->nombre}_{$estudiante->apellido}.pdf";
@@ -370,7 +424,9 @@ class BoletinResource extends Resource
                     ->action(function (array $data) {
                         $grado = Grado::find($data['grado_id']);
                         $periodo = Periodo::find($data['periodo_id']);
-                        $estudiantes = Estudiante::where('grado_id', $grado->id)->get();
+                        $estudiantes = Estudiante::where('grado_id', $grado->id)
+                            ->with(['grado.directorGrupo'])
+                            ->get();
 
                         // Crear un archivo ZIP en memoria
                         $zip = new \ZipArchive();
@@ -379,26 +435,39 @@ class BoletinResource extends Resource
                         
                         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
                             foreach ($estudiantes as $estudiante) {
-                                // Obtener el período anterior (primer corte del mismo período)
-                                $periodoAnterior = $periodo->periodo_anterior;
-                                
-                                // Obtener logros del primer corte
-                                $logrosPrimerCorte = collect();
+                                // Obtener desempeños del primer corte
+                                $desempenosPrimerCorte = collect();
                                 if ($periodoAnterior) {
-                                    $logrosPrimerCorte = $estudiante->estudianteLogros()
+                                    $desempenosPrimerCorte = $estudiante->desempenosMateria()
                                         ->where('periodo_id', $periodoAnterior->id)
-                                        ->with(['logro.materia.docente', 'logro.materia.grados'])
+                                        ->with(['materia.docente', 'estudianteLogros.logro'])
                                         ->get();
                                 }
 
-                                // Obtener logros del segundo corte
-                                $logrosSegundoCorte = $estudiante->estudianteLogros()
+                                // Obtener desempeños del segundo corte
+                                $desempenosSegundoCorte = $estudiante->desempenosMateria()
                                     ->where('periodo_id', $periodo->id)
-                                    ->with(['logro.materia.docente', 'logro.materia.grados'])
+                                    ->with(['materia.docente', 'estudianteLogros.logro'])
                                     ->get();
 
                                 // Combinar logros de ambos cortes
-                                $todosLosLogros = $logrosPrimerCorte->concat($logrosSegundoCorte);
+                                $todosLosLogros = collect();
+                                $logrosPrimerCorte = collect();
+                                $logrosSegundoCorte = collect();
+                                
+                                foreach ($desempenosPrimerCorte as $desempeno) {
+                                    foreach ($desempeno->estudianteLogros as $estudianteLogro) {
+                                        $logrosPrimerCorte->push($estudianteLogro);
+                                        $todosLosLogros->push($estudianteLogro);
+                                    }
+                                }
+                                
+                                foreach ($desempenosSegundoCorte as $desempeno) {
+                                    foreach ($desempeno->estudianteLogros as $estudianteLogro) {
+                                        $logrosSegundoCorte->push($estudianteLogro);
+                                        $todosLosLogros->push($estudianteLogro);
+                                    }
+                                }
                                 
                                 // Agrupar por materia
                                 $logrosPorMateria = $todosLosLogros->groupBy(function ($logro) {
@@ -415,14 +484,28 @@ class BoletinResource extends Resource
                                     }
                                 }
 
-                                // Calcular promedios por materia
+                                // Calcular promedios por materia basados en desempeños
                                 $promediosPorMateria = [];
-                                foreach ($logrosPorMateria as $materia => $logros) {
-                                    if ($logros->isNotEmpty()) {
-                                        $promedio = $logros->avg('valor_numerico');
-                                        $promediosPorMateria[$materia] = $promedio;
+                                $desempenosPorMateria = $desempenosPrimerCorte->concat($desempenosSegundoCorte)
+                                    ->groupBy(function ($desempeno) {
+                                        return $desempeno->materia->nombre;
+                                    });
+                                    
+                                foreach ($materiasDelGrado as $materia) {
+                                    if ($desempenosPorMateria->has($materia->nombre)) {
+                                        $desempenosMateria = $desempenosPorMateria->get($materia->nombre);
+                                        $promedio = $desempenosMateria->avg(function ($desempeno) {
+                                            return match($desempeno->nivel_desempeno) {
+                                                'E' => 5.0,
+                                                'S' => 4.0,
+                                                'A' => 3.0,
+                                                'I' => 2.0,
+                                                default => 0.0
+                                            };
+                                        });
+                                        $promediosPorMateria[$materia->nombre] = $promedio;
                                     } else {
-                                        $promediosPorMateria[$materia] = 0;
+                                        $promediosPorMateria[$materia->nombre] = 0;
                                     }
                                 }
 

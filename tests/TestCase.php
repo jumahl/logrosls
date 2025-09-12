@@ -9,6 +9,7 @@ use App\Models\Estudiante;
 use App\Models\Logro;
 use App\Models\Periodo;
 use App\Models\EstudianteLogro;
+use App\Models\DesempenoMateria;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -162,10 +163,10 @@ abstract class TestCase extends BaseTestCase
         // Crear períodos
         $periodos = [
             'periodo1' => Periodo::factory()->primerPeriodo()->primerCorte()->create([
-                'año_escolar' => 2024,
+                'anio_escolar' => 2024,
             ]),
             'periodo2' => Periodo::factory()->primerPeriodo()->segundoCorte()->create([
-                'año_escolar' => 2024,
+                'anio_escolar' => 2024,
             ]),
         ];
 
@@ -179,22 +180,37 @@ abstract class TestCase extends BaseTestCase
     {
         $setup = $this->createAcademicSetup();
         
+        // Crear desempeños de materia para el estudiante
+        $desempenoMatematicas = DesempenoMateria::factory()->create([
+            'estudiante_id' => $setup['estudiantes']['juan']->id,
+            'materia_id' => $setup['materias']['matematicas']->id,
+            'periodo_id' => $setup['periodos']['periodo1']->id,
+            'nivel_desempeno' => 'E',
+        ]);
+        
+        $desempenoLenguaje = DesempenoMateria::factory()->create([
+            'estudiante_id' => $setup['estudiantes']['juan']->id,
+            'materia_id' => $setup['materias']['lenguaje']->id,
+            'periodo_id' => $setup['periodos']['periodo1']->id,
+            'nivel_desempeno' => 'S',
+        ]);
+
+        // Crear logros asociados a los desempeños
         $estudianteLogros = [
             EstudianteLogro::factory()->create([
-                'estudiante_id' => $setup['estudiantes']['juan']->id,
+                'desempeno_materia_id' => $desempenoMatematicas->id,
                 'logro_id' => $setup['logros']['matematicas_basico']->id,
-                'periodo_id' => $setup['periodos']['periodo1']->id,
-                'nivel_desempeno' => 'E',
+                'alcanzado' => true,
             ]),
             EstudianteLogro::factory()->create([
-                'estudiante_id' => $setup['estudiantes']['juan']->id,
+                'desempeno_materia_id' => $desempenoLenguaje->id,
                 'logro_id' => $setup['logros']['lenguaje_lectura']->id,
-                'periodo_id' => $setup['periodos']['periodo1']->id,
-                'nivel_desempeno' => 'S',
+                'alcanzado' => true,
             ]),
         ];
 
         $setup['estudianteLogros'] = $estudianteLogros;
+        $setup['desempenosMateria'] = [$desempenoMatematicas, $desempenoLenguaje];
         
         return $setup;
     }

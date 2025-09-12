@@ -18,8 +18,7 @@ class LogroTest extends TestCase
     public function it_has_correct_fillable_attributes()
     {
         $expectedFillable = [
-            'codigo', 'titulo', 'descripcion', 'materia_id', 'nivel_dificultad', 'tipo',
-            'activo', 'competencia', 'tema', 'indicador_desempeno', 'dimension', 'orden'
+            'codigo', 'titulo', 'desempeno', 'materia_id', 'activo', 'orden'
         ];
         $logro = new Logro();
         
@@ -71,18 +70,14 @@ class LogroTest extends TestCase
     {
         $materia = Materia::factory()->create();
         $logro = Logro::factory()->create([
-            'titulo' => 'Comprende operaciones básicas',
-            'descripcion' => 'El estudiante realiza sumas y restas',
+            'titulo' => 'Subrama Matemáticas',
+            'desempeno' => 'El estudiante realiza sumas y restas',
             'materia_id' => $materia->id,
-            'nivel_dificultad' => 'bajo',
-            'tipo' => 'conocimiento',
         ]);
 
-        $this->assertEquals('Comprende operaciones básicas', $logro->titulo);
-        $this->assertEquals('El estudiante realiza sumas y restas', $logro->descripcion);
+        $this->assertEquals('Subrama Matemáticas', $logro->titulo);
+        $this->assertEquals('El estudiante realiza sumas y restas', $logro->desempeno);
         $this->assertEquals($materia->id, $logro->materia_id);
-        $this->assertEquals('bajo', $logro->nivel_dificultad);
-        $this->assertEquals('conocimiento', $logro->tipo);
     }
 
     /** @test */
@@ -187,36 +182,7 @@ class LogroTest extends TestCase
     }
 
     /** @test */
-    public function scope_por_nivel_dificultad_filters_by_nivel()
-    {
-        Logro::factory()->bajo()->create();
-        Logro::factory()->medio()->create();
-        Logro::factory()->alto()->create();
-        
-        $bajosCount = Logro::porNivelDificultad('bajo')->count();
-        $mediosCount = Logro::porNivelDificultad('medio')->count();
-        $altosCount = Logro::porNivelDificultad('alto')->count();
-        
-        $this->assertEquals(1, $bajosCount);
-        $this->assertEquals(1, $mediosCount);
-        $this->assertEquals(1, $altosCount);
-    }
-
-    /** @test */
-    public function scope_por_tipo_filters_by_tipo()
-    {
-        Logro::factory()->conocimiento()->create();
-        Logro::factory()->habilidad()->create();
-        Logro::factory()->actitud()->create();
-        
-        $conocimientoCount = Logro::porTipo('conocimiento')->count();
-        $habilidadCount = Logro::porTipo('habilidad')->count();
-        $actitudCount = Logro::porTipo('actitud')->count();
-        
-        $this->assertEquals(1, $conocimientoCount);
-        $this->assertEquals(1, $habilidadCount);
-        $this->assertEquals(1, $actitudCount);
-    }
+    // Scopes por nivel y tipo eliminados en el nuevo esquema
 
     /** @test */
     public function it_deletes_estudiante_logros_when_deleted()
@@ -252,33 +218,7 @@ class LogroTest extends TestCase
     }
 
     /** @test */
-    public function factory_creates_different_tipos()
-    {
-        $conocimiento = Logro::factory()->conocimiento()->create();
-        $habilidad = Logro::factory()->habilidad()->create();
-        $actitud = Logro::factory()->actitud()->create();
-
-        $this->assertEquals('conocimiento', $conocimiento->tipo);
-        $this->assertEquals('cognitiva', $conocimiento->dimension);
-        
-        $this->assertEquals('habilidad', $habilidad->tipo);
-        $this->assertEquals('procedimental', $habilidad->dimension);
-        
-        $this->assertEquals('actitud', $actitud->tipo);
-        $this->assertEquals('actitudinal', $actitud->dimension);
-    }
-
-    /** @test */
-    public function factory_creates_different_niveles()
-    {
-        $bajo = Logro::factory()->bajo()->create();
-        $medio = Logro::factory()->medio()->create();
-        $alto = Logro::factory()->alto()->create();
-
-        $this->assertEquals('bajo', $bajo->nivel_dificultad);
-        $this->assertEquals('medio', $medio->nivel_dificultad);
-        $this->assertEquals('alto', $alto->nivel_dificultad);
-    }
+    // Factories específicas de tipo/nivel eliminadas
 
     /** @test */
     public function factory_generates_unique_codigo()
@@ -304,15 +244,7 @@ class LogroTest extends TestCase
     }
 
     /** @test */
-    public function it_requires_titulo_field()
-    {
-        $this->expectException(\Illuminate\Database\QueryException::class);
-        
-        Logro::create([
-            'descripcion' => 'Test description',
-            'materia_id' => Materia::factory()->create()->id,
-        ]);
-    }
+    // Título ahora es opcional; no se requiere validarlo como obligatorio
 
     /** @test */
     public function it_can_be_assigned_to_specific_materia()

@@ -7,24 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\OptimizaConsultasLogros;
 
 class Logro extends Model
 {
-    use HasFactory;
+    use HasFactory, OptimizaConsultasLogros;
 
     protected $fillable = [
-        'codigo',
-        'titulo',
-        'descripcion',
-        'materia_id',
-        'nivel_dificultad',
-        'tipo',
-        'activo',
-        'competencia',
-        'tema',
-        'indicador_desempeno',
-        'dimension',
-        'orden'
+    'codigo',
+    'titulo',
+    'desempeno',
+    'materia_id',
+    'activo',
+    'orden'
     ];
 
     protected $casts = [
@@ -92,21 +87,7 @@ class Logro extends Model
         return $query->where('materia_id', $materiaId);
     }
 
-    /**
-     * Scope para filtrar por nivel de dificultad.
-     */
-    public function scopePorNivelDificultad($query, $nivel)
-    {
-        return $query->where('nivel_dificultad', $nivel);
-    }
-
-    /**
-     * Scope para filtrar por tipo de logro.
-     */
-    public function scopePorTipo($query, $tipo)
-    {
-        return $query->where('tipo', $tipo);
-    }
+    // Scopes eliminados: porNivelDificultad y porTipo ya no aplican al nuevo esquema
     
     /**
      * Boot the model.
