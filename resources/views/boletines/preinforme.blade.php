@@ -58,7 +58,7 @@
         .student-table th {
             background: #fff;
             font-weight: bold;
-            text-align: left;
+            text-align: center;
         }
         .section-title {
             text-align: center;
@@ -87,7 +87,7 @@
             font-size: 9pt;
         }
 
-        .area-titulo-custom {
+        .area-titulo-custom, th.area-titulo-custom {
             font-weight: bold;
             padding: 4px 8px;
             margin-top: 10px;
@@ -148,14 +148,10 @@
 
         .observaciones-texto {
             min-height: 40px;
-            border: 1px solid #ccc;
             padding: 5px;
             font-size: 9pt;
         }
-        .observaciones {
-            margin-top: 18px;
-            font-size: 9pt;
-        }
+
         .sign-table {
             width: 100%;
             margin-top: 40px;
@@ -239,14 +235,14 @@
             {{ $gradoGrupo }}
         </td>
         <td style="text-align: center; border-right: 1px solid #000; font-size: 11pt;">
-            {{ ($periodo->corte ?? '') . ' - ' . ($periodo->numero_periodo ?? 'I') }}
+            {{ ($periodo->numero_periodo ?? 'I') }}
         </td>
         <td style="text-align: center; border-right: 1px solid #000; font-size: 11pt;">
             {{ $periodo->anio_escolar ?? now()->year }}
         </td>
     </tr>
     <tr>
-        <td colspan="2" style="font-weight: bold; font-size: 9pt;">Director de grupo: {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
+        <td colspan="2" style="font-weight: bold; font-size: 9pt;">Director(a) de grupo: {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
         <td colspan="2" style="font-weight: bold; font-size: 9pt;">Inasistencia: {{ $estudiante->inasistencias ?? '' }}</td>
     </tr>
 </table>
@@ -268,12 +264,11 @@
     @endphp
     @if($desempenoActual)
         @if($areaActual !== $areaAnterior)
-            <div class="area-titulo-custom">ÁREA: {{ $areaFormateada }}</div>
             @php $areaAnterior = $areaActual; @endphp
         @endif
         <table class="asignatura-table" style="margin-bottom: 18px;">
             <tr>
-                <th style="width:30%"></th>
+                <th class="area-titulo-custom" style="width:30%">ÁREA: {{ $areaFormateada }}</th>
                 <th style="width:20%">Escala Valoración</th>
                 <th style="width:20%">Nivel de Desempeño</th>
                 <th style="width:30%">Docente</th>
