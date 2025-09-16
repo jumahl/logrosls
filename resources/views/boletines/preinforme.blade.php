@@ -211,39 +211,43 @@
 <!-- Datos del estudiante -->
 <table class="student-table">
     <tr>
-        <th style="width: 40%; border-right: 1px solid #000;font-size: 8pt;">APELLIDOS Y NOMBRES DEL ESTUDIANTE</th>
-        <th style="width: 20%; border-right: 1px solid #000;font-size: 8pt;">GRADO</th>
-        <th style="width: 20%; border-right: 1px solid #000;font-size: 8pt;">PERIODO</th>
-        <th style="width: 20%; border-right: 1px solid #000;font-size: 8pt;">AÑO</th>
+        <th style="width: 45%; border-right: 1px solid #000;font-size: 8pt;">APELLIDOS Y NOMBRES DEL ESTUDIANTE</th>
+        <th style="width: 20%; border-right: 1px solid #000;font-size: 9pt;">NIVEL</th>
+        <th style="width: 15%; border-right: 1px solid #000;font-size: 9pt;">GRADO</th>
+        <th style="width: 10%; border-right: 1px solid #000;font-size: 9pt;">PERIODO</th>
+        <th style="width: 10%; border-right: 1px solid #000;font-size: 9pt;">AÑO</th>
     </tr>
     <tr>
         <td style="font-weight: bold; border-right: 1px solid #000; font-size: 11pt;">
             @php
                 $nombreCompleto = ucwords(strtolower(($estudiante->apellido ?? '') . ' ' . ($estudiante->nombre ?? '')));
             @endphp
-            {{ $nombreCompleto }}
+            {{ strtoupper($nombreCompleto) }}
         </td>
-        <td style="text-align: center; border-right: 1px solid #000; font-size: 11pt;">
+        <td style="text-align: center; border-right: 1px solid #000; font-size: 10pt;">
+            {{ strtoupper($estudiante->grado->tipo ?? '') }}
+        </td>
+        <td style="text-align: center; border-right: 1px solid #000; font-size: 10pt;">
             @php
                 $gradoNombre = $estudiante->grado->nombre ?? '';
                 $grupo = $estudiante->grado->grupo ?? '';
                 $gradoGrupo = $gradoNombre;
                 if ($grupo) {
-                    $gradoGrupo .= ' ' . strtoupper($grupo);
+                    $gradoGrupo .= ' ' ($grupo);
                 }
             @endphp
-            {{ $gradoGrupo }}
+            {{ strtoupper($gradoGrupo) }}
         </td>
-        <td style="text-align: center; border-right: 1px solid #000; font-size: 11pt;">
+        <td style="text-align: center; border-right: 1px solid #000; font-size: 10pt;">
             {{ ($periodo->numero_periodo ?? 'I') }}
         </td>
-        <td style="text-align: center; border-right: 1px solid #000; font-size: 11pt;">
+        <td style="text-align: center; border-right: 1px solid #000; font-size: 10pt;">
             {{ $periodo->anio_escolar ?? now()->year }}
         </td>
     </tr>
     <tr>
-        <td colspan="2" style="font-weight: bold; font-size: 9pt;">Director(a) de grupo: {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}</td>
-        <td colspan="2" style="font-weight: bold; font-size: 9pt;">Inasistencia: {{ $estudiante->inasistencias ?? '' }}</td>
+        <td colspan="2" style="font-weight: bold; font-size: 9pt;">DIRECTOR(A) DE GRUPO: DOC. {{ strtoupper($estudiante->grado->directorGrupo->name ?? 'No asignado') }}</td>
+        <td colspan="3" style="font-weight: bold; font-size: 9pt;">INASISTENCIA: {{ $estudiante->inasistencias ?? '' }}</td>
     </tr>
 </table>
 
@@ -253,64 +257,79 @@
 <div class="subtitle">Comprendido entre: el {{ $periodo->fecha_inicio->format('d/m/Y') }} y el {{ $periodo->fecha_fin->format('d/m/Y') }}</div>
 
 <!-- Áreas y asignaturas -->
-@php $areaAnterior = null; @endphp
-@foreach($desempenosPorMateria as $materia => $desempenos)
+@php
+// Agrupar materias por área y ordenar áreas alfabéticamente
+$materiasPorArea = [];
+foreach($desempenosPorMateria as $materia => $desempenos) {
+    $desempenoActual = $desempenos->sortByDesc(function($d) {
+        return $d->periodo->numero_periodo . '_' . $d->periodo->corte;
+    })->first();
+    $areaActual = $desempenoActual ? ($desempenoActual->materia->area ?? 'SIN ÁREA') : 'SIN ÁREA';
+    $materiasPorArea[$areaActual][$materia] = $desempenos;
+}
+ksort($materiasPorArea);
+@endphp
+@foreach($materiasPorArea as $areaActual => $materias)
     @php
-        $desempenoActual = $desempenos->sortByDesc(function($d) {
-            return $d->periodo->numero_periodo . '_' . $d->periodo->corte;
-        })->first();
-        $areaActual = $desempenoActual ? ($desempenoActual->materia->area ?? 'SIN ÁREA') : null;
         $areaFormateada = $areaActual ? strtoupper(str_replace('_', ' ', $areaActual)) : '';
+        $primeraMateria = true;
     @endphp
-    @if($desempenoActual)
-        @if($areaActual !== $areaAnterior)
-            @php $areaAnterior = $areaActual; @endphp
+    @foreach($materias as $materia => $desempenos)
+        @php
+            $desempenoActual = $desempenos->sortByDesc(function($d) {
+                return $d->periodo->numero_periodo . '_' . $d->periodo->corte;
+            })->first();
+        @endphp
+        @if($desempenoActual)
+            <table class="asignatura-table" style="margin-bottom: 18px;">
+                @if($primeraMateria)
+                <tr>
+                    <th class="area-titulo-custom" style="width:30%; text-align: left;">ÁREA: {{ $areaFormateada }}</th>
+                    <th style="width:20%">Escala Valoración</th>
+                    <th style="width:20%">Nivel de Desempeño</th>
+                    <th style="width:30%">Docente</th>
+                </tr>
+                @php $primeraMateria = false; @endphp
+                @endif
+                <tr>
+                    <td class="asignatura-nombre">Asignatura: {{ $materia }}</td>
+                    <td class="escala-col">{{ $desempenoActual->nivel_desempeno ?? 'N/A' }}</td>
+                    <td class="nivel-col">
+                        {{
+                            $desempenoActual->nivel_desempeno == 'E' ? 'Superior' :
+                            ($desempenoActual->nivel_desempeno == 'S' ? 'Alto' :
+                            ($desempenoActual->nivel_desempeno == 'A' ? 'Básico' :
+                            ($desempenoActual->nivel_desempeno == 'I' ? 'Bajo' : 'N/A')))
+                        }}
+                    </td>
+                    <td class="docente-col">Doc. {{ $desempenoActual->materia->docente->name ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="logros-cell">
+                        @if($desempenoActual->estudianteLogros->count() > 0)
+                            @foreach($desempenoActual->estudianteLogros as $estudianteLogro)
+                                @php
+                                    $titulo = $estudianteLogro->logro->titulo;
+                                    $desempeno = $estudianteLogro->logro->desempeno ?? '';
+                                @endphp
+                                <div style="margin-bottom: 4px;">
+                                    @if($titulo)
+                                        <span style="font-weight: bold;">{{ $titulo }}</span>
+                                    @endif
+                                    @if($titulo && $desempeno)
+                                        <br>
+                                    @endif
+                                    @if($desempeno)
+                                        {{ $desempeno }}
+                                    @endif
+                                </div>
+                            @endforeach
+                        @endif
+                    </td>
+                </tr>
+            </table>
         @endif
-        <table class="asignatura-table" style="margin-bottom: 18px;">
-            <tr>
-                <th class="area-titulo-custom" style="width:30%">ÁREA: {{ $areaFormateada }}</th>
-                <th style="width:20%">Escala Valoración</th>
-                <th style="width:20%">Nivel de Desempeño</th>
-                <th style="width:30%">Docente</th>
-            </tr>
-            <tr>
-                <td class="asignatura-nombre">Asignatura: {{ $materia }}</td>
-                <td class="escala-col">{{ $desempenoActual->nivel_desempeno ?? 'N/A' }}</td>
-                <td class="nivel-col">
-                    {{
-                        $desempenoActual->nivel_desempeno == 'E' ? 'Superior' :
-                        ($desempenoActual->nivel_desempeno == 'S' ? 'Alto' :
-                        ($desempenoActual->nivel_desempeno == 'A' ? 'Básico' :
-                        ($desempenoActual->nivel_desempeno == 'I' ? 'Bajo' : 'N/A')))
-                    }}
-                </td>
-                <td class="docente-col">{{ $desempenoActual->materia->docente->name ?? 'N/A' }}</td>
-            </tr>
-            <tr>
-                <td colspan="4" class="logros-cell">
-                    @if($desempenoActual->estudianteLogros->count() > 0)
-                        @foreach($desempenoActual->estudianteLogros as $estudianteLogro)
-                            @php
-                                $titulo = $estudianteLogro->logro->titulo;
-                                $desempeno = $estudianteLogro->logro->desempeno ?? '';
-                            @endphp
-                            <div style="margin-bottom: 4px;">
-                                @if($titulo)
-                                    <span style="font-weight: bold;">{{ $titulo }}</span>
-                                @endif
-                                @if($titulo && $desempeno)
-                                    <br>
-                                @endif
-                                @if($desempeno)
-                                    {{ $desempeno }}
-                                @endif
-                            </div>
-                        @endforeach
-                    @endif
-                </td>
-            </tr>
-        </table>
-    @endif
+    @endforeach
 @endforeach
 
 <!-- Observaciones -->
@@ -332,9 +351,9 @@
     <tr>
         <td>
             <div class="firma-line"></div>
-            {{ $estudiante->grado->directorGrupo->name ?? 'No asignado' }}
+            {{ strtoupper($estudiante->grado->directorGrupo->name ?? 'No asignado') }}
             <br>
-            DIRECTOR DE GRUPO
+            DIRECTOR(A) DE GRUPO
         </td>
         <td>
             <div class="firma-line"></div>

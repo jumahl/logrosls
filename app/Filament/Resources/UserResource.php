@@ -60,9 +60,9 @@ class UserResource extends Resource
                             ->dehydrated(fn ($state) => filled($state))
                             ->required(fn (string $context): bool => $context === 'create')
                             ->minLength(8)
-                            ->regex('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/')
+                                ->regex('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/')
                             ->label('Contraseña')
-                            ->helperText('Mínimo 8 caracteres, debe incluir mayúscula, minúscula, número y símbolo'),
+                                ->helperText('Mínimo 8 caracteres, debe incluir mayúscula, minúscula y número'),
                         TextInput::make('password_confirmation')
                             ->password()
                             ->required(fn (string $context): bool => $context === 'create')
