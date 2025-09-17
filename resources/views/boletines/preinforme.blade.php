@@ -11,8 +11,8 @@
             font-size: 10pt;
         }
         @page {
-            size: letter;
-            margin: 1.5cm 2cm;
+            size: legal; /* Tamaño oficio (legal) para más espacio */
+            margin: 1.2cm 1.5cm 2.5cm 1.5cm; /* Márgenes optimizados: superior, derecho, inferior, izquierdo */
         }
         .header-table {
             width: 100%;
@@ -36,7 +36,7 @@
             line-height: 1.3;
         }
         .logo {
-            width: 70px;
+            width: 80px; /* Aumentado de 70px a 80px para oficio */
             height: auto;
         }
         .foto {
@@ -64,7 +64,7 @@
             text-align: center;
             font-weight: bold;
             font-size: 11pt;
-            margin: 15px 0 8px 0;
+            margin: 12px 0 6px 0; /* Reducido para ahorrar espacio en oficio */
         }
         .subtitle {
             text-align: center;
@@ -74,7 +74,7 @@
         .asignatura-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8px;
+            margin-bottom: 12px; /* Reducido de 8px a 12px para mejor separación pero sin desperdiciar */
             table-layout: fixed;
         }
         .asignatura-table td {
@@ -168,9 +168,90 @@
             width: 70%;
             margin: 0 auto 5px auto;
         }
+
+        /* Pie de página */
+        .footer-text {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8pt;
+            font-family: 'Arial', Times, serif;
+            padding: 5px 1.5cm;
+            background: white;
+            color: #807e7e;
+            z-index: 1000;
+            display: block !important;
+            height: auto;
+            line-height: 1.1;
+        }
+        
+        /* Pie de página duplicado para primera página */
+        .footer-text-first {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8pt;
+            font-family: 'Arial', Times, serif;
+            padding: 5px 1.5cm; 
+            background: white;
+            color: #807e7e;
+            z-index: 1001;
+            display: block !important;
+            height: auto;
+            line-height: 1.1; 
+        }
+        
+        /* Asegurar espacio para el pie de página */
+        body {
+            margin-bottom: 40px;
+        }
+
         @media print {
             body {
                 font-size: 10pt;
+                margin-bottom: 40px !important;
+            }
+            
+            .footer-text, .footer-text-first {
+                position: fixed !important;
+                bottom: 10px !important;
+                left: 0 !important;
+                right: 0 !important;
+                display: block !important;
+                background: white !important;
+                z-index: 9999 !important;
+                font-size: 7pt !important;
+                padding: 3px 1.5cm !important;
+            }
+            
+            /* Agregar contenido de pie usando CSS para tamaño oficio */
+            @page {
+                size: legal;
+                margin: 1.2cm 1.5cm 2.5cm 1.5cm;
+                @bottom-center {
+                    content: "Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores";
+                    font-size: 7pt;
+                    font-family: Arial;
+                    color: #807e7e;
+                }
+            }
+        }
+        
+        /* Estilo específico para DomPDF */
+        @media dompdf {
+            .footer-text, .footer-text-first {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 8pt;
+                background: white;
+                z-index: 9999;
             }
         }
     </style>
@@ -246,7 +327,7 @@
         </td>
     </tr>
     <tr>
-        <td colspan="2" style="font-weight: bold; font-size: 9pt;">DIRECTOR(A) DE GRUPO: DOC. {{ strtoupper($estudiante->grado->directorGrupo->name ?? 'No asignado') }}</td>
+        <td colspan="2" style="font-weight: bold; font-size: 9pt;">DIRECTOR(A) DE GRUPO:{{ strtoupper($estudiante->grado->directorGrupo->name ?? 'No asignado') }}</td>
         <td colspan="3" style="font-weight: bold; font-size: 9pt;">INASISTENCIA: {{ $estudiante->inasistencias ?? '' }}</td>
     </tr>
 </table>
@@ -255,6 +336,11 @@
 <div class="section-title">PRE-INFORME ACADÉMICO Y DISCIPLINARIO</div>
 <div class="section-title">INFORME {{ $periodo->numero_periodo == 1 ? 'PRIMER' : 'SEGUNDO' }} PERIODO</div>
 <div class="subtitle">Comprendido entre: el {{ $periodo->fecha_inicio->format('d/m/Y') }} y el {{ $periodo->fecha_fin->format('d/m/Y') }}</div>
+
+<!-- Pie de página para primera página -->
+<div class="footer-text-first">
+    Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores
+</div>
 
 <!-- Áreas y asignaturas -->
 @php
@@ -273,15 +359,18 @@ ksort($materiasPorArea);
     @php
         $areaFormateada = $areaActual ? strtoupper(str_replace('_', ' ', $areaActual)) : '';
         $primeraMateria = true;
+        $totalMaterias = count($materias);
+        $materiaActual = 0;
     @endphp
     @foreach($materias as $materia => $desempenos)
         @php
+            $materiaActual++;
             $desempenoActual = $desempenos->sortByDesc(function($d) {
                 return $d->periodo->numero_periodo . '_' . $d->periodo->corte;
             })->first();
         @endphp
         @if($desempenoActual)
-            <table class="asignatura-table" style="margin-bottom: 18px;">
+            <table class="asignatura-table" style="margin-bottom: 15px; page-break-inside: avoid;">
                 @if($primeraMateria)
                 <tr>
                     <th class="area-titulo-custom" style="width:30%; text-align: left;">ÁREA: {{ $areaFormateada }}</th>
@@ -328,9 +417,26 @@ ksort($materiasPorArea);
                     </td>
                 </tr>
             </table>
+            @if($materiaActual % 4 == 0 && $materiaActual < $totalMaterias)
+                <!-- Pie de página antes del salto -->
+                <div class="footer-text" style="position: absolute; bottom: 10px;">
+                    Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores
+                </div>
+                <!-- Salto de página cada 4 materias (más aprovechamiento del espacio en oficio) -->
+                <div style="page-break-after: always;"></div>
+                <!-- Pie de página después del salto -->
+                <div class="footer-text">
+                    Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores
+                </div>
+            @endif
         @endif
     @endforeach
 @endforeach
+
+<!-- Pie de página antes de observaciones -->
+<div class="footer-text">
+    Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores
+</div>
 
 <!-- Observaciones -->
 <div class="observaciones-section">
@@ -364,6 +470,40 @@ ksort($materiasPorArea);
         </td>
     </tr>
 </table>
+
+<!-- Pie de página -->
+<div class="footer-text">
+    Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores
+</div>
+
+<!-- Script para asegurar que el pie aparezca en todas las páginas -->
+<script type="text/php">
+    if (isset($pdf)) {
+        $text = "Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores";
+        $font = $fontMetrics->get_font("Arial", "normal");
+        $size = 7; // Tamaño reducido para mejor aprovechamiento
+        $color = array(0.5, 0.5, 0.5);
+        
+        // Obtener el número total de páginas
+        $pageCount = $pdf->get_page_count();
+        
+        // Aplicar el pie a cada página - optimizado para oficio
+        for ($i = 1; $i <= $pageCount; $i++) {
+            $pdf->open_object();
+            $y = $pdf->get_height() - 25; // Más cerca del borde para tamaño oficio
+            $x = 40; // Margen izquierdo optimizado
+            $width = $pdf->get_width() - 80; // Ancho disponible
+            
+            // Centrar el texto
+            $textWidth = $fontMetrics->get_text_width($text, $font, $size);
+            $centerX = ($pdf->get_width() - $textWidth) / 2;
+            
+            $pdf->text($centerX, $y, $text, $font, $size, $color);
+            $pdf->close_object();
+            $pdf->add_object_to_page($i, $pdf->get_object());
+        }
+    }
+</script>
 
 </body>
 </html>
