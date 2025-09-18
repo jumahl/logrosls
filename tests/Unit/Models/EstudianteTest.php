@@ -68,8 +68,8 @@ class EstudianteTest extends TestCase
     public function it_has_logros_relationship()
     {
         $estudiante = Estudiante::factory()->create();
-        // logros() ahora retorna una colección, no una relación
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $estudiante->logros());
+        // logros() ahora retorna un query builder, no una relación
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Builder::class, $estudiante->logros());
     }
 
     /** @test */
@@ -143,7 +143,7 @@ class EstudianteTest extends TestCase
         $setup = $this->createStudentWithLogros();
         $estudiante = $setup['estudiantes']['juan'];
 
-        $logros = $estudiante->logros();
+        $logros = $estudiante->logros()->get();
         $this->assertCount(2, $logros);
         $this->assertTrue($logros->contains($setup['logros']['matematicas_basico']));
         $this->assertTrue($logros->contains($setup['logros']['lenguaje_lectura']));
@@ -155,7 +155,7 @@ class EstudianteTest extends TestCase
         $setup = $this->createStudentWithLogros();
         $estudiante = $setup['estudiantes']['juan'];
         
-        $logros = $estudiante->logros();
+        $logros = $estudiante->logros()->get();
         $this->assertCount(2, $logros);
         $this->assertTrue($logros->contains($setup['logros']['matematicas_basico']));
         $this->assertTrue($logros->contains($setup['logros']['lenguaje_lectura']));
