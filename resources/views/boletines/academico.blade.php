@@ -307,7 +307,7 @@
         @media print {
             body {
                 font-size: 10pt;
-                margin-bottom: 40px !important; /* Ajustado para el nuevo espaciado */
+                margin-bottom: 40px !important; 
             }
 
             .page-break {
@@ -412,7 +412,7 @@
                 $grupo = $estudiante->grado->grupo ?? '';
                 $gradoGrupo = $gradoNombre;
                 if ($grupo) {
-                    $gradoGrupo .= ' ' ($grupo);
+                    $gradoGrupo .= ' ' . $grupo;
                 }
             @endphp
             {{ strtoupper($gradoGrupo) }}
@@ -535,10 +535,6 @@ ksort($materiasPorArea);
 
 
 
-<!-- Pie de página antes del consolidado -->
-<div class="footer-text">
-    Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores
-</div>
 
 <!-- Salto de página forzado antes del consolidado -->
 <div style="page-break-after: always;"></div>
@@ -786,9 +782,7 @@ ksort($materiasPorArea);
             {{ $estudiante->observaciones_disciplina }}
         </div>
     @else
-        <div class="observaciones-texto" style="min-height: 60px;">
-            <!-- Espacio para observaciones -->
-        </div>
+        <div class="observaciones-texto" style="min-height: 60px;"></div>
     @endif
 </div>
 

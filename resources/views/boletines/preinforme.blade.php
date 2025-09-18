@@ -11,8 +11,8 @@
             font-size: 10pt;
         }
         @page {
-            size: legal; /* Tamaño oficio (legal) para más espacio */
-            margin: 1.2cm 1.5cm 2.5cm 1.5cm; /* Márgenes optimizados: superior, derecho, inferior, izquierdo */
+            size: legal;
+            margin: 1.2cm 1.5cm 2.5cm 1.5cm;
         }
         .header-table {
             width: 100%;
@@ -36,7 +36,7 @@
             line-height: 1.3;
         }
         .logo {
-            width: 80px; /* Aumentado de 70px a 80px para oficio */
+            width: 80px;
             height: auto;
         }
         .foto {
@@ -64,7 +64,7 @@
             text-align: center;
             font-weight: bold;
             font-size: 11pt;
-            margin: 12px 0 6px 0; /* Reducido para ahorrar espacio en oficio */
+            margin: 12px 0 6px 0; 
         }
         .subtitle {
             text-align: center;
@@ -74,7 +74,7 @@
         .asignatura-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px; /* Reducido de 8px a 12px para mejor separación pero sin desperdiciar */
+            margin-bottom: 12px;
             table-layout: fixed;
         }
         .asignatura-table td {
@@ -176,7 +176,7 @@
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 8pt;
+            font-size: 9pt;
             font-family: 'Arial', Times, serif;
             padding: 5px 1.5cm;
             background: white;
@@ -194,7 +194,7 @@
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 8pt;
+            font-size: 9pt;
             font-family: 'Arial', Times, serif;
             padding: 5px 1.5cm; 
             background: white;
@@ -224,7 +224,7 @@
                 display: block !important;
                 background: white !important;
                 z-index: 9999 !important;
-                font-size: 7pt !important;
+                font-size: 9pt !important;
                 padding: 3px 1.5cm !important;
             }
             
@@ -314,7 +314,7 @@
                 $grupo = $estudiante->grado->grupo ?? '';
                 $gradoGrupo = $gradoNombre;
                 if ($grupo) {
-                    $gradoGrupo .= ' ' ($grupo);
+                    $gradoGrupo .= ' ' . $grupo;
                 }
             @endphp
             {{ strtoupper($gradoGrupo) }}
@@ -433,10 +433,6 @@ ksort($materiasPorArea);
     @endforeach
 @endforeach
 
-<!-- Pie de página antes de observaciones -->
-<div class="footer-text">
-    Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores
-</div>
 
 <!-- Observaciones -->
 <div class="observaciones-section">
@@ -446,9 +442,7 @@ ksort($materiasPorArea);
             {{ $estudiante->observaciones_disciplina }}
         </div>
     @else
-        <div class="observaciones-texto" style="min-height: 60px;">
-            <!-- Espacio para observaciones -->
-        </div>
+        <div class="observaciones-texto" style="min-height: 60px;"></div>
     @endif
 </div>
 
@@ -471,7 +465,7 @@ ksort($materiasPorArea);
     </tr>
 </table>
 
-<!-- Pie de página -->
+<!-- Pie de página (solo una vez al final) -->
 <div class="footer-text">
     Es deber de los padres de familia acompañar el proceso educativo en cumplimiento de su responsabilidad como primeros educadores de sus hijos para mejorar la orientación personal y el desarrollo de los valores
 </div>
