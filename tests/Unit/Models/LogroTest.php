@@ -110,33 +110,32 @@ class LogroTest extends TestCase
         $estudiantes = Estudiante::factory(2)->create();
         
         foreach ($estudiantes as $estudiante) {
-            // Crear DesempenoMateria y EstudianteLogro con la nueva estructura
-            EstudianteLogro::factory()
-                ->create([
-                    'logro_id' => $logro->id,
-                ]);
+            EstudianteLogro::factory()->create([
+                'estudiante_id' => $estudiante->id,
+                'logro_id' => $logro->id,
+            ]);
         }
         
-        // Verificar que el logro tiene estudiantes asociados a través de EstudianteLogro
-        $this->assertCount(2, $logro->estudianteLogros);
+        $this->assertCount(2, $logro->estudiantes);
+        $this->assertTrue($logro->estudiantes->contains($estudiantes[0]));
     }
 
     /** @test */
     public function estudiantes_relationship_includes_pivot_data()
     {
         $logro = Logro::factory()->create();
+        $estudiante = Estudiante::factory()->create();
         
-        $estudianteLogro = EstudianteLogro::factory()
-            ->create([
-                'logro_id' => $logro->id,
-                'alcanzado' => true,
-            ]);
+        EstudianteLogro::factory()->create([
+            'estudiante_id' => $estudiante->id,
+            'logro_id' => $logro->id,
+            'fecha_asignacion' => '2024-01-15',
+            'observaciones' => 'Excelente trabajo',
+        ]);
         
-        // Verificar que podemos acceder a los datos a través de EstudianteLogro
-        $this->assertNotNull($estudianteLogro->desempenoMateria);
-        $this->assertNotNull($estudianteLogro->desempenoMateria->estudiante);
-        $this->assertTrue($estudianteLogro->alcanzado);
-        $this->assertEquals($logro->id, $estudianteLogro->logro_id);
+        $estudianteWithPivot = $logro->estudiantes->first();
+        $this->assertStringStartsWith('2024-01-15', $estudianteWithPivot->pivot->fecha_asignacion);
+        $this->assertEquals('Excelente trabajo', $estudianteWithPivot->pivot->observaciones);
     }
 
     /** @test */

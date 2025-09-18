@@ -111,9 +111,9 @@ class ListLogros extends ListRecords
                 ->form([
                     Select::make('materia_id')
                         ->label('Materia de Destino')
+                        ->placeholder('Usar materia del archivo Excel')
                         ->options($materiasDisponibles)
-                        ->required()
-                        ->helperText('Debes seleccionar una materia. Todos los logros se asignarán a esta materia.'),
+                        ->helperText('Si selecciona una materia, todos los logros se asignarán a esta materia'),
                     FileUpload::make('archivo')
                         ->label('Archivo Excel')
                         ->required()
@@ -128,26 +128,26 @@ class ListLogros extends ListRecords
                 ->action(function (array $data) {
                     try {
                         $archivo = $data['archivo'];
-                        $materiaId = $data['materia_id']; // Ahora siempre requerido
+                        $materiaId = $data['materia_id'] ?? null;
                         $rutaArchivo = storage_path('app/public/' . $archivo);
-
+                        
                         $import = new LogrosImport($materiaId);
                         Excel::import($import, $rutaArchivo);
-
+                        
                         $resultados = $import->getImportResults();
                         $failures = $import->failures();
                         $errors = $import->errors();
-
+                        
                         // Construir mensaje de resultado
                         $mensaje = sprintf(
                             'Importación completada: %d logros creados, %d actualizados.',
                             $resultados['created'],
                             $resultados['updated']
                         );
-
+                        
                         if (count($failures) > 0 || count($errors) > 0) {
                             $mensaje .= sprintf(' Se encontraron %d errores.', count($failures) + count($errors));
-
+                            
                             Notification::make()
                                 ->title('Importación con errores')
                                 ->body($mensaje)
@@ -161,12 +161,12 @@ class ListLogros extends ListRecords
                                 ->success()
                                 ->send();
                         }
-
+                        
                         // Limpiar archivo temporal
                         if (file_exists($rutaArchivo)) {
                             unlink($rutaArchivo);
                         }
-
+                        
                     } catch (\Exception $e) {
                         Notification::make()
                             ->title('Error en la importación')

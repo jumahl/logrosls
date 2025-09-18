@@ -72,7 +72,7 @@ class LogrosImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnEr
                 'titulo' => $row['titulo'] ?? null,
                 'desempeno' => $row['desempeno'],
                 'materia_id' => $materia->id,
-                // 'orden' eliminado del import
+                'orden' => (int)($row['orden'] ?? 0),
                 'activo' => true,
             ]);
             $this->importResults['updated']++;
@@ -85,7 +85,7 @@ class LogrosImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnEr
                 'titulo' => $row['titulo'] ?? null,
                 'desempeno' => $row['desempeno'],
                 'materia_id' => $materia->id,
-                // 'orden' eliminado del import
+                'orden' => (int)($row['orden'] ?? 0),
                 'activo' => true,
             ]);
         }
@@ -100,6 +100,7 @@ class LogrosImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnEr
             'codigo' => 'required|string|max:255',
             'titulo' => 'nullable|string|max:255',
             'desempeno' => 'required|string',
+            'orden' => 'nullable|integer|min:0',
         ];
 
         // Si no se especificó materia en el constructor, validar que existe en el Excel
@@ -122,6 +123,8 @@ class LogrosImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnEr
             'desempeno.required' => 'El campo desempeño es obligatorio.',
             'codigo_materia.required' => 'El código de materia es obligatorio.',
             'materia.required' => 'El nombre de materia es obligatorio.',
+            'orden.integer' => 'El orden debe ser un número entero.',
+            'orden.min' => 'El orden debe ser mayor o igual a 0.',
         ];
     }
 

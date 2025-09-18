@@ -16,7 +16,7 @@ class MateriaTest extends TestCase
     /** @test */
     public function it_has_correct_fillable_attributes()
     {
-        $expectedFillable = ['nombre', 'codigo', 'descripcion', 'docente_id', 'activa', 'area'];
+        $expectedFillable = ['nombre', 'codigo', 'descripcion', 'docente_id', 'activa'];
         $materia = new Materia();
         
         $this->assertHasFillable($materia, $expectedFillable);

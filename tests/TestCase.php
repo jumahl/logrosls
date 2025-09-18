@@ -26,51 +26,6 @@ abstract class TestCase extends BaseTestCase
         
         // Crear roles y permisos básicos
         $this->setupRolesAndPermissions();
-        
-        // Crear años escolares básicos para testing
-        $this->setupAniosEscolares();
-    }
-
-    /**
-     * Setup basic school years for testing.
-     */
-    protected function setupAniosEscolares(): void
-    {
-        \App\Models\AnioEscolar::factory()->create([
-            'anio' => 2024,
-            'activo' => false,
-            'finalizado' => true,
-        ]);
-        
-        \App\Models\AnioEscolar::factory()->create([
-            'anio' => 2025, 
-            'activo' => true,
-            'finalizado' => false,
-        ]);
-        
-        \App\Models\AnioEscolar::factory()->create([
-            'anio' => 2020,
-            'activo' => false,
-            'finalizado' => true,
-        ]);
-        
-        \App\Models\AnioEscolar::factory()->create([
-            'anio' => 2021,
-            'activo' => false,
-            'finalizado' => true,
-        ]);
-        
-        \App\Models\AnioEscolar::factory()->create([
-            'anio' => 2022,
-            'activo' => false,
-            'finalizado' => true,
-        ]);
-        
-        \App\Models\AnioEscolar::factory()->create([
-            'anio' => 2023,
-            'activo' => false,
-            'finalizado' => true,
-        ]);
     }
 
     /**
@@ -208,10 +163,10 @@ abstract class TestCase extends BaseTestCase
         // Crear períodos
         $periodos = [
             'periodo1' => Periodo::factory()->primerPeriodo()->primerCorte()->create([
-                'anio_escolar' => 2025, // Usar año activo
+                'anio_escolar' => 2024,
             ]),
             'periodo2' => Periodo::factory()->primerPeriodo()->segundoCorte()->create([
-                'anio_escolar' => 2025, // Usar año activo
+                'anio_escolar' => 2024,
             ]),
         ];
 
