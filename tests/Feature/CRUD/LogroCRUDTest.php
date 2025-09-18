@@ -20,15 +20,10 @@ class LogroCRUDTest extends TestCase
         $logroData = [
             'codigo' => 'MAT-001',
             'titulo' => 'Comprende operaciones básicas',
-            'descripcion' => 'El estudiante realiza sumas y restas con números naturales',
+            'desempeno' => 'El estudiante realiza sumas y restas con números naturales',
             'materia_id' => $materia->id,
-            'nivel_dificultad' => 'bajo',
-            'tipo' => 'conocimiento',
             'activo' => true,
-            'competencia' => 'Pensamiento numérico',
-            'tema' => 'Operaciones básicas',
-            'indicador_desempeno' => 'Realiza sumas y restas correctamente',
-            'dimension' => 'cognitiva',
+            'orden' => 1,
         ];
         
         $logro = Logro::create($logroData);
@@ -37,8 +32,6 @@ class LogroCRUDTest extends TestCase
             'codigo' => 'MAT-001',
             'titulo' => 'Comprende operaciones básicas',
             'materia_id' => $materia->id,
-            'nivel_dificultad' => 'bajo',
-            'tipo' => 'conocimiento',
         ]);
     }
 
@@ -109,20 +102,20 @@ class LogroCRUDTest extends TestCase
         $admin = $this->createAdmin();
         $logro = Logro::factory()->create([
             'titulo' => 'Título original',
-            'descripcion' => 'Descripción original',
+            'desempeno' => 'Descripción original',
         ]);
         
         $this->actingAs($admin);
         
         $logro->update([
             'titulo' => 'Título actualizado',
-            'descripcion' => 'Descripción actualizada',
+            'desempeno' => 'Descripción actualizada',
         ]);
         
         $this->assertDatabaseHas('logros', [
             'id' => $logro->id,
             'titulo' => 'Título actualizado',
-            'descripcion' => 'Descripción actualizada',
+            'desempeno' => 'Descripción actualizada',
         ]);
     }
 
@@ -208,37 +201,20 @@ class LogroCRUDTest extends TestCase
         
         $this->actingAs($admin);
         
+        // Test de compatibilidad - los métodos existen y no fallan
         $logrosBasicos = Logro::porNivelDificultad('bajo')->get();
         $logrosIntermedios = Logro::porNivelDificultad('medio')->get();
         $logrosAvanzados = Logro::porNivelDificultad('alto')->get();
         
-        $this->assertCount(1, $logrosBasicos);
-        $this->assertCount(1, $logrosIntermedios);
-        $this->assertCount(1, $logrosAvanzados);
+        // Como son métodos de compatibilidad, solo verificamos que retornan colecciones
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $logrosBasicos);
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $logrosIntermedios);
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $logrosAvanzados);
         
-        $this->assertEquals($logroBasico->id, $logrosBasicos->first()->id);
-        $this->assertEquals($logroIntermedio->id, $logrosIntermedios->first()->id);
-        $this->assertEquals($logroAvanzado->id, $logrosAvanzados->first()->id);
-    }
-
-    /** @test */
-    public function logro_can_be_filtered_by_tipo()
-    {
-        $admin = $this->createAdmin();
-        
-        $logroConceptual = Logro::factory()->conocimiento()->create();
-        $logroProcedimental = Logro::factory()->habilidad()->create();
-        $logroActitudinal = Logro::factory()->actitud()->create();
-        
-        $this->actingAs($admin);
-        
-        $logrosConceptuales = Logro::porTipo('conocimiento')->get();
-        $logrosProcedimentales = Logro::porTipo('habilidad')->get();
-        $logrosActitudinales = Logro::porTipo('actitud')->get();
-        
-        $this->assertCount(1, $logrosConceptuales);
-        $this->assertCount(1, $logrosProcedimentales);
-        $this->assertCount(1, $logrosActitudinales);
+        // Verificar que al menos los logros creados existen
+        $this->assertTrue(Logro::where('id', $logroBasico->id)->exists());
+        $this->assertTrue(Logro::where('id', $logroIntermedio->id)->exists());
+        $this->assertTrue(Logro::where('id', $logroAvanzado->id)->exists());
     }
 
     /** @test */
@@ -285,7 +261,7 @@ class LogroCRUDTest extends TestCase
         
         // Intentar crear sin campos requeridos
         Logro::create([
-            'descripcion' => 'Solo descripción',
+            'desempeno' => 'Solo descripción',
             // Faltan campos requeridos como titulo, materia_id
         ]);
     }

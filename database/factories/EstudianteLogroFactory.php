@@ -67,4 +67,34 @@ class EstudianteLogroFactory extends Factory
             'alcanzado' => false,
         ]);
     }
+
+    /**
+     * Create a logro evaluado (evaluated).
+     */
+    public function evaluado(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'alcanzado' => true,
+        ]);
+    }
+
+    /**
+     * Create a logro pendiente (pending).
+     */
+    public function pendiente(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'alcanzado' => false,
+        ]);
+    }
+
+    /**
+     * Create a logro with excelente performance.
+     */
+    public function excelente(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'alcanzado' => true,
+        ]);
+    }
 }

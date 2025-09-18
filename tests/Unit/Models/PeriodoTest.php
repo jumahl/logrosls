@@ -7,6 +7,7 @@ use App\Models\Logro;
 use App\Models\EstudianteLogro;
 use Tests\TestCase;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 
@@ -50,7 +51,7 @@ class PeriodoTest extends TestCase
     public function it_has_estudiante_logros_relationship()
     {
         $periodo = Periodo::factory()->create();
-        $this->assertInstanceOf(HasMany::class, $periodo->estudianteLogros());
+        $this->assertInstanceOf(HasManyThrough::class, $periodo->estudianteLogros());
     }
 
     /** @test */
@@ -106,10 +107,20 @@ class PeriodoTest extends TestCase
     public function it_can_have_many_estudiante_logros()
     {
         $periodo = Periodo::factory()->create();
-        $estudianteLogros = EstudianteLogro::factory(5)->create(['periodo_id' => $periodo->id]);
+        
+        // Crear DesempenoMateria que pertenece al periodo
+        $desempenosMateria = \App\Models\DesempenoMateria::factory(3)
+            ->create(['periodo_id' => $periodo->id]);
+        
+        // Crear EstudianteLogros asociados a esos DesempenosMateria
+        foreach($desempenosMateria as $desempeno) {
+            EstudianteLogro::factory(2)->create([
+                'desempeno_materia_id' => $desempeno->id
+            ]);
+        }
 
-        $this->assertCount(5, $periodo->estudianteLogros);
-        $this->assertTrue($periodo->estudianteLogros->contains($estudianteLogros[0]));
+        // Debe tener 6 EstudianteLogros (3 DesempenosMateria × 2 EstudianteLogros)
+        $this->assertCount(6, $periodo->estudianteLogros);
     }
 
     /** @test */
