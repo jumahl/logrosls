@@ -14,27 +14,25 @@ return new class extends Migration
         Schema::table('materias', function (Blueprint $table) {
             $table->enum('area', [
                 'humanidades',
-                'matemáticas',
+                'matematicas', 
                 'ciencias_naturales_y_educacion_ambiental',
                 'ciencias_sociales',
-                'ciencias_políticas_y_económicas',
-                'filosofía',
-                'tecnología_e_informática',
-                'educación_ética_y_valores_humanos',
-                'educación_religiosa',
-                'educación_artística',
-                'educación_física_recreación_y_deporte',
+                'ciencias_politicas_y_economicas',
+                'filosofia',
+                'tecnologia_e_informatica',
+                'educacion_etica_y_valores_humanos',
+                'educacion_religiosa',
+                'educacion_artistica',
+                'educacion_fisica_recreacion_y_deporte',
                 'disciplina_y_convivencia_escolar',
-                'dimensión_comunicativa',
-                'dimensión_cognitiva',
-                'dimensión_estética',
-                'dimensión_ética_y_socio_afectiva',
-                'dimensión_corporal',
+                'dimension_comunicativa',
+                'dimension_cognitiva',
+                'dimension_estetica',
+                'dimension_etica_y_socio_afectiva',
+                'dimension_corporal'
             ])->after('descripcion')->nullable();
         });
     }
-
-    
 
     /**
      * Reverse the migrations.

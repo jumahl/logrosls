@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Periodo;
-use App\Models\AnioEscolar;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,10 +21,7 @@ class PeriodoFactory extends Factory
     {
         $cortes = ['Primer Corte', 'Segundo Corte'];
         $periodos = [1, 2]; // Solo 1 o 2 según la migración
-        
-        // Crear o usar un año escolar existente
-        $anioEscolar = AnioEscolar::inRandomOrder()->first()?->anio 
-            ?? AnioEscolar::factory()->create()->anio;
+    $anioEscolar = $this->faker->numberBetween(2020, 2025);
         
         // Generar fechas coherentes
         $numeroCorte = $this->faker->randomElement([1, 2]);
