@@ -33,7 +33,6 @@ class LogrosPlantillaExport implements FromArray, WithHeadings, WithStyles
                 'Identifica ideas principales y secundarias en textos narrativos',
                 $this->materiaNombre ?? 'Lengua Castellana',
                 $this->materiaCodigo ?? 'ESP001',
-                1
             ],
             [
                 'LOG002',
@@ -41,7 +40,6 @@ class LogrosPlantillaExport implements FromArray, WithHeadings, WithStyles
                 'Analiza elementos gramaticales y sintácticos en oraciones compuestas',
                 $this->materiaNombre ?? 'Lengua Castellana',
                 $this->materiaCodigo ?? 'ESP001',
-                2
             ],
             [
                 'LOG003',
@@ -49,7 +47,6 @@ class LogrosPlantillaExport implements FromArray, WithHeadings, WithStyles
                 'Produce textos argumentativos con coherencia y cohesión adecuadas',
                 $this->materiaNombre ?? 'Lengua Castellana',
                 $this->materiaCodigo ?? 'ESP001',
-                3
             ]
         ];
 
@@ -78,15 +75,14 @@ class LogrosPlantillaExport implements FromArray, WithHeadings, WithStyles
             $headings[] = 'codigo_materia';
         }
 
-        $headings[] = 'orden';
-
+        // Columna 'orden' eliminada
         return $headings;
     }
 
     public function styles(Worksheet $sheet)
     {
         // Auto ajustar ancho de columnas
-        $lastColumn = $this->incluirMateria ? 'F' : 'D';
+        $lastColumn = $this->incluirMateria ? 'E' : 'D';
         foreach (range('A', $lastColumn) as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }

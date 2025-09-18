@@ -70,6 +70,8 @@ class LogroFactory extends Factory
 
     // Métodos de compatibilidad con estados antiguos (no-ops)
     public function basico(): static { return $this->state(fn (array $attributes) => []); }
+    public function medio(): static { return $this->state(fn (array $attributes) => []); }
+    public function alto(): static { return $this->state(fn (array $attributes) => []); }
     public function intermedio(): static { return $this->state(fn (array $attributes) => []); }
     public function avanzado(): static { return $this->state(fn (array $attributes) => []); }
     public function conocimiento(): static { return $this->state(fn (array $attributes) => []); }

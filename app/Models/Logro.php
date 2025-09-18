@@ -90,6 +90,26 @@ class Logro extends Model
     // Scopes eliminados: porNivelDificultad y porTipo ya no aplican al nuevo esquema
     
     /**
+     * Scope para filtrar por tipo (compatibility method).
+     * Como ya no existe el campo tipo, retorna todos los logros
+     */
+    public function scopePorTipo($query, $tipo)
+    {
+        // Método de compatibilidad - retorna todos los logros
+        return $query;
+    }
+    
+    /**
+     * Scope para filtrar por nivel de dificultad (compatibility method).
+     * Como ya no existe el campo nivel_dificultad, retorna todos los logros
+     */
+    public function scopePorNivelDificultad($query, $nivel)
+    {
+        // Método de compatibilidad - retorna todos los logros
+        return $query;
+    }
+    
+    /**
      * Boot the model.
      */
     protected static function boot()

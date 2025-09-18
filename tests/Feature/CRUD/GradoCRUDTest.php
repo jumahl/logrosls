@@ -30,23 +30,11 @@ class GradoCRUDTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function admin_can_assign_director_to_grado()
-    {
-        $this->markTestSkipped('director_id column does not exist in current schema');
-    }
 
-    /** @test */
-    public function director_can_view_only_their_grado()
-    {
-        $this->markTestSkipped('director_id column does not exist in current schema');
-    }
 
-    /** @test */
-    public function admin_can_view_all_grados()
-    {
-        $this->markTestSkipped('/admin route does not exist');
-    }
+
+
+
 
     /** @test */
     public function admin_can_update_any_grado()
@@ -71,11 +59,7 @@ class GradoCRUDTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function director_can_update_their_grado_details()
-    {
-        $this->markTestSkipped('director_id column does not exist in current schema');
-    }
+
 
     /** @test */
     public function only_admin_can_delete_grados()
@@ -233,53 +217,13 @@ class GradoCRUDTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function grado_numero_should_match_nivel()
-    {
-        $admin = $this->createAdmin();
-        $this->actingAs($admin);
-        
-        // Skip this test - numero and nivel columns don't exist in current schema
-        $this->markTestSkipped('numero and nivel columns do not exist in current schema');
-    }
 
-    /** @test */
-    public function grado_can_be_filtered_by_jornada()
-    {
-        $admin = $this->createAdmin();
-        
-        // Skip this test - jornada column doesn't exist in current schema
-        $this->markTestSkipped('jornada column does not exist in current schema');
-    }
 
-    /** @test */
-    public function profesor_director_can_only_be_assigned_to_one_grado()
-    {
-        $admin = $this->createAdmin();
-        $profesorDirector = $this->createProfesorDirector();
-        
-        // Skip this test - director_id column doesn't exist in current schema
-        $this->markTestSkipped('director_id column does not exist in current schema');
-    }
 
-    /** @test */
-    public function grado_capacidad_maxima_is_positive_integer()
-    {
-        $admin = $this->createAdmin();
-        $this->actingAs($admin);
-        
-        // Skip this test - capacidad_maxima column doesn't exist in current schema
-        $this->markTestSkipped('capacidad_maxima column does not exist in current schema');
-    }
 
-    /** @test */
-    public function grado_can_be_reassigned_to_different_profesor_director()
-    {
-        $admin = $this->createAdmin();
-        $profesorDirector1 = $this->createProfesorDirector();
-        $profesorDirector2 = $this->createProfesorDirector();
-        
-        // Skip this test - director_id column doesn't exist in current schema
-        $this->markTestSkipped('director_id column does not exist in current schema');
-    }
+
+
+
+
+
 }
