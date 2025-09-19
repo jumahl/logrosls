@@ -27,9 +27,17 @@ class MateriasRelationManager extends RelationManager
                 Forms\Components\TextInput::make('codigo')
                     ->required()
                     ->maxLength(20)
-                    ->label('Código'),
+                    ->unique(ignoreRecord: true)
+                    ->regex('/^[A-Z0-9\-]+$/')
+                    ->label('Código')
+                    ->helperText('Solo letras mayúsculas, números y guiones. Ej: MAT-001'),
                 Forms\Components\Select::make('grados')
-                    ->relationship('grados', 'nombre')
+                    ->relationship(
+                        'grados',
+                        'nombre',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                     ->multiple()
                     ->required()
                     ->searchable()
@@ -39,6 +47,10 @@ class MateriasRelationManager extends RelationManager
                             ->required()
                             ->maxLength(255)
                             ->label('Nombre'),
+                        Forms\Components\TextInput::make('grupo')
+                            ->maxLength(10)
+                            ->label('Grupo')
+                            ->helperText('Opcional. Ej: A, B, C'),
                         Forms\Components\Select::make('tipo')
                             ->options([
                                 'preescolar' => 'Preescolar',
@@ -51,11 +63,17 @@ class MateriasRelationManager extends RelationManager
                     ])
                     ->label('Grados'),
                 Forms\Components\Select::make('docente_id')
-                    ->relationship('docente', 'name')
+                    ->relationship('docente', 'name', fn($query) => $query->role('profesor'))
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->label('Docente'),
+                    ->label('Docente')
+                    ->helperText('Solo usuarios con rol de profesor'),
+                Forms\Components\Select::make('area')
+                    ->options(\App\Models\Materia::getAreas())
+                    ->required()
+                    ->searchable()
+                    ->label('Área Académica'),
                 Forms\Components\Textarea::make('descripcion')
                     ->maxLength(65535)
                     ->columnSpanFull()

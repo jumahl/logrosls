@@ -115,59 +115,20 @@ class HistoricoDesempenoResource extends Resource
                     ->label('Fecha de Archivo')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
-                Tables\Columns\IconColumn::make('activo')
-                    ->label('Estado')
-                    ->getStateUsing(function ($record) {
-                        // Verificar si el estudiante está actualmente activo
-                        $estudiante = \App\Models\Estudiante::find($record->estudiante_id);
-                        return $estudiante ? $estudiante->activo : false;
-                    })
-                    ->boolean()
-                    ->sortable(false),
-            ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('anio_escolar')
-                    ->label('Año Escolar')
-                    ->options(function () {
-                        return \App\Models\HistoricoDesempeno::select('anio_escolar')
-                            ->distinct()
-                            ->orderBy('anio_escolar', 'desc')
-                            ->pluck('anio_escolar', 'anio_escolar');
-                    }),
-                Tables\Filters\Filter::make('estudiante')
-                    ->form([
-                        Forms\Components\TextInput::make('estudiante_buscar')
-                            ->label('Buscar estudiante')
-                            ->placeholder('Nombre, apellido o documento')
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['estudiante_buscar'],
-                                fn (Builder $query, $search): Builder => $query->where(function ($query) use ($search) {
-                                    $query->where('estudiante_nombre', 'like', "%{$search}%")
-                                          ->orWhere('estudiante_apellido', 'like', "%{$search}%")
-                                          ->orWhere('estudiante_documento', 'like', "%{$search}%");
-                                })
-                            );
-                    }),
             ])
             ->actions([
-                Tables\Actions\Action::make('descargar_boletin_segundo_periodo')
-                    ->label('Boletín')
+                Tables\Actions\Action::make('descargar_boletin_historico')
+                    ->label('Boletín Histórico')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
                     ->action(function ($record) {
                         try {
                             $service = new BoletinHistoricoService();
-                            $pdf = $service->generarBoletinHistoricoSegundoPeriodo($record->estudiante_id, $record->anio_escolar);
-                            
-                            $filename = "boletin_2do_periodo_{$record->estudiante_apellido}_{$record->estudiante_nombre}_{$record->anio_escolar}.pdf";
-                            
+                            $pdf = $service->generarBoletinHistorico($record->estudiante_id, $record->anio_escolar);
+                            $filename = "boletin_historico_{$record->estudiante_apellido}_{$record->estudiante_nombre}_{$record->anio_escolar}.pdf";
                             return response()->streamDownload(function () use ($pdf) {
                                 echo $pdf->output();
                             }, $filename);
-                            
                         } catch (\Exception $e) {
                             Notification::make()
                                 ->title('Error al generar boletín')
@@ -177,24 +138,21 @@ class HistoricoDesempenoResource extends Resource
                         }
                     })
                     ->requiresConfirmation()
-                    ->modalHeading('Descargar Boletín')
-                    ->modalDescription(fn ($record) => "¿Descargar el boletín de {$record->estudiante_nombre} {$record->estudiante_apellido} del año {$record->anio_escolar}?"),
+                    ->modalHeading('Descargar Boletín Histórico')
+                    ->modalDescription(fn ($record) => "¿Descargar el boletín histórico de {$record->estudiante_nombre} {$record->estudiante_apellido} del año {$record->anio_escolar}?")
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('descargar_boletines')
-                        ->label('Boletines')
+                    Tables\Actions\BulkAction::make('descargar_boletines_historicos')
+                        ->label('Boletines Históricos')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('success')
                         ->action(function ($records) {
                             try {
                                 $service = new BoletinHistoricoService();
-                                $zipPath = $service->generarBoletinesSegundoPeriodoMasivo($records);
-                                
-                                $zipName = "boletines_2do_periodo_" . now()->format('Y-m-d_H-i-s') . ".zip";
-                                
+                                $zipPath = $service->generarBoletinesHistoricosMasivo($records);
+                                $zipName = "boletines_historicos_" . now()->format('Y-m-d_H-i-s') . ".zip";
                                 return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
-                                
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->title('Error al generar boletines')
@@ -204,8 +162,8 @@ class HistoricoDesempenoResource extends Resource
                             }
                         })
                         ->requiresConfirmation()
-                        ->modalHeading('Descargar Boletines')
-                        ->modalDescription('¿Descargar boletines de los estudiantes seleccionados?'),
+                        ->modalHeading('Descargar Boletines Históricos')
+                        ->modalDescription('¿Descargar boletines históricos de los estudiantes seleccionados?'),
                 ]),
             ])
             ->defaultSort('anio_escolar', 'desc');

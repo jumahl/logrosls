@@ -38,8 +38,20 @@ class LogrosRelationManager extends RelationManager
                     ->helperText('Código único del logro'),
                 Forms\Components\TextInput::make('titulo')
                     ->maxLength(255)
-                    ->label('Identificador / Subrama (opcional)')
-                    ->helperText('Identificador para diferenciar subramas dentro de la materia (opcional)'),
+                    ->label('Identificador')
+                    ->helperText('Solo Para Lectores Competentes y Técnicas Lingüísticas')
+                    ->visible(function () use ($user) {
+                        if ($user && $user->hasRole('admin')) {
+                            return true;
+                        }
+                        if ($user && $user->hasRole('profesor')) {
+                            return $user->materias()
+                                ->where('nombre', 'LIKE', '%Lenguaje%')
+                                ->orWhere('nombre', 'LIKE', '%Lengua Castellana%')
+                                ->exists();
+                        }
+                        return false;
+                    }),
                 Forms\Components\Select::make('materia_id')
                     ->relationship('materia', 'nombre', function (Builder $query) {
                         $gradoId = $this->getOwnerRecord()->id;
@@ -50,6 +62,19 @@ class LogrosRelationManager extends RelationManager
                     ->required()
                     ->searchable()
                     ->preload()
+                    ->options(function () use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            return $user->materias()
+                                ->get()
+                                ->mapWithKeys(function ($materia) {
+                                    return [$materia->id => "{$materia->codigo} - {$materia->nombre}"];
+                                });
+                        }
+                        return \App\Models\Materia::get()
+                            ->mapWithKeys(function ($materia) {
+                                return [$materia->id => "{$materia->codigo} - {$materia->nombre}"];
+                            });
+                    })
                     ->createOptionForm($user && $user->hasRole('admin') ? [
                         Forms\Components\TextInput::make('nombre')
                             ->required()
@@ -60,7 +85,12 @@ class LogrosRelationManager extends RelationManager
                             ->maxLength(20)
                             ->label('Código'),
                         Forms\Components\Select::make('grados')
-                            ->relationship('grados', 'nombre')
+                            ->relationship(
+                                'grados',
+                                'nombre',
+                                modifyQueryUsing: fn ($query) => $query->orderBy('nombre')->orderBy('grupo')
+                            )
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_completo)
                             ->multiple()
                             ->required()
                             ->searchable()
@@ -74,7 +104,15 @@ class LogrosRelationManager extends RelationManager
                     ->label('Desempeño')
                     ->helperText('Descripción del desempeño esperado'),
                 Forms\Components\Select::make('periodos')
-                    ->relationship('periodos', 'corte')
+                    ->relationship('periodos', 'corte', function ($query) use ($user) {
+                        if ($user && $user->hasRole('profesor')) {
+                            return $query->where('activo', true);
+                        }
+                        return $query;
+                    })
+                    ->getOptionLabelFromRecordUsing(function ($record) {
+                        return $record->periodo_completo;
+                    })
                     ->multiple()
                     ->preload()
                     ->searchable()
@@ -106,8 +144,7 @@ class LogrosRelationManager extends RelationManager
                         Forms\Components\DatePicker::make('fecha_fin')
                             ->required()
                             ->label('Fecha de Fin'),
-                    ] : null)
-                    ->label('Períodos'),
+                    ] : null),
                 Forms\Components\Toggle::make('activo')
                     ->required()
                     ->default(true)
@@ -118,6 +155,7 @@ class LogrosRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        $user = auth()->user();
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('codigo')
@@ -156,6 +194,7 @@ class LogrosRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
+                    ->visible(fn() => $user && ($user->hasRole('admin') || $user->hasRole('profesor')))
                     ->mutateFormDataUsing(function (array $data): array {
                         // Asignar automáticamente la materia del grado
                         $data['materia_id'] = $data['materia_id'] ?? null;

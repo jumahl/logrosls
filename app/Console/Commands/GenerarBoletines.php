@@ -138,7 +138,7 @@ class GenerarBoletines extends Command
             // Generar PDF con timeout aumentado para documentos grandes
             ini_set('max_execution_time', 120);
             
-            $pdf = Pdf::loadView('boletines.academico', [
+            $pdf = Pdf::loadView('boletines.boletin', [
                 'estudiante' => $estudiante,
                 'periodo' => $periodo,
                 'periodoAnterior' => $periodoAnterior,

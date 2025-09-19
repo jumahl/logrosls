@@ -257,7 +257,7 @@ class BoletinResource extends Resource
                         }
 
                         // Generar el PDF
-                        $pdf = PDF::loadView('boletines.academico', [
+                        $pdf = PDF::loadView('boletines.boletin', [
                             'estudiante' => $record,
                             'periodo' => $periodo,
                             'desempenosPorMateria' => $desempenosPorMateria,
@@ -509,7 +509,7 @@ class BoletinResource extends Resource
                                     }
                                 }
 
-                                $pdf = PDF::loadView('boletines.academico', [
+                                $pdf = PDF::loadView('boletines.boletin', [
                                     'estudiante' => $estudiante,
                                     'periodo' => $periodo,
                                     'periodoAnterior' => $periodoAnterior,

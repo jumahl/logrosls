@@ -98,51 +98,57 @@
         <thead>
             <tr>
                 <th style="width: 30%;">Materia</th>
-                <th style="width: 20%;">Período</th>
-                <th style="width: 15%;">Desempeño</th>
-                <th style="width: 10%;">Promedio</th>
+                <th style="width: 15%;">1er Corte</th>
+                <th style="width: 15%;">2do Corte</th>
                 <th style="width: 25%;">Observaciones</th>
             </tr>
         </thead>
         <tbody>
             @foreach($desempenosPorMateria as $materia => $desempenos)
                 @php
-                    $primerDesempeno = $desempenos->first();
-                    $promedio = $promediosPorMateria[$materia] ?? 0;
+                    $primerPeriodo = $desempenos->firstWhere('periodo_numero', 1) ?? $desempenos->firstWhere('periodo_corte', 1);
+                    $segundoPeriodo = $desempenos->firstWhere('periodo_numero', 2) ?? $desempenos->firstWhere('periodo_corte', 2);
                 @endphp
                 <tr>
-                    <td rowspan="{{ $desempenos->count() }}"><strong>{{ $materia }}</strong></td>
-                    <td>{{ $primerDesempeno->periodo_nombre }}</td>
-                    <td class="desempeno-{{ $primerDesempeno->nivel_desempeno }}">
-                        {{ $primerDesempeno->nivel_desempeno }} - 
-                        @switch($primerDesempeno->nivel_desempeno)
-                            @case('E') Excelente @break
-                            @case('S') Sobresaliente @break
-                            @case('A') Aceptable @break
-                            @case('I') Insuficiente @break
-                            @default Sin calificar
-                        @endswitch
+                    <td><strong>{{ $materia }}</strong></td>
+                    <td class="desempeno-{{ $primerPeriodo->nivel_desempeno ?? '' }}">
+                        @if($primerPeriodo)
+                            {{ $primerPeriodo->nivel_desempeno }} - 
+                            @switch($primerPeriodo->nivel_desempeno)
+                                @case('E') Excelente @break
+                                @case('S') Sobresaliente @break
+                                @case('A') Aceptable @break
+                                @case('I') Insuficiente @break
+                                @default Sin calificar
+                            @endswitch
+                        @else
+                            Sin nota
+                        @endif
                     </td>
-                    <td rowspan="{{ $desempenos->count() }}">{{ number_format($promedio, 1) }}</td>
-                    <td>{{ $primerDesempeno->observaciones_finales ?? 'Sin observaciones' }}</td>
-                </tr>
-                
-                @foreach($desempenos->skip(1) as $desempeno)
-                <tr>
-                    <td>{{ $desempeno->periodo_nombre }}</td>
-                    <td class="desempeno-{{ $desempeno->nivel_desempeno }}">
-                        {{ $desempeno->nivel_desempeno }} - 
-                        @switch($desempeno->nivel_desempeno)
-                            @case('E') Excelente @break
-                            @case('S') Sobresaliente @break
-                            @case('A') Aceptable @break
-                            @case('I') Insuficiente @break
-                            @default Sin calificar
-                        @endswitch
+                    <td class="desempeno-{{ $segundoPeriodo->nivel_desempeno ?? '' }}">
+                        @if($segundoPeriodo)
+                            {{ $segundoPeriodo->nivel_desempeno }} - 
+                            @switch($segundoPeriodo->nivel_desempeno)
+                                @case('E') Excelente @break
+                                @case('S') Sobresaliente @break
+                                @case('A') Aceptable @break
+                                @case('I') Insuficiente @break
+                                @default Sin calificar
+                            @endswitch
+                        @else
+                            Sin nota
+                        @endif
                     </td>
-                    <td>{{ $desempeno->observaciones_finales ?? 'Sin observaciones' }}</td>
+                    <td>
+                        @if($segundoPeriodo && $segundoPeriodo->observaciones_finales)
+                            {{ $segundoPeriodo->observaciones_finales }}
+                        @elseif($primerPeriodo && $primerPeriodo->observaciones_finales)
+                            {{ $primerPeriodo->observaciones_finales }}
+                        @else
+                            Sin observaciones
+                        @endif
+                    </td>
                 </tr>
-                @endforeach
             @endforeach
         </tbody>
     </table>

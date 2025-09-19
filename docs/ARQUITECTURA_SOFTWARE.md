@@ -238,7 +238,7 @@ class EstudiantesExport implements FromCollection, WithHeadings {
 
 ```php
 // Generación de boletines
-$pdf = Pdf::loadView('boletines.academico', $data);
+$pdf = Pdf::loadView('boletines.boletin', $data);
 return $pdf->download("boletin_{$estudiante->documento}.pdf");
 ```
 
